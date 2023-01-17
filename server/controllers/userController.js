@@ -1,3 +1,7 @@
+const {Type} = require('../models/models');
+const ApiError = require('../errors/ApiError')
+
+
 class CUserContoller {
     async regestration(req, res){
 
@@ -7,8 +11,11 @@ class CUserContoller {
 
     }
 
-    async check(req, res){
-        res.json({m: 'ok'})
+    async check(req, res, next){
+        const {id} = req.query
+        if(!id)
+            return next(ApiError.badRequest('No id!'))
+        res.json(id)
     }
 }
 

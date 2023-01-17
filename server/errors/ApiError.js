@@ -1,6 +1,5 @@
 class CApiError{
     constructor(status, message){
-        super();
         this.status = status
         this.message = message
     }
@@ -17,3 +16,5 @@ class CApiError{
         return new CApiError(403, message)
     }
 }
+
+module.exports = CApiError
