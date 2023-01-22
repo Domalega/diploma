@@ -15,6 +15,10 @@ class CApiError{
     static forbiden(message){ // no access
         return new CApiError(403, message)
     }
+
+    static unauthorized(message){
+        return new CApiError(401, message)
+    }
 }
 
 module.exports = CApiError
