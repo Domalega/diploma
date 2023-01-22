@@ -1,10 +1,10 @@
 const Router = require('express')
 const userController = require('../controllers/userController')
-
+const { body } = require('express-validator');
 
 const router = new Router()
 
-router.post('/registration', userController.regestration)
+router.post('/registration', body('email').isEmail(), userController.regestration)
 router.post('/login', userController.login)
 router.get('/auth', userController.check)
 
