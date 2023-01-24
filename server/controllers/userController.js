@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { json } = require('sequelize');
 const { validationResult } = require('express-validator');
 
+
 const generateToken = (id, email) =>{
     return jwt.sign(
             {id: id, email: email}, 
@@ -12,6 +13,7 @@ const generateToken = (id, email) =>{
             {expiresIn: '24h'}
         )
 }
+
 class CUserContoller {
     async regestration(req, res, next){
         const {email, password, fullName} = req.body
@@ -50,7 +52,8 @@ class CUserContoller {
     }
 
     async check(req, res, next){
-        res.json({m: "test"})
+        const token = generateToken(req.user.id, req.user.email)
+        return res.json({token})
     }
 }
 
