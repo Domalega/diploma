@@ -42,6 +42,11 @@ const UserDate = sequelize.define('userDate',{
     comment:{
         type: DataTypes.STRING,
         allowNull: true,
+    },
+
+    userId:{
+        type: DataTypes.INTEGER,
+        allowNull: false,   
     }
 
 })

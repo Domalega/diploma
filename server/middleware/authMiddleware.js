@@ -8,7 +8,6 @@ module.exports = function(req, res, next){
     
     try {
         const token = req.headers.authorization.split(' ')[1]
-        //console.log(token)
         if(!token)
             return res.status(401).json({message: "unauthorized user"})
 
@@ -17,7 +16,6 @@ module.exports = function(req, res, next){
         next()
 
     } catch (error) {
-        //ApiError.unauthorized('unauthorized user')
         console.log(error)
         res.status(401).json({message: "unauthorized user"})
     }
