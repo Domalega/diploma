@@ -16,44 +16,56 @@ const generateToken = (id, email) =>{
 
 class CUserContoller {
     async regestration(req, res, next){
-        const {email, password, fullName} = req.body
-        if(!email || !password || !fullName)
-            return next(ApiError.badRequest('Uncorrect data'))
+        try{
+            const {email, password, fullName} = req.body
+            if(!email || !password || !fullName)
+                return next(ApiError.badRequest('Uncorrect data'))
 
-        const usedEmail = await User.findOne({where: {email}})
-        if(usedEmail)
-            return next(ApiError.badRequest('User is already have with this email'))
+            const usedEmail = await User.findOne({where: {email}})
+            if(usedEmail)
+                return next(ApiError.badRequest('User is already have with this email'))
 
 
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) 
-            return next(ApiError.badRequest('Wrong password'))
-            
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) 
+                return next(ApiError.badRequest('Wrong password'))
+                
 
-        const hashPassword = await bcrypt.hash(password, 5)
-        const user = await User.create({email, password: hashPassword, fullName})
-        const token = generateToken(user.id, user.email)
+            const hashPassword = await bcrypt.hash(password, 5)
+            const user = await User.create({email, password: hashPassword, fullName})
+            const token = generateToken(user.id, user.email)
 
-        return res.json(token)
+            return res.json(token)
+        }   catch(error){
+            next(ApiError.badRequest(error.message))
+        }
     }
 
     async login(req, res, next){
-        const {email, password} = req.body
-        const user = await User.findOne({where:{email}})
-        if(!user)
-            return next(ApiError.badRequest('User not found'))
+        try{
+            const {email, password} = req.body
+            const user = await User.findOne({where:{email}})
+            if(!user)
+                return next(ApiError.badRequest('User not found'))
 
-        let comparePassword = bcrypt.compareSync(password, user.password)
-        if(!comparePassword)
-            return next(ApiError.badRequest('Password or login is wrong'))
+            let comparePassword = bcrypt.compareSync(password, user.password)
+            if(!comparePassword)
+                return next(ApiError.badRequest('Password or login is wrong'))
 
-        const token = generateToken(user.id, user.email)
-        return res.json({token})
+            const token = generateToken(user.id, user.email)
+            return res.json({token})
+        }   catch(error){
+                next(ApiError.badRequest(error.message))
+        }
     }
 
     async check(req, res, next){
-        const token = generateToken(req.user.id, req.user.email)
-        return res.json({token})
+        try{
+            const token = generateToken(req.user.id, req.user.email)
+            return res.json({token})
+        }   catch(error){
+            next(ApiError.badRequest(error.message))
+        }
     }
 }
 
