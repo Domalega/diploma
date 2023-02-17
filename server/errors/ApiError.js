@@ -1,24 +1,25 @@
-class CApiError{
-    constructor(status, message){
-        this.status = status
-        this.message = message
-    }
+class CApiError {
+  constructor(status, message) {
+    this.status = status;
+    this.message = message;
+  }
 
-    static badRequest(message){
-        return new CApiError(404, message)
-    }
+  static badRequest(message) {
+    return new CApiError(404, message);
+  }
 
-    static internal(message){
-        return new CApiError(500, message)
-    }
+  static internal(message) {
+    return new CApiError(500, message);
+  }
 
-    static forbiden(message){ // no access
-        return new CApiError(403, message)
-    }
+  static forbidden(message) {
+    // no access
+    return new CApiError(403, message);
+  }
 
-    static unauthorized(message){
-        return new CApiError(401, message)
-    }
+  static unauthorized(message) {
+    return new CApiError(401, message);
+  }
 }
 
-module.exports = CApiError
+module.exports = CApiError;

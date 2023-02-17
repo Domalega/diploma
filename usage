@@ -12,9 +12,9 @@ backend:
     express-validator - для валидации данных
 
 frontend:
-    react-js -
+    react-js - фреймворк для написания фронт части проекта
     axios - для отправки запросов на сервер
     react-router-dom - для постраничной навигации
-    mobx -
-    mobx-react-lite - 
-    boostrap
+    mobx - для отслеживания изменений в проекте 
+    mobx-react-lite - для отслеживания изменений в проекте(работа в функциях)
+    boostrap - для более быстрой верстки
