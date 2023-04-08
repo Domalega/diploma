@@ -1,0 +1,21 @@
+.containerBar{
+    width: 500px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+}
+
+.containerBar-label { 
+    grid-area: 1 / 2 / 2 / 3; 
+    margin: 0 auto;
+}
+
+.containerBar-btn_prev { 
+    grid-area: 2 / 1 / 3 / 2; 
+}
+
+.containerBar-btn_next { 
+    grid-area: 2 / 3 / 3 / 4; 
+}

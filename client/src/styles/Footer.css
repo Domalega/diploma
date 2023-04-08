@@ -1,0 +1,33 @@
+.containerFtr{
+    height: 100%;
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    width: 100%
+}
+
+.Footer-line{
+    margin-top: 30px;
+    width: 80%;
+    height: 1px;
+    background-color: #78b1ee;
+}
+
+.flex-containerFtr{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+}
+
+.flex-containerFtr-creator{
+    margin: 5px;
+    padding: 5px;
+    flex: 0 1 auto;
+}
+
+.flex-containerFtr-logo{
+    margin: 5px;
+    padding: 5px;
+    flex: 0 1 auto;
+}

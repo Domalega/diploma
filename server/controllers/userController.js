@@ -54,6 +54,7 @@ class CUserController {
         return next(ApiError.badRequest("Password or login is wrong"));
 
       const token = generateToken(user.id, user.email);
+      console.log(req.body);
       return res.json({ token });
     } catch (error) {
       next(ApiError.badRequest(error.message));
