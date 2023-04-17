@@ -1,43 +1,37 @@
-import { React, useState, useEffect } from "react";
+import React from "react";
 import NavBar from "../components/NavBar";
 import MainCalendar from "../components/MainCalendar";
-import DatePicker from "../components/DatePicker";
 import Footer from "../components/Footer";
 import "../styles/Calendar.css";
-import colors from "../color";
+import colors from "../utils/colors";
+import useMobileDetection from "../utils/resizeHook";
+import DatePickerM from "../components/DatePicker";
 
 const Calendar = () => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
+  const isMobile = useMobileDetection();
   const classes = isMobile ? "mobile-style" : "desktop-style";
 
+  console.log(classes);
   return (
     <div className="wrapper">
-      <header className={`header ${classes}`}>
+      <header className={`header-${classes}`}>
         <NavBar />
       </header>
 
-      <main className="main" style={{ background: colors.WrapperColorDark }}>
-        <div className="child" style={{ background: "#900000" }}>
-          <DatePicker />
+      <main
+        className={`main-${classes}`}
+        style={{ background: colors.WrapperColorDark }}
+      >
+        <div className="child">
+          <DatePickerM />
         </div>
+
         <div className="child" style={{ color: colors.TextColorDark }}>
           <MainCalendar />
         </div>
       </main>
-      <footer className="footer">
+
+      <footer className={`footer-${classes}`}>
         <Footer />
       </footer>
     </div>

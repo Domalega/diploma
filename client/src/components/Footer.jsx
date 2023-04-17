@@ -1,8 +1,7 @@
-import { React } from "react";
+import React from "react";
 import "../styles/Footer.css";
-import colors from "../color";
+import colors from "../utils/colors";
 
-//ДОПИСАТЬ ПАЛОЧКУ !!!
 const Footer = () => {
   return (
     <div

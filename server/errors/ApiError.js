@@ -22,4 +22,4 @@ class CApiError {
   }
 }
 
-module.exports = CApiError;
+export default CApiError;

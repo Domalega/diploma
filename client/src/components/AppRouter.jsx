@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Context } from "..";
+import { Context } from "../";
 import Auth from "../pages/Auth";
 import Calendar from "../pages/Calendar";
 import Date from "../pages/Date";

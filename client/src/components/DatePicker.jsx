@@ -1,7 +1,14 @@
 import React from "react";
+import { DatePicker } from "antd";
+import "moment/locale/ru";
+import moment from "moment";
 
-const DatePicker = () => {
-  return <div>DATE PICKER IS HERE</div>;
+const DatePickerM = () => {
+  function onChange(date, dateString) {
+    console.log(date, dateString);
+  }
+
+  return <DatePicker onChange={onChange} format="DD.MM.YYYY" />;
 };
 
-export default DatePicker;
+export default DatePickerM;

@@ -18,6 +18,7 @@ frontend:
     mobx - для отслеживания изменений в проекте 
     mobx-react-lite - для отслеживания изменений в проекте(работа в функциях)
     boostrap - для более быстрой верстки
+    react-bootstrap
     react-spring - для создания анимаций
     react-big-calendar - для создания календаря
     antd moment - для создания 

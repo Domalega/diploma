@@ -1,28 +1,50 @@
-body, html{
-    height: 100%;
-}
 
 .wrapper{
     height: 100%;
 }
 
-.main{
+/*MOBILE*/
+.header-mobile-style{
+
+}
+
+.main-mobile-style{
     display: flex;
     flex-flow: column nowrap;
     align-items: center;
     align-content: flex-start;
     width: 100%;
-    height: 90%;
+    height: 100%;
 }
 
-.footer{
+.footer-mobile-style{
+    position: absolute;
+    bottom: 0;
+    width: 100%;
     height: 10%;
 }
-
-.child{
-    margin: 20px 0px;
+/*///////*/
+/*DESKTOP*/
+.header-desktop-style{
+    height: 5hv;
 }
 
-.mobile-style{
+.main-desktop-style{
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    align-content: flex-start;
+    width: 100%;
+    height: 85vh;
+}
 
+.footer-desktop-style{
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 10vh;
+}
+/*///////*/
+.child{
+    margin: 20px 0px;
 }

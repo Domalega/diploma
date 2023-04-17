@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, Container, Form, FormGroup, Row } from "react-bootstrap";
 import Card from "react-bootstrap/esm/Card";
 import { NavLink, useLocation } from "react-router-dom";
-import colors from "../color";
+import colors from "../utils/colors";
 import { LOGIN_ROUTE, REGISTRATION_ROUTE } from "../utils/const";
 
 const Auth = () => {
