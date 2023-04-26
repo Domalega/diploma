@@ -14,8 +14,8 @@ const generateToken = (id, email) => {
 class CUserController {
   async registration(req, res, next) {
     try {
-      const { email, password, fullName } = req.body;
-      if (!email || !password || !fullName)
+      const { email, password } = req.body;
+      if (!email || !password)
         return next(ApiError.badRequest("Uncorrected data"));
 
       const usedEmail = await User.findOne({ where: { email } });
@@ -31,7 +31,6 @@ class CUserController {
       const user = await User.create({
         email,
         password: hashPassword,
-        fullName,
       });
 
       //await mailService.sendActivationEmail(email, activationLink)

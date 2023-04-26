@@ -21,4 +21,5 @@ frontend:
     react-bootstrap
     react-spring - для создания анимаций
     react-big-calendar - для создания календаря
-    antd moment - для создания 
+    antd moment - для создания мини календаря(выбор дат по вводу)
+    react-modal - для создания модульного окна

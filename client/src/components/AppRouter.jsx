@@ -4,6 +4,7 @@ import { Context } from "../";
 import Auth from "../pages/Auth";
 import Calendar from "../pages/Calendar";
 import Date from "../pages/Date";
+
 import {
   LOGIN_ROUTE,
   REGISTRATION_ROUTE,
@@ -14,6 +15,7 @@ import {
 const AppRouter = () => {
   const { user } = useContext(Context);
   console.log(user);
+
   return (
     <Routes>
       <Route path={LOGIN_ROUTE} element={<Auth />} />

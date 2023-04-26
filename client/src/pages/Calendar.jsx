@@ -11,7 +11,7 @@ const Calendar = () => {
   const isMobile = useMobileDetection();
   const classes = isMobile ? "mobile-style" : "desktop-style";
 
-  console.log(classes);
+  //console.log(classes);
   return (
     <div className="wrapper">
       <header className={`header-${classes}`}>
