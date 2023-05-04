@@ -1,5 +1,3 @@
-import { useContext } from "react";
-import { Context } from "..";
 import Container from "react-bootstrap/Container";
 import Navbar from "react-bootstrap/Navbar";
 import SideBtn from "./SideBtn";
@@ -7,7 +5,6 @@ import colors from "../utils/colors";
 import "../styles/NavBar.css";
 
 const NavBar = () => {
-  const { user } = useContext(Context);
   return (
     <Navbar
       className="navBar"

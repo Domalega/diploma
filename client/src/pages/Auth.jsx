@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import LoginForm from "../components/LognForm";
 import { login, register } from "../api/api";
 import { Navigate, useLocation } from "react-router-dom";
-import { CALENDAR_ROUTE, LOGIN_ROUTE } from "../utils/const";
+import { CALENDAR_ROUTE } from "../utils/const";
 
 const Auth = () => {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -31,7 +31,6 @@ const Auth = () => {
         const data = await response.json();
         localStorage.setItem("token", data.token);
         if (response.ok) {
-          console.log("ss");
           setRegisterIn(true);
         } else alert(data.message);
       } catch (error) {
@@ -40,9 +39,12 @@ const Auth = () => {
       }
     }
   }
+
+  //если пользователь авторизовался или зарегистирорвался
   if (registerIn || loggedIn) return <Navigate to={CALENDAR_ROUTE} />;
 
   return (
+    //отрисовка формы
     <div>
       <LoginForm onSubmit={handleLogin} />
     </div>

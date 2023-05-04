@@ -22,4 +22,26 @@ async function register(email, password) {
   return response;
 }
 
-export { login, register };
+async function check(token) {
+  const response = await fetch(`${BASE_URL}/api/user/auth`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response;
+}
+
+async function createDate(date, comment, token) {
+  const response = await fetch(`${BASE_URL}/api/userDate/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ date, comment }),
+  });
+  return response;
+}
+
+export { login, register, check, createDate };

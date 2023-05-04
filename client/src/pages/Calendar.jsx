@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import NavBar from "../components/NavBar";
 import MainCalendar from "../components/MainCalendar";
 import Footer from "../components/Footer";
@@ -6,11 +6,17 @@ import "../styles/Calendar.css";
 import colors from "../utils/colors";
 import useMobileDetection from "../utils/resizeHook";
 import DatePickerM from "../components/DatePicker";
+import ModalWindow from "../components/ModalWindow";
 
 const Calendar = () => {
   const isMobile = useMobileDetection();
   const classes = isMobile ? "mobile-style" : "desktop-style";
 
+  const [modalIsOpen, setIsOpen] = useState(false);
+
+  function openModal() {
+    setIsOpen(true);
+  }
   //console.log(classes);
   return (
     <div className="wrapper">
@@ -22,13 +28,27 @@ const Calendar = () => {
         className={`main-${classes}`}
         style={{ background: colors.WrapperColorDark }}
       >
-        <div className="child">
-          <DatePickerM />
-        </div>
+        <button
+          onClick={openModal}
+          className={`btn containerBar__btn-add-${classes}`}
+          style={{
+            background: colors.BgColorDark,
+            color: colors.TextColorDark,
+            margin: 10,
+            width: 250,
+          }}
+        >
+          Добавить дату
+        </button>
 
-        <div className="child" style={{ color: colors.TextColorDark }}>
+        <div
+          className={`child modal-${modalIsOpen}`}
+          style={{ color: colors.TextColorDark, zIndex: 1 }}
+        >
           <MainCalendar />
         </div>
+
+        <ModalWindow modalIsOpen={modalIsOpen} setIsOpen={setIsOpen} />
       </main>
 
       <footer className={`footer-${classes}`}>

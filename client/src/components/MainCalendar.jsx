@@ -5,7 +5,6 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../styles/MainCalendar.css";
 import colors from "../utils/colors";
 import useMobileDetection from "../utils/resizeHook";
-import Modal from "./ModalWindow.jsx";
 
 const localizer = momentLocalizer(moment);
 moment.locale("ru");
@@ -13,13 +12,6 @@ moment.locale("ru");
 function CustomToolbar(props) {
   const isMobile = useMobileDetection();
   const classes = isMobile ? "mobile-style" : "desktop-style";
-
-  const [showModalWindow, setShowModalWindow] = useState(false);
-
-  const handleButtonClick = () => {
-    console.log(showModalWindow);
-    setShowModalWindow(true);
-  };
 
   return (
     <div>
@@ -37,17 +29,6 @@ function CustomToolbar(props) {
           Предыдущий
         </button>
         <button
-          onClick={() => handleButtonClick()}
-          className={`btn containerBar__btn-add-${classes}`}
-          style={{
-            background: colors.BgColorDark,
-            color: colors.TextColorDark,
-            margin: 10,
-          }}
-        >
-          Добавить дату
-        </button>
-        <button
           onClick={() => props.onNavigate("NEXT")}
           className={`btn containerBar__btn-next-${classes}`}
           style={{
@@ -59,12 +40,11 @@ function CustomToolbar(props) {
           Следующий
         </button>
       </div>
-      {showModalWindow && <Modal />}
     </div>
   );
 }
 
-const MainCalendar = () => {
+const MainCalendar = (props) => {
   const components = {
     toolbar: CustomToolbar,
   };
@@ -77,10 +57,6 @@ const MainCalendar = () => {
     },
   ];
 
-  const handleSelect = () => {
-    console.log("start");
-  };
-
   return (
     <div>
       <Calendar
@@ -91,8 +67,7 @@ const MainCalendar = () => {
         startAccessor="start"
         endAccessor="end"
         selectable="true"
-        onSelectSlot={handleSelect}
-        style={{ height: 500 }}
+        style={{ height: 500, zIndex: 2 }}
       />
     </div>
   );

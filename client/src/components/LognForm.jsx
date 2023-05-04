@@ -20,14 +20,6 @@ const LoginForm = (props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  function handleEmailChange(event) {
-    setEmail(event.target.value);
-  }
-
-  function handlePasswordChange(event) {
-    setPassword(event.target.value);
-  }
-
   function handleSubmit(event) {
     event.preventDefault();
     props.onSubmit(email, password);
@@ -57,7 +49,7 @@ const LoginForm = (props) => {
                 placeholder="Enter your login"
                 type="email"
                 value={email}
-                onChange={handleEmailChange}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </FormGroup>
             <FormGroup>
@@ -67,7 +59,7 @@ const LoginForm = (props) => {
                 placeholder="Enter your password"
                 type="password"
                 value={password}
-                onChange={handlePasswordChange}
+                onChange={(e) => setPassword(e.target.value)}
               />
               <Form.Text className="text-muted">
                 Don`t share your email or password

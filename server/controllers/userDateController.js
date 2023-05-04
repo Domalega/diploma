@@ -6,13 +6,15 @@ const jwt = require("jsonwebtoken");
 class CUserDateController {
   async create(req, res, next) {
     try {
-      const { date, comment, token } = req.body;
+      const { date, comment } = req.body;
+      const token = req.headers.authorization;
+      console.log(date, comment, token);
       const tokenSplitted = token.split(" ")[1];
       const decode = jwt.verify(tokenSplitted, process.env.SECRET_KEY);
       const userId = decode.id;
 
       const type = await UserDate.create({ date, comment, userId });
-      return res.json(type);
+      return res.json({ created: "ok" });
     } catch (error) {
       next(ApiError.badRequest(error.message));
     }
