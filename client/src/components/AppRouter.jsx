@@ -1,15 +1,12 @@
 import React, { useContext, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import Auth from "../pages/Auth";
 import Calendar from "../pages/Calendar";
-import Date from "../pages/Date";
 import { check } from "../api/api";
 import {
   LOGIN_ROUTE,
   REGISTRATION_ROUTE,
   CALENDAR_ROUTE,
-  DATE_ROUTE,
 } from "../utils/const";
 
 async function CheckAuth(token) {
@@ -40,7 +37,6 @@ const AppRouter = () => {
         path={CALENDAR_ROUTE}
         element={<PrivateRoute component={Calendar} />}
       />
-      <Route path={DATE_ROUTE} element={<Date />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

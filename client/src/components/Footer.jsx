@@ -14,7 +14,9 @@ const Footer = () => {
           Copyright ©2023 All rights reserved or not This site is made with by
           Domalega inc.
         </div>
-        <div className="flex-containerFtr-logo">LOGO</div>
+        <div className="flex-containerFtr-logo">
+          <img src="../pic/1.png" alt="Logo" />
+        </div>
       </div>
     </div>
   );

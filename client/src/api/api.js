@@ -44,4 +44,15 @@ async function createDate(date, comment, token) {
   return response;
 }
 
-export { login, register, check, createDate };
+async function getAllDates(token) {
+  const response = await fetch(`${BASE_URL}/api/userDate/get`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response;
+}
+
+export { login, register, check, createDate, getAllDates };

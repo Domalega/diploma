@@ -5,8 +5,7 @@ import Footer from "../components/Footer";
 import "../styles/Calendar.css";
 import colors from "../utils/colors";
 import useMobileDetection from "../utils/resizeHook";
-import DatePickerM from "../components/DatePicker";
-import ModalWindow from "../components/ModalWindow";
+import ModalWindow from "../components/ModalChoseDate.jsx";
 
 const Calendar = () => {
   const isMobile = useMobileDetection();

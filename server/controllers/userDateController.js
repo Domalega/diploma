@@ -24,9 +24,9 @@ class CUserDateController {
     try {
       const token = req.headers.authorization.split(" ")[1];
       const decode = jwt.verify(token, process.env.SECRET_KEY);
-      const id = decode.id;
+      const userId = decode.id;
 
-      const all = await UserDate.findAll({ where: { id } });
+      const all = await UserDate.findAll({ where: { userId } });
       return res.json(all);
     } catch (error) {
       next(ApiError.badRequest(error.message));

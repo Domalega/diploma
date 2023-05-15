@@ -15,7 +15,9 @@ const NavBar = () => {
         <Navbar.Brand href="#">
           <SideBtn />
         </Navbar.Brand>
-        <Navbar.Brand href="/Calendar">LogoIsHere</Navbar.Brand>
+        <Navbar.Brand href="/Calendar" className="NavBar__logo">
+          <img src="../pic/1.png" alt="Logo" />
+        </Navbar.Brand>
       </Container>
     </Navbar>
   );

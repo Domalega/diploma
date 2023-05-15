@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../styles/MainCalendar.css";
 import colors from "../utils/colors";
 import useMobileDetection from "../utils/resizeHook";
+import { getAllDates } from "../api/api";
 
 const localizer = momentLocalizer(moment);
 moment.locale("ru");
@@ -26,7 +27,7 @@ function CustomToolbar(props) {
             margin: 10,
           }}
         >
-          Предыдущий
+          Previous
         </button>
         <button
           onClick={() => props.onNavigate("NEXT")}
@@ -37,7 +38,7 @@ function CustomToolbar(props) {
             margin: 10,
           }}
         >
-          Следующий
+          Next
         </button>
       </div>
     </div>
@@ -49,13 +50,36 @@ const MainCalendar = (props) => {
     toolbar: CustomToolbar,
   };
 
-  const events = [
-    {
-      start: moment("2023-04-18").toDate(),
-      end: moment("2023-04-18").toDate(),
-      title: "test",
-    },
-  ];
+  const [events, setEvents] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  useEffect(() => {
+    async function getData() {
+      const token = localStorage.getItem("token");
+      const response = await getAllDates(token);
+      const data = await response.json();
+      const tempEvents = data.map((item) => ({
+        start: moment(item.date).toDate(),
+        end: moment(item.date).toDate(),
+        title: item.comment,
+      }));
+      setEvents(tempEvents);
+    }
+    getData();
+  }, []);
+
+  const eventStyleGetter = () => {
+    return {
+      style: {
+        height: "150px",
+      },
+    };
+  };
+
+  const handleSelectSlot = ({ start }) => {
+    console.log(start);
+    setSelectedDate(start);
+  };
 
   return (
     <div>
@@ -68,6 +92,8 @@ const MainCalendar = (props) => {
         endAccessor="end"
         selectable="true"
         style={{ height: 500, zIndex: 2 }}
+        eventPropGetter={eventStyleGetter}
+        onSelectEvent={handleSelectSlot}
       />
     </div>
   );
