@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Auth from "../pages/Auth";
 import Calendar from "../pages/Calendar";

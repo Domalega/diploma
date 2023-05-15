@@ -7,18 +7,25 @@ import { LOGIN_ROUTE, REGISTRATION_ROUTE } from "../utils/const";
 
 const LoginForm = (props) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const location = useLocation();
 
   const isLogin = location.pathname === LOGIN_ROUTE;
 
-  const btnStyle = {
-    background: isHovered ? colors.Success : colors.BtnColorDark,
-    color: colors.TextColorDark,
-    width: 200,
+  const styles = {
+    container: { height: window.innerHeight - 100 },
+    card: {
+      width: 700,
+      boxShadow: "5px black",
+      background: colors.BgColorDark,
+    },
+    btnStyle: {
+      background: isHovered ? colors.Success : colors.BtnColorDark,
+      color: colors.TextColorDark,
+    },
   };
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -29,18 +36,11 @@ const LoginForm = (props) => {
     <div>
       <Container
         className="d-flex justify-content-center align-items-center p-4"
-        style={{ height: window.innerHeight - 100 }}
+        style={styles.container}
       >
-        <Card
-          style={{
-            width: 700,
-            boxShadow: "5px black",
-            background: colors.BgColorDark,
-          }}
-          className="p-5 link-light"
-        >
+        <Card style={styles.card} className="p-5 link-light">
           <h3 className="m-auto">
-            {isLogin ? "Authorization" : "Registration"}{" "}
+            {isLogin ? "Authorization" : "Registration"}
           </h3>
           <Form onSubmit={handleSubmit}>
             <FormGroup>
@@ -68,21 +68,21 @@ const LoginForm = (props) => {
 
             <Row className="m-auto justify-content-between">
               {isLogin ? (
-                <div className="align-self-center" style={{ width: 350 }}>
+                <div className="align-self-center w-50">
                   Haven`t account?{" "}
                   <NavLink to={REGISTRATION_ROUTE}>Create an account</NavLink>
                 </div>
               ) : (
-                <div className="align-self-center" style={{ width: 350 }}>
-                  Already have login and password?{" "}
+                <div className="align-self-center w-75">
+                  Already have login and password?
                   <NavLink to={LOGIN_ROUTE}>Sign in</NavLink>
                 </div>
               )}
 
               <Button
-                className="mt-3"
+                className="mt-3 w-25"
                 type="submit"
-                style={btnStyle}
+                style={styles.btnStyle}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
               >

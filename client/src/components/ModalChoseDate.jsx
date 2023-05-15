@@ -2,11 +2,10 @@ import React, { useState } from "react";
 import { Form, FormControl, Button } from "react-bootstrap";
 import Modal from "react-modal";
 import colors from "../utils/colors";
-import "../styles/Modal.css";
 import { createDate } from "../api/api";
 
 const ModalWindow = (props) => {
-  const customStyles = {
+  const styles = {
     content: {
       top: "50%",
       left: "50%",
@@ -28,7 +27,6 @@ const ModalWindow = (props) => {
       gridArea: "1 / 5 / 2 / 6",
     },
     form: {
-      marginTop: 20,
       gridArea: "2 / 1 / 6 / 6",
     },
   };
@@ -73,17 +71,13 @@ const ModalWindow = (props) => {
       <Modal
         isOpen={props.modalIsOpen}
         onRequestClose={closeModal}
-        style={customStyles}
-        contentLabel="Отправка даты"
+        style={styles}
+        contentLabel="Send data"
       >
-        <button
-          className="btn"
-          onClick={closeModal}
-          style={customStyles.closeButton}
-        >
+        <button className="btn" onClick={closeModal} style={styles.closeButton}>
           close
         </button>
-        <div style={customStyles.form}>
+        <div style={styles.form}>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="p-2">
               <Form.Label>Date</Form.Label>
@@ -106,7 +100,7 @@ const ModalWindow = (props) => {
             </Form.Group>
 
             <Button
-              className="m-2"
+              className="m-2 mt-4"
               style={btnStyleSubmit}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}

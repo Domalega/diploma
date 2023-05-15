@@ -11,11 +11,14 @@ const Footer = () => {
       <div className="Footer-line"></div>
       <div className="flex-containerFtr">
         <div className="flex-containerFtr-creator">
-          Copyright ©2023 All rights reserved or not This site is made with by
-          Domalega inc.
+          This site is made with by Domalega inc.
         </div>
         <div className="flex-containerFtr-logo">
-          <img src="../pic/1.png" alt="Logo" />
+          <img
+            src="%PUBLIC_URL%/../logo.png"
+            alt="Logo"
+            style={{ width: "40px", height: "40px" }}
+          />
         </div>
       </div>
     </div>

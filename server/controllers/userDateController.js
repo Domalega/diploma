@@ -1,6 +1,5 @@
 const { UserDate } = require("../models/models");
 const ApiError = require("../errors/ApiError");
-const { json } = require("sequelize");
 const jwt = require("jsonwebtoken");
 
 class CUserDateController {
@@ -8,7 +7,6 @@ class CUserDateController {
     try {
       const { date, comment } = req.body;
       const token = req.headers.authorization;
-      console.log(date, comment, token);
       const tokenSplitted = token.split(" ")[1];
       const decode = jwt.verify(tokenSplitted, process.env.SECRET_KEY);
       const userId = decode.id;
@@ -35,7 +33,8 @@ class CUserDateController {
 
   async delete(req, res, next) {
     try {
-      const { date, token } = req.body;
+      const { date } = req.body;
+      const token = req.headers.authorization;
       const tokenSplitted = token.split(" ")[1];
       const decode = jwt.verify(tokenSplitted, process.env.SECRET_KEY);
       const userId = decode.id;

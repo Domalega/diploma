@@ -4,45 +4,45 @@ import MainCalendar from "../components/MainCalendar";
 import Footer from "../components/Footer";
 import "../styles/Calendar.css";
 import colors from "../utils/colors";
-import useMobileDetection from "../utils/resizeHook";
+
 import ModalWindow from "../components/ModalChoseDate.jsx";
 
 const Calendar = () => {
-  const isMobile = useMobileDetection();
-  const classes = isMobile ? "mobile-style" : "desktop-style";
-
   const [modalIsOpen, setIsOpen] = useState(false);
 
   function openModal() {
     setIsOpen(true);
   }
-  //console.log(classes);
+  const style = {
+    btnAddStyle: {
+      background: colors.BgColorDark,
+      color: colors.TextColorDark,
+      margin: 10,
+      width: 250,
+    },
+    mainWrapperStyle: { background: colors.WrapperColorDark },
+    mainCalendarStyle: {
+      color: colors.TextColorDark,
+    },
+  };
   return (
     <div className="wrapper">
-      <header className={`header-${classes}`}>
+      <header className="header">
         <NavBar />
       </header>
 
-      <main
-        className={`main-${classes}`}
-        style={{ background: colors.WrapperColorDark }}
-      >
+      <main className="main" style={style.mainWrapperStyle}>
         <button
           onClick={openModal}
-          className={`btn containerBar__btn-add-${classes}`}
-          style={{
-            background: colors.BgColorDark,
-            color: colors.TextColorDark,
-            margin: 10,
-            width: 250,
-          }}
+          className="btn containerBar__btn-add"
+          style={style.btnAddStyle}
         >
-          Добавить дату
+          Add date
         </button>
 
         <div
           className={`child modal-${modalIsOpen}`}
-          style={{ color: colors.TextColorDark, zIndex: 1 }}
+          style={style.mainCalendarStyle}
         >
           <MainCalendar />
         </div>
@@ -50,7 +50,7 @@ const Calendar = () => {
         <ModalWindow modalIsOpen={modalIsOpen} setIsOpen={setIsOpen} />
       </main>
 
-      <footer className={`footer-${classes}`}>
+      <footer className="footer">
         <Footer />
       </footer>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import LoginForm from "../components/LognForm";
+import LoginForm from "../components/LoginForm";
 import { login, register } from "../api/api";
 import { Navigate, useLocation } from "react-router-dom";
 import { CALENDAR_ROUTE } from "../utils/const";
@@ -11,7 +11,6 @@ const Auth = () => {
   const location = useLocation();
 
   async function handleLogin(email, password) {
-    //console.log(email, password, location.pathname);
     if (location.pathname === "/login") {
       try {
         const response = await login(email, password);
@@ -40,15 +39,9 @@ const Auth = () => {
     }
   }
 
-  //если пользователь авторизовался или зарегистирорвался
   if (registerIn || loggedIn) return <Navigate to={CALENDAR_ROUTE} />;
 
-  return (
-    //отрисовка формы
-    <div>
-      <LoginForm onSubmit={handleLogin} />
-    </div>
-  );
+  return <LoginForm onSubmit={handleLogin} />;
 };
 
 export default Auth;

@@ -13,7 +13,6 @@ class CApiError {
   }
 
   static forbidden(message) {
-    // no access
     return new CApiError(403, message);
   }
 

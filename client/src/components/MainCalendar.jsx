@@ -4,39 +4,35 @@ import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../styles/MainCalendar.css";
 import colors from "../utils/colors";
-import useMobileDetection from "../utils/resizeHook";
 import { getAllDates } from "../api/api";
 
 const localizer = momentLocalizer(moment);
 moment.locale("ru");
 
 function CustomToolbar(props) {
-  const isMobile = useMobileDetection();
-  const classes = isMobile ? "mobile-style" : "desktop-style";
+  const styles = {
+    btn: {
+      background: colors.BgColorDark,
+      color: colors.TextColorDark,
+      margin: 10,
+    },
+  };
 
   return (
     <div>
-      <div className={`containerBar-${classes}`}>
-        <div className={`containerBar__label-${classes}`}>{props.label}</div>
+      <div className={`containerBar`}>
+        <div className={`containerBar__label`}>{props.label}</div>
         <button
           onClick={() => props.onNavigate("PREV")}
-          className={`btn containerBar__btn-prev-${classes}`}
-          style={{
-            background: colors.BgColorDark,
-            color: colors.TextColorDark,
-            margin: 10,
-          }}
+          className={`btn containerBar__btn-prev`}
+          style={styles.btn}
         >
           Previous
         </button>
         <button
           onClick={() => props.onNavigate("NEXT")}
-          className={`btn containerBar__btn-next-${classes}`}
-          style={{
-            background: colors.BgColorDark,
-            color: colors.TextColorDark,
-            margin: 10,
-          }}
+          className={`btn containerBar__btn-next`}
+          style={styles.btn}
         >
           Next
         </button>
@@ -51,7 +47,6 @@ const MainCalendar = (props) => {
   };
 
   const [events, setEvents] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     async function getData() {
@@ -76,11 +71,6 @@ const MainCalendar = (props) => {
     };
   };
 
-  const handleSelectSlot = ({ start }) => {
-    console.log(start);
-    setSelectedDate(start);
-  };
-
   return (
     <div>
       <Calendar
@@ -93,7 +83,6 @@ const MainCalendar = (props) => {
         selectable="true"
         style={{ height: 500, zIndex: 2 }}
         eventPropGetter={eventStyleGetter}
-        onSelectEvent={handleSelectSlot}
       />
     </div>
   );

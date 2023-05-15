@@ -1,8 +1,7 @@
-const { UserDate, User } = require("../models/models");
+const { User } = require("../models/models");
 const ApiError = require("../errors/ApiError");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { json } = require("sequelize");
 const { validationResult } = require("express-validator");
 
 const generateToken = (id, email) => {
@@ -33,7 +32,6 @@ class CUserController {
         password: hashPassword,
       });
 
-      //await mailService.sendActivationEmail(email, activationLink)
       const token = generateToken(user.id, user.email);
 
       return res.json(token);

@@ -17,10 +17,12 @@ app.use(errorHandler);
 
 const start = async () => {
   try {
-    await sequelize.authenticate(); //connect to db
-    await sequelize.sync(); //check model to db
+    await sequelize.authenticate();
+    await sequelize.sync();
     app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 start();

@@ -4,14 +4,13 @@ import Button from "react-bootstrap/Button";
 import Offcanvas from "react-bootstrap/Offcanvas";
 import { getAllDates } from "../api/api";
 import DateContainer from "./DateContainer";
+import colors from "../utils/colors";
 
 const SideBtn = () => {
-  const User = { name: "Ivan" };
-
-  const navigate = useNavigate();
-
   const [show, setShow] = useState(false);
   const [dates, setGetDates] = useState();
+
+  const navigate = useNavigate();
 
   const handleClose = () => {
     setShow(false);
@@ -29,29 +28,37 @@ const SideBtn = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
+  const styles = {
+    btnOpen: { width: 100 },
+    btnOut: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      margin: 20,
+      backgroundColor: colors.BtnColorDark,
+    },
+  };
 
   return (
-    <>
-      <Button variant="light" onClick={handleShow} style={{ width: 100 }}>
+    <div>
+      <Button variant="light" onClick={handleShow} style={styles.btnOpen}>
         Profile
       </Button>
 
       <Offcanvas show={show} onHide={handleClose}>
         <Offcanvas.Header closeButton>
-          <Offcanvas.Title>{User.name}</Offcanvas.Title>
+          <Offcanvas.Title>Welcome</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
+          <p className="m-1 h5">Your`s date:</p>
           {dates &&
             dates.map((data) => <DateContainer key={data.id} date={data} />)}
-          <Button
-            style={{ position: "absolute", bottom: 0, left: 0, margin: 20 }}
-            onClick={handleOut}
-          >
+          <Button style={styles.btnOut} onClick={handleOut}>
             Sign out
           </Button>
         </Offcanvas.Body>
       </Offcanvas>
-    </>
+    </div>
   );
 };
 
