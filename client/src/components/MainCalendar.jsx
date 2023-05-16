@@ -81,7 +81,7 @@ const MainCalendar = (props) => {
         startAccessor="start"
         endAccessor="end"
         selectable="true"
-        style={{ height: 500, zIndex: 2 }}
+        style={{ height: 500, maxWidth: 580 }}
         eventPropGetter={eventStyleGetter}
       />
     </div>

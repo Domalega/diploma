@@ -17,7 +17,13 @@ const Footer = () => {
           <img
             src="%PUBLIC_URL%/../logo.png"
             alt="Logo"
-            style={{ width: "40px", height: "40px" }}
+            style={{
+              width: "40px",
+              height: "40px",
+              aspectRatio: "4/3",
+              objectFit: "contain",
+              mixBlendMode: "color-burn",
+            }}
           />
         </div>
       </div>

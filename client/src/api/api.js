@@ -55,15 +55,16 @@ async function getAllDates(token) {
   return response;
 }
 
-async function deleteDate(token) {
+async function deleteDate(token, date) {
   const response = await fetch(`${BASE_URL}/api/userDate/delete`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ date }),
   });
   return response;
 }
 
-export { login, register, check, createDate, getAllDates };
+export { login, register, check, createDate, getAllDates, deleteDate };

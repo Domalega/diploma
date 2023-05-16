@@ -3,8 +3,14 @@ import { Form, FormControl, Button } from "react-bootstrap";
 import Modal from "react-modal";
 import colors from "../utils/colors";
 import { createDate } from "../api/api";
+import { FaTimes } from "react-icons/fa";
 
 const ModalWindow = (props) => {
+  const [date, setDate] = useState("");
+  const [comment, setComment] = useState("");
+  const [isHover, setIsHover] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
   const styles = {
     content: {
       top: "50%",
@@ -25,17 +31,14 @@ const ModalWindow = (props) => {
     closeButton: {
       color: colors.TextColorDark,
       gridArea: "1 / 5 / 2 / 6",
+      justifySelf: "end",
+      cursor: "pointer",
+      transform: isHover ? "scale(1.2)" : "scale(1)",
     },
     form: {
       gridArea: "2 / 1 / 6 / 6",
     },
   };
-
-  function closeModal() {
-    props.setIsOpen(false);
-  }
-
-  const [isHovered, setIsHovered] = useState(false);
 
   const btnStyleSubmit = {
     background: isHovered ? colors.Success : colors.BtnColorDark,
@@ -43,18 +46,23 @@ const ModalWindow = (props) => {
     width: 200,
   };
 
-  const [date, setDate] = useState("");
-  const [comment, setComment] = useState("");
+  const handleMouseEnter = () => {
+    setIsHover(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHover(false);
+  };
 
   async function handleSubmitDate(date, comment) {
     try {
       const token = localStorage.getItem("token");
       const response = await createDate(date, comment, token);
-      if (response.ok) {
+      const data = await response.json();
+      if (response.ok && data.message === "ok") {
         closeModal();
       } else {
-        const data = await response.json();
-        alert(data.message);
+        alert("Date is already created");
       }
     } catch (error) {
       alert(error);
@@ -62,9 +70,12 @@ const ModalWindow = (props) => {
   }
 
   const handleSubmit = (e) => {
-    e.preventDefault();
     handleSubmitDate(date, comment);
   };
+
+  function closeModal() {
+    props.setIsOpen(false);
+  }
 
   return (
     <div>
@@ -74,9 +85,12 @@ const ModalWindow = (props) => {
         style={styles}
         contentLabel="Send data"
       >
-        <button className="btn" onClick={closeModal} style={styles.closeButton}>
-          close
-        </button>
+        <FaTimes
+          onClick={() => closeModal()}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          style={styles.closeButton}
+        />
         <div style={styles.form}>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="p-2">

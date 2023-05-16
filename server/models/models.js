@@ -34,7 +34,6 @@ const UserDate = sequelize.define("userDate", {
 
   date: {
     type: DataTypes.DATEONLY,
-    unique: true,
     allowNull: false,
   },
 

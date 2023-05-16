@@ -10,9 +10,12 @@ class CUserDateController {
       const tokenSplitted = token.split(" ")[1];
       const decode = jwt.verify(tokenSplitted, process.env.SECRET_KEY);
       const userId = decode.id;
+      const dateWasCreated = await UserDate.findOne({ where: { date } });
+      if (dateWasCreated)
+        return res.json({ message: "date was already created" });
 
       const type = await UserDate.create({ date, comment, userId });
-      return res.json({ created: "ok" });
+      return res.json({ message: "ok" });
     } catch (error) {
       next(ApiError.badRequest(error.message));
     }
