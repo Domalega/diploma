@@ -16,7 +16,6 @@ const Auth = () => {
         const response = await login(email, password);
         const data = await response.json();
         localStorage.setItem("token", data.token);
-        console.log(data.token);
         if (response.ok) {
           setLoggedIn(true);
         } else alert(data.message);

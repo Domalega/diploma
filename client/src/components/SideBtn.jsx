@@ -12,22 +12,23 @@ const SideBtn = () => {
 
   const navigate = useNavigate();
 
-  const handleClose = () => {
-    setShow(false);
-  };
-
   const handleShow = async () => {
-    const token = localStorage.getItem("token");
-    const response = await getAllDates(token);
-    const data = await response.json();
-    setGetDates(data);
-    setShow(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await getAllDates(token);
+      const data = await response.json();
+      setGetDates(data);
+      setShow(true);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleOut = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
+
   const styles = {
     btnOpen: { width: 100 },
     btnOut: {
@@ -45,7 +46,7 @@ const SideBtn = () => {
         Profile
       </Button>
 
-      <Offcanvas show={show} onHide={handleClose}>
+      <Offcanvas show={show} onHide={() => setShow(false)}>
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>Welcome</Offcanvas.Title>
         </Offcanvas.Header>

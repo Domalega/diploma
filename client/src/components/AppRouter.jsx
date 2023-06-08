@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Auth from "../pages/Auth";
 import Calendar from "../pages/Calendar";
@@ -10,22 +10,36 @@ import {
 } from "../utils/const";
 
 async function CheckAuth(token) {
-  const response = await check(token);
-  return response.ok;
+  try {
+    const response = await check(token);
+    return response.ok;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function PrivateRoute(props) {
-  const [component, setComponent] = useState(null);
+  const [auth, setAuth] = useState(null);
 
-  const token = localStorage.getItem("token");
-  CheckAuth(token).then((auth) => {
-    const ComponentToRender = auth
-      ? props.component
-      : () => <Navigate to="/login" replace />;
-    setComponent(<ComponentToRender />);
-  });
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    CheckAuth(token).then((auth) => {
+      setAuth(auth);
+    });
+  }, []);
 
-  return component;
+  if (auth === null)
+    return (
+      <div class="d-flex justify-content-center align-items-center">
+        <p>Loading...</p>
+      </div>
+    );
+
+  const ComponentToRender = auth
+    ? props.component
+    : () => <Navigate to={LOGIN_ROUTE} replace />;
+
+  return <ComponentToRender />;
 }
 
 const AppRouter = () => {
@@ -37,7 +51,7 @@ const AppRouter = () => {
         path={CALENDAR_ROUTE}
         element={<PrivateRoute component={Calendar} />}
       />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to={LOGIN_ROUTE} replace />} />
     </Routes>
   );
 };

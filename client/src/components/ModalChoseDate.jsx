@@ -8,8 +8,8 @@ import { FaTimes } from "react-icons/fa";
 const ModalWindow = (props) => {
   const [date, setDate] = useState("");
   const [comment, setComment] = useState("");
-  const [isHover, setIsHover] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  const [isHoverBtnClose, setIsHoverBtnClose] = useState(false);
+  const [isHoverBtnSubmit, setIsHoverBtnSubmit] = useState(false);
 
   const styles = {
     content: {
@@ -33,25 +33,16 @@ const ModalWindow = (props) => {
       gridArea: "1 / 5 / 2 / 6",
       justifySelf: "end",
       cursor: "pointer",
-      transform: isHover ? "scale(1.2)" : "scale(1)",
+      transform: isHoverBtnClose ? "scale(1.2)" : "scale(1)",
     },
     form: {
       gridArea: "2 / 1 / 6 / 6",
     },
-  };
-
-  const btnStyleSubmit = {
-    background: isHovered ? colors.Success : colors.BtnColorDark,
-    color: colors.TextColorDark,
-    width: 200,
-  };
-
-  const handleMouseEnter = () => {
-    setIsHover(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHover(false);
+    btnStyleSubmit: {
+      background: isHoverBtnSubmit ? colors.Success : colors.BtnColorDark,
+      color: colors.TextColorDark,
+      width: 200,
+    },
   };
 
   async function handleSubmitDate(date, comment) {
@@ -60,7 +51,8 @@ const ModalWindow = (props) => {
       const response = await createDate(date, comment, token);
       const data = await response.json();
       if (response.ok && data.message === "ok") {
-        closeModal();
+        props.setIsOpen(false);
+        window.location.reload();
       } else {
         alert("Date is already created");
       }
@@ -69,30 +61,22 @@ const ModalWindow = (props) => {
     }
   }
 
-  const handleSubmit = (e) => {
-    handleSubmitDate(date, comment);
-  };
-
-  function closeModal() {
-    props.setIsOpen(false);
-  }
-
   return (
     <div>
       <Modal
         isOpen={props.modalIsOpen}
-        onRequestClose={closeModal}
+        onRequestClose={() => props.setIsOpen(false)}
         style={styles}
         contentLabel="Send data"
       >
         <FaTimes
-          onClick={() => closeModal()}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
+          onClick={() => props.setIsOpen(false)}
+          onMouseEnter={() => setIsHoverBtnClose(true)}
+          onMouseLeave={() => setIsHoverBtnClose(false)}
           style={styles.closeButton}
         />
         <div style={styles.form}>
-          <Form onSubmit={handleSubmit}>
+          <Form onSubmit={() => handleSubmitDate(date, comment)}>
             <Form.Group className="p-2">
               <Form.Label>Date</Form.Label>
               <FormControl
@@ -115,9 +99,9 @@ const ModalWindow = (props) => {
 
             <Button
               className="m-2 mt-4"
-              style={btnStyleSubmit}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              style={styles.btnStyleSubmit}
+              onMouseEnter={() => setIsHoverBtnSubmit(true)}
+              onMouseLeave={() => setIsHoverBtnSubmit(false)}
               type="submit"
             >
               Submit

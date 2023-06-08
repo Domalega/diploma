@@ -10,7 +10,9 @@ class CUserDateController {
       const tokenSplitted = token.split(" ")[1];
       const decode = jwt.verify(tokenSplitted, process.env.SECRET_KEY);
       const userId = decode.id;
-      const dateWasCreated = await UserDate.findOne({ where: { date } });
+      const dateWasCreated = await UserDate.findOne({
+        where: { userId, date },
+      });
       if (dateWasCreated)
         return res.json({ message: "date was already created" });
 

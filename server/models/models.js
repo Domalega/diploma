@@ -48,7 +48,7 @@ const UserDate = sequelize.define("userDate", {
   },
 });
 
-User.hasOne(UserDate);
+User.hasMany(UserDate);
 UserDate.belongsTo(User);
 
 module.exports = {

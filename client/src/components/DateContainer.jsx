@@ -3,20 +3,6 @@ import { FaTimes } from "react-icons/fa";
 import colors from "../utils/colors.js";
 import { deleteDate } from "../api/api";
 
-async function Delete({ date }) {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await deleteDate(token, date);
-    console.log(response);
-    if (response.ok) {
-      window.location.reload();
-      console.log("deleted");
-    }
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 const DateContainer = ({ date, onDelete }) => {
   const [isHover, setIsHover] = useState(false);
 
@@ -40,13 +26,19 @@ const DateContainer = ({ date, onDelete }) => {
     },
   };
 
-  const handleMouseEnter = () => {
-    setIsHover(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHover(false);
-  };
+  async function Delete({ date }) {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await deleteDate(token, date);
+      console.log(response);
+      if (response.ok) {
+        window.location.reload();
+        console.log("deleted");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   return (
     <div style={styles.containerStyle}>
@@ -54,8 +46,8 @@ const DateContainer = ({ date, onDelete }) => {
         <h3 style={styles.headingStyle}>{date.date}</h3>
         <FaTimes
           onClick={() => Delete(date)}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
+          onMouseEnter={() => setIsHover(true)}
+          onMouseLeave={() => setIsHover(false)}
           style={styles.btnOut}
         />
       </div>

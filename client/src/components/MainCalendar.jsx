@@ -49,16 +49,66 @@ const MainCalendar = (props) => {
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
+    function checkPermission() {
+      let granted = false;
+      if (Notification.permission === "granted") {
+        granted = true;
+      } else if (Notification.permission !== "denied") {
+        let permission = Notification.requestPermission();
+        granted = permission === "granted" ? true : false;
+      }
+      return granted;
+    }
+
+    function ShowNotification(comment) {
+      try {
+        var notification = new Notification("Today", {
+          body: `${comment}`,
+          icon: "%PUBLIC_URL%/../logo.png",
+        });
+        notification.onclick = function () {
+          window.focus();
+          this.close();
+        };
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    function ShowError() {
+      alert("You block notification!");
+    }
+
     async function getData() {
-      const token = localStorage.getItem("token");
-      const response = await getAllDates(token);
-      const data = await response.json();
-      const tempEvents = data.map((item) => ({
-        start: moment(item.date).toDate(),
-        end: moment(item.date).toDate(),
-        title: item.comment,
-      }));
-      setEvents(tempEvents);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await getAllDates(token);
+        const data = await response.json();
+
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
+        const formattedDate = `${year}-${month}-${day}`;
+
+        data.forEach((item) => {
+          console.log(item);
+          if (item.date === formattedDate) {
+            const granted = checkPermission();
+            granted ? ShowNotification(item.comment) : ShowError();
+          }
+        });
+
+        const tempEvents = data.map((item) => ({
+          start: moment(item.date).toDate(),
+          end: moment(item.date).toDate(),
+          title: item.comment,
+        }));
+        setEvents(tempEvents);
+      } catch (error) {
+        alert("Can`t get you`r dates");
+        console.log(error);
+      }
     }
     getData();
   }, []);
