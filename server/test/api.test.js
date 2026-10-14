@@ -199,6 +199,9 @@ test("duplicate dates and missing notes have distinct HTTP statuses", async (t) 
 });
 
 test("unknown routes and malformed JSON return JSON errors", async () => {
+  const health = await request("/health");
+  assert.equal(health.status, 200);
+  assert.deepEqual(health.data, { status: "ok" });
   assert.equal((await request("/missing")).status, 404);
   const result = await fetch(`${baseUrl}/user/login`, {
     method: "POST",

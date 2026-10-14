@@ -43,3 +43,13 @@ Requires **Node.js 22+** and npm. Run all commands from the project root.
 4. Open [http://localhost:3000](http://localhost:3000). The API runs on port `5000`.
 
 For a different API address, copy `client/.env.example` to `client/.env`, update `REACT_APP_API_URL`, and restart the frontend. To use PostgreSQL, set `DB_DIALECT=postgres` and provide the connection settings listed in `server/.env.example`.
+
+### Deploy from `redesign`
+
+The hosted setup uses GitHub Pages for the frontend, Render for the API, and Neon PostgreSQL for storage.
+
+1. Create a Neon database and set its connection URL as `DATABASE_URL` in Render.
+2. Deploy the API using `render.yaml` with a random `SECRET_KEY`. Use the free plan; PostgreSQL connections use verified TLS.
+3. Enable GitHub Pages with GitHub Actions and set the repository variable `REACT_APP_API_URL` to the API's HTTPS address ending in `/api`.
+
+Successful checks on `redesign` publish the frontend. Pages uses hash routes such as `/diploma/#/calendar`; SQLite remains available for local development.

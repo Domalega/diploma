@@ -2,10 +2,16 @@ name: Checks
 
 on:
   push:
+    branches: [redesign]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   verify:
@@ -23,4 +29,38 @@ jobs:
       - run: npm run setup
       - run: npm test
       - run: npm run lint
-      - run: npm run build
+      - name: Validate deployment configuration
+        if: vars.REACT_APP_API_URL != ''
+        env:
+          API_URL: ${{ vars.REACT_APP_API_URL }}
+        run: |
+          case "$API_URL" in
+            https://*/api) ;;
+            *) echo "REACT_APP_API_URL must be an HTTPS URL ending in /api."; exit 1 ;;
+          esac
+      - name: Build frontend
+        run: npm run build
+        env:
+          CI: "true"
+          PUBLIC_URL: /diploma
+          REACT_APP_ROUTER: hash
+          REACT_APP_API_URL: ${{ vars.REACT_APP_API_URL || 'http://localhost:5000/api' }}
+      - uses: actions/upload-pages-artifact@v4
+        if: github.ref == 'refs/heads/redesign' && github.event_name != 'pull_request' && vars.REACT_APP_API_URL != ''
+        with:
+          path: client/build
+
+  deploy-pages:
+    if: github.ref == 'refs/heads/redesign' && github.event_name != 'pull_request' && vars.REACT_APP_API_URL != ''
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

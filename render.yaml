@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: diploma-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    repo: https://github.com/Domalega/diploma
+    branch: redesign
+    rootDir: server
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: DB_DIALECT
+        value: postgres
+      - key: DB_SSL
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CLIENT_ORIGIN
+        value: https://domalega.github.io
