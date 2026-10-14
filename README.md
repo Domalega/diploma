@@ -2,6 +2,8 @@
 
 A personal calendar with user accounts, notes by date, and browser notifications for today's notes while the calendar is open.
 
+[Live demo](https://domalega.github.io/diploma/) · [API health](https://diploma-api-zozr.onrender.com/api/health)
+
 ## Background
 
 Originally created as a graduation thesis project. It is now being revisited to improve the code structure and make it easier to maintain.
