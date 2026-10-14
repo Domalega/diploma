@@ -38,29 +38,29 @@ export default function useDates() {
     return () => controller.abort();
   }, [reload]);
 
-  async function create(date, comment) {
+  async function create(date, comment, time) {
     try {
-      await datesApi.createDate(date, comment);
+      await datesApi.createDate(date, comment, time);
       await reload();
     } catch (error) {
       if (error.status === 401) handleError(error);
       throw error;
     }
   }
-  async function remove(date) {
+  async function remove(id) {
     try {
-      await datesApi.deleteDate(date);
-      setDates((items) => items.filter((item) => item.date !== date));
+      await datesApi.deleteDate(id);
+      setDates((items) => items.filter((item) => item.id !== id));
       setError("");
     } catch (error) {
       if (error.status === 401) handleError(error);
       throw error;
     }
   }
-  async function update(date, comment) {
+  async function update(id, changes) {
     try {
-      await datesApi.updateDate(date, comment);
-      setDates((items) => items.map((item) => (item.date === date ? { ...item, comment } : item)));
+      await datesApi.updateDate(id, changes);
+      setDates((items) => items.map((item) => (item.id === id ? { ...item, ...changes } : item)));
       setError("");
     } catch (error) {
       if (error.status === 401) handleError(error);

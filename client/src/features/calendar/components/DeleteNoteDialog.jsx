@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Alert, Button, Modal } from "react-bootstrap";
 import { formatDay } from "../utils/calendarDates";
-export default function DeleteNoteDialog({ date, onDelete, onDeleted, onClose }) {
+export default function DeleteNoteDialog({ note, onDelete, onDeleted, onClose }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   async function remove() {
@@ -9,7 +9,7 @@ export default function DeleteNoteDialog({ date, onDelete, onDeleted, onClose })
     setPending(true);
     setError("");
     try {
-      await onDelete(date);
+      await onDelete(note.id);
       onDeleted();
     } catch (error) {
       setError(error.message);
@@ -30,7 +30,11 @@ export default function DeleteNoteDialog({ date, onDelete, onDeleted, onClose })
         <Modal.Title id="delete-title">Delete this note?</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <p id="delete-description">The note for {formatDay(date)} will be permanently deleted.</p>
+        <p id="delete-description">
+          Only this note for {formatDay(note.date)}
+          {note.time ? " at " + note.time : ""} will be permanently deleted.
+        </p>
+        <p className="delete-note-preview">{note.comment || "Untitled note"}</p>
         {error && (
           <Alert variant="danger" role="alert">
             {error}

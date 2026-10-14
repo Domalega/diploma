@@ -42,7 +42,10 @@ export default function ProfileSidebar({ notifications = { supported: false } })
             <h2>
               <FiBell aria-hidden="true" /> Notifications
             </h2>
-            <p>Reminders for today's note appear while this calendar is open.</p>
+            <p>
+              Timed notes remind you when their time arrives. All-day notes remind you when you open
+              the calendar. Keep the calendar open to receive reminders.
+            </p>
             {!supported ? (
               <p>Notifications are unavailable in this browser.</p>
             ) : permission === "granted" ? (
@@ -52,7 +55,7 @@ export default function ProfileSidebar({ notifications = { supported: false } })
                   checked={enabled}
                   onChange={(event) => setEnabled(event.target.checked)}
                 />
-                Remind me about today's note
+                Remind me about today's notes
               </label>
             ) : permission === "denied" ? (
               <p>

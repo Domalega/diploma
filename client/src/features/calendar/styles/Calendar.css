@@ -278,7 +278,7 @@
 }
 .planner .day-cell {
   width: 100%;
-  height: clamp(80px, calc((100svh - 350px) / 6), 116px);
+  height: clamp(126px, calc((100svh - 350px) / 6), 156px);
   border: 2px solid transparent;
   padding: 12px 9px;
   display: flex;
@@ -351,6 +351,79 @@
   border-radius: 50%;
   background: var(--accent);
   flex-shrink: 0;
+}
+.day-note time {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.day-note-more {
+  font-size: 10px;
+  color: var(--muted);
+}
+.day-note-count {
+  display: none;
+}
+.day-notes-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+.day-notes-heading h3 {
+  font-size: 13px;
+  margin: 0;
+  color: var(--muted);
+}
+.day-notes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.day-notes .note-paper {
+  margin: 0 0 14px;
+  padding: 16px;
+}
+.note-paper.is-highlighted {
+  border-color: var(--accent);
+}
+.note-paper-time {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.note-paper .detail-actions {
+  margin-top: 16px;
+}
+.note-time-control {
+  display: flex;
+  gap: 10px;
+}
+.note-time-control input {
+  min-width: 0;
+}
+.note-time-control button {
+  flex-shrink: 0;
+}
+.delete-note-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+.agenda-time {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 .keyboard-help,
 .calendar-empty-hint {
@@ -889,11 +962,23 @@
     display: none;
   }
   .day-note {
-    background: transparent;
-    padding: 0 7px;
+    display: none;
   }
   .day-note > span:last-child {
     display: none;
+  }
+  .day-note time {
+    display: none;
+  }
+  .day-note-more {
+    display: none;
+  }
+  .day-note-count {
+    display: block;
+    width: 100%;
+    color: var(--accent);
+    font-size: 9px;
+    line-height: 1.4;
   }
   .note-dot {
     width: 6px;

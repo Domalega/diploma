@@ -63,3 +63,25 @@ test("notification preferences survive remounting and browser permission is requ
   expect(settings.permission).toBe("granted");
   expect(settings.enabled).toBe(true);
 });
+
+test("several timed notes wait for their local time and each reminds once", () => {
+  jest.setSystemTime(new Date(2026, 9, 14, 9, 29, 0));
+  const notes = [
+    { id: 11, date: todayKey(), time: null, comment: "All day" },
+    { id: 12, date: todayKey(), time: "09:30", comment: "Morning call" },
+    { id: 13, date: todayKey(), time: "09:30", comment: "Another call" },
+    { id: 14, date: todayKey(), time: "16:00", comment: "Afternoon" },
+  ];
+  render(<Reminders notes={notes} />);
+  expect(Notification).toHaveBeenCalledTimes(1);
+  act(() => jest.advanceTimersByTime(60000));
+  expect(Notification).toHaveBeenCalledTimes(3);
+  expect(Notification.mock.calls[1][0]).toBe("09:30 — A note for today");
+  act(() => window.dispatchEvent(new Event("focus")));
+  expect(Notification).toHaveBeenCalledTimes(3);
+  act(() => {
+    jest.setSystemTime(new Date(2026, 9, 14, 16, 0));
+    window.dispatchEvent(new Event("focus"));
+  });
+  expect(Notification).toHaveBeenCalledTimes(4);
+});

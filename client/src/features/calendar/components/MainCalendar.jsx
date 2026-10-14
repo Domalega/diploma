@@ -7,6 +7,7 @@ import {
   parseDate,
   todayKey,
 } from "../utils/calendarDates";
+import { compareNotes } from "../utils/noteTimes";
 const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 export default function MainCalendar({
   month,
@@ -17,7 +18,11 @@ export default function MainCalendar({
   today = todayKey(),
 }) {
   const days = monthDays(month);
-  const notes = new Map(dates.map((item) => [item.date, item]));
+  const notes = new Map();
+  [...dates].sort(compareNotes).forEach((note) => {
+    if (!notes.has(note.date)) notes.set(note.date, []);
+    notes.get(note.date).push(note);
+  });
   const [focusDate, setFocusDate] = useState(selectedDate);
   const focusAfterRender = useRef(false);
   const grid = useRef(null);
@@ -73,7 +78,7 @@ export default function MainCalendar({
           {Array.from({ length: days.length / 7 }, (_, row) => (
             <tr key={row}>
               {days.slice(row * 7, row * 7 + 7).map((value) => {
-                const note = notes.get(value),
+                const dayNotes = notes.get(value) || [],
                   selected = value === selectedDate,
                   isToday = value === today;
                 return (
@@ -91,7 +96,18 @@ export default function MainCalendar({
                       aria-label={
                         formatDay(value) +
                         (isToday ? ", Today" : "") +
-                        (note ? ", Note: " + (note.comment || "Untitled note") : "")
+                        (dayNotes.length
+                          ? (dayNotes.length === 1
+                              ? ", Note: "
+                              : ", " + dayNotes.length + " notes: ") +
+                            dayNotes
+                              .map(
+                                (note) =>
+                                  (note.time ? note.time + " " : "") +
+                                  (note.comment || "Untitled note"),
+                              )
+                              .join("; ")
+                          : "")
                       }
                       aria-pressed={selected}
                       aria-current={isToday ? "date" : undefined}
@@ -101,10 +117,21 @@ export default function MainCalendar({
                     >
                       <span className="day-number">{parseDate(value).getDate()}</span>
                       {isToday && <span className="today-label">Today</span>}
-                      {note && (
-                        <span className="day-note">
+                      {dayNotes.slice(0, 2).map((note) => (
+                        <span className="day-note" key={note.id}>
                           <span className="note-dot" aria-hidden="true" />
+                          {note.time && (
+                            <time dateTime={note.date + "T" + note.time}>{note.time}</time>
+                          )}
                           <span>{note.comment || "Untitled note"}</span>
+                        </span>
+                      ))}
+                      {dayNotes.length > 2 && (
+                        <span className="day-note-more">+{dayNotes.length - 2} more</span>
+                      )}
+                      {!!dayNotes.length && (
+                        <span className="day-note-count" aria-hidden="true">
+                          {dayNotes.length} {dayNotes.length === 1 ? "note" : "notes"}
                         </span>
                       )}
                     </button>

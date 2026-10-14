@@ -9,6 +9,7 @@ export default function NoteEditor({
   onClose,
 }) {
   const [date, setDate] = useState(initialDate);
+  const [time, setTime] = useState(note?.time || "");
   const [comment, setComment] = useState(note?.comment || "");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -18,7 +19,9 @@ export default function NoteEditor({
     setPending(true);
     setError("");
     try {
-      await (note ? onUpdate(date, comment.trim()) : onCreate(date, comment.trim()));
+      await (note
+        ? onUpdate(note.id, { date, comment: comment.trim(), time: time || null })
+        : onCreate(date, comment.trim(), time || null));
       onSaved(date);
     } catch (error) {
       setError(error.message);
@@ -52,9 +55,39 @@ export default function NoteEditor({
               type="date"
               required
               value={date}
-              disabled={!!note || pending}
+              disabled={pending}
+              onInput={(event) => setDate(event.currentTarget.value)}
               onChange={(event) => setDate(event.target.value)}
             />
+          </Form.Group>
+          <Form.Group controlId="note-time" className="mb-4">
+            <Form.Label>
+              Time <span className="detail-muted">(optional)</span>
+            </Form.Label>
+            <div className="note-time-control">
+              <Form.Control
+                type="time"
+                step={60}
+                value={time}
+                disabled={pending}
+                onInput={(event) => setTime(event.currentTarget.value)}
+                onChange={(event) => setTime(event.target.value)}
+                aria-describedby="note-time-help"
+              />
+              {time && (
+                <Button
+                  className="theme-button-outline"
+                  variant="outline-secondary"
+                  disabled={pending}
+                  onClick={() => setTime("")}
+                >
+                  Clear time
+                </Button>
+              )}
+            </div>
+            <Form.Text id="note-time-help">
+              Leave empty for an all-day note. Times use your device's local clock.
+            </Form.Text>
           </Form.Group>
           <Form.Group controlId="note-text">
             <Form.Label>Your note</Form.Label>
@@ -70,7 +103,7 @@ export default function NoteEditor({
               onChange={(event) => setComment(event.target.value)}
             />
             <p className="note-length" id="note-length">
-              {comment.length} / 255 characters · One note per day
+              {comment.length} / 255 characters
             </p>
           </Form.Group>
         </Modal.Body>

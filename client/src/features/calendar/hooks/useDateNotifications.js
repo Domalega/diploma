@@ -7,23 +7,29 @@ export default function useDateNotifications(dates, enabled, permission) {
     function remind() {
       if (Notification.permission !== "granted") return;
       const today = todayKey();
+      const now = new Date();
+      const clock =
+        String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
       notified.current.forEach((key) => {
         if (!key.startsWith(today + ":")) notified.current.delete(key);
       });
       dates
-        .filter((item) => item.date === today)
+        .filter((item) => item.date === today && (!item.time || item.time <= clock))
         .forEach((item) => {
-          const key = today + ":" + item.id;
+          const key = today + ":" + item.id + ":" + (item.time || "all-day");
           if (notified.current.has(key)) return;
           try {
-            const notification = new Notification("A note for today", {
-              body: item.comment || "Open your calendar to see today's note.",
-              icon:
-                process.env.PUBLIC_URL +
-                "/daymark-" +
-                (document.documentElement.dataset.theme === "dark" ? "dark" : "light") +
-                ".svg",
-            });
+            const notification = new Notification(
+              item.time ? item.time + " — A note for today" : "A note for today",
+              {
+                body: item.comment || "Open your calendar to see today's note.",
+                icon:
+                  process.env.PUBLIC_URL +
+                  "/daymark-" +
+                  (document.documentElement.dataset.theme === "dark" ? "dark" : "light") +
+                  ".svg",
+              },
+            );
             notification.onclick = () => {
               window.focus();
               notification.close();

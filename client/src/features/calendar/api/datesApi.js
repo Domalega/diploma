@@ -2,21 +2,21 @@ import { request } from "../../../shared/api/http";
 import { getToken } from "../../../shared/api/tokenStorage";
 
 export const getAllDates = (signal) => request("/userDate/get", { token: getToken(), signal });
-export const createDate = (date, comment) =>
+export const createDate = (date, comment, time = null) =>
   request("/userDate/create", {
     method: "POST",
     token: getToken(),
-    body: { date, comment },
+    body: { date, comment, time },
   });
-export const deleteDate = (date) =>
+export const deleteDate = (id) =>
   request("/userDate/delete", {
     method: "DELETE",
     token: getToken(),
-    body: { date },
+    body: { id },
   });
-export const updateDate = (date, comment) =>
+export const updateDate = (id, changes) =>
   request("/userDate/update", {
     method: "PATCH",
     token: getToken(),
-    body: { date, comment },
+    body: { id, ...changes },
   });

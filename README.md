@@ -1,6 +1,6 @@
 # Daymark
 
-A personal calendar with user accounts, password recovery, editable notes by date, search, a month view and a notes list. Browser notifications can remind you about today's note while the calendar is open.
+A personal calendar with user accounts, password recovery, multiple notes per day, optional local times, search, a month view and a notes list. Each note can be edited, moved to another day or deleted individually. Browser reminders respect note times while the calendar is open.
 
 The theme follows your device by default. Choose System, Light, or Dark on the sign-in page or in calendar Settings; your preference is saved in your browser.
 

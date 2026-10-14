@@ -1,9 +1,18 @@
 import { FiArrowRight, FiSearch, FiCalendar } from "react-icons/fi";
 import { formatDay, formatMonth, moveDays, parseDate } from "../utils/calendarDates";
+import { noteTime } from "../utils/noteTimes";
 
 const shortDate = (date) =>
   parseDate(date).toLocaleDateString("en", { day: "numeric", month: "short" });
-export default function NotesList({ notes, selectedDate, onSelect, query, month, today }) {
+export default function NotesList({
+  notes,
+  selectedDate,
+  selectedNoteId,
+  onSelect,
+  query,
+  month,
+  today,
+}) {
   const groups = new Map();
   notes.forEach((note) => {
     const day = parseDate(note.date);
@@ -40,17 +49,20 @@ export default function NotesList({ notes, selectedDate, onSelect, query, month,
                     type="button"
                     className={
                       "agenda-note" +
-                      (selectedDate === note.date ? " is-selected" : "") +
+                      (selectedDate === note.date && selectedNoteId === note.id
+                        ? " is-selected"
+                        : "") +
                       (note.date === today ? " is-today" : "")
                     }
                     aria-label={
                       formatDay(note.date) +
                       (note.date === today ? ", Today" : "") +
                       ", " +
+                      (note.time ? note.time + ", " : "") +
                       (note.comment || "Untitled note")
                     }
-                    aria-pressed={selectedDate === note.date}
-                    onClick={() => onSelect(note.date)}
+                    aria-pressed={selectedDate === note.date && selectedNoteId === note.id}
+                    onClick={() => onSelect(note.date, note.id)}
                   >
                     <time dateTime={note.date} className="agenda-date">
                       <span>
@@ -60,6 +72,12 @@ export default function NotesList({ notes, selectedDate, onSelect, query, month,
                     </time>
                     <span className="agenda-marker" aria-hidden="true" />
                     <span className="agenda-note-content">
+                      <time
+                        className="agenda-time"
+                        dateTime={note.date + (note.time ? "T" + note.time : "")}
+                      >
+                        {noteTime(note)}
+                      </time>
                       {note.date === today && <span className="agenda-today">Today</span>}
                       <span>{note.comment || "Untitled note"}</span>
                     </span>

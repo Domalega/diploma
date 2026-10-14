@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Alert, Button, Offcanvas } from "react-bootstrap";
-import {
-  FiArrowLeft,
-  FiArrowRight,
-  FiPlus,
-  FiEdit3,
-  FiCalendar,
-  FiList,
-  FiCheck,
-} from "react-icons/fi";
+import { FiArrowLeft, FiArrowRight, FiPlus, FiCalendar, FiList, FiCheck } from "react-icons/fi";
 import NavBar from "../components/NavBar";
 import MainCalendar from "../components/MainCalendar";
 import NoteDetails from "../components/NoteDetails";
@@ -22,10 +14,12 @@ import useToday from "../hooks/useToday";
 import InteractivePhrase from "../../../shared/components/InteractivePhrase";
 import CalendarLoading from "../../../shared/components/CalendarLoading";
 import { formatDay, formatMonth, monthStart, moveMonths, todayKey } from "../utils/calendarDates";
+import { compareNotes } from "../utils/noteTimes";
 import "../styles/Calendar.css";
 
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [month, setMonth] = useState(() => monthStart(todayKey()));
   const [view, setView] = useState("month");
   const [query, setQuery] = useState("");
@@ -45,26 +39,27 @@ export default function CalendarPage() {
   const { dates, loading, error, reload, create, update, remove } = useDates();
   const notifications = useNotificationSettings();
   useDateNotifications(dates, notifications.enabled, notifications.permission);
-  const selectedNote = dates.find((note) => note.date === selectedDate);
+  const selectedNotes = dates.filter((note) => note.date === selectedDate).sort(compareNotes);
   const ready = !loading && !error;
   const search = query.trim().toLocaleLowerCase();
   const filtered = dates
     .filter((note) =>
       search
-        ? [note.comment || "", note.date, formatDay(note.date)].some((text) =>
-            text.toLocaleLowerCase().includes(search),
+        ? [note.comment || "", note.date, note.time || "All day", formatDay(note.date)].some(
+            (text) => text.toLocaleLowerCase().includes(search),
           )
         : note.date.slice(0, 7) === month.slice(0, 7),
     )
-    .sort((a, b) => a.date.localeCompare(b.date));
-  function selectDay(date) {
+    .sort(compareNotes);
+  function selectDay(date, noteId = null) {
     setSelectedDate(date);
+    setSelectedNoteId(noteId);
     setMonth(monthStart(date));
     setMessage("");
     if (window.matchMedia("(max-width: 1000px)").matches) setMobileDay(true);
   }
-  function editSelected() {
-    openDialog(() => setEditor({ date: selectedDate, note: selectedNote }));
+  function addNote() {
+    openDialog(() => setEditor({ date: selectedDate }));
   }
   function openDialog(action) {
     if (mobileDay) {
@@ -74,11 +69,13 @@ export default function CalendarPage() {
   }
   const detailsProps = {
     date: selectedDate,
-    note: selectedNote,
+    notes: selectedNotes,
+    selectedNoteId,
     ready,
-    onEdit: editSelected,
-    onDelete: () => {
-      openDialog(() => setDeleting(selectedDate));
+    onAdd: addNote,
+    onEdit: (note) => openDialog(() => setEditor({ date: note.date, note })),
+    onDelete: (note) => {
+      openDialog(() => setDeleting(note));
     },
   };
   const searching = !!search;
@@ -96,10 +93,10 @@ export default function CalendarPage() {
             ref={newNoteButton}
             className="theme-button new-note-button"
             disabled={!ready}
-            onClick={editSelected}
+            onClick={addNote}
           >
-            {selectedNote ? <FiEdit3 aria-hidden="true" /> : <FiPlus aria-hidden="true" />}
-            {selectedNote ? "Edit note" : "New note"}
+            <FiPlus aria-hidden="true" />
+            New note
           </Button>
         </div>
         <div className="planner-feedback" role="status" aria-live="polite">
@@ -157,6 +154,7 @@ export default function CalendarPage() {
                   onClick={() => {
                     setMonth(monthStart(todayKey()));
                     setSelectedDate(todayKey());
+                    setSelectedNoteId(null);
                     setQuery("");
                   }}
                 >
@@ -191,6 +189,7 @@ export default function CalendarPage() {
               <NotesList
                 notes={filtered}
                 selectedDate={selectedDate}
+                selectedNoteId={selectedNoteId}
                 onSelect={selectDay}
                 query={searching ? query.trim() : ""}
                 month={month}
@@ -249,6 +248,7 @@ export default function CalendarPage() {
           onSaved={(date) => {
             setEditor(null);
             setSelectedDate(date);
+            setSelectedNoteId(editor.note?.id || null);
             setMonth(monthStart(date));
             setMessage("Note saved.");
           }}
@@ -256,11 +256,12 @@ export default function CalendarPage() {
       )}
       {deleting && (
         <DeleteNoteDialog
-          date={deleting}
+          note={deleting}
           onDelete={remove}
           onClose={() => setDeleting(null)}
           onDeleted={() => {
             setDeleting(null);
+            setSelectedNoteId(null);
             setMessage("Note deleted.");
           }}
         />

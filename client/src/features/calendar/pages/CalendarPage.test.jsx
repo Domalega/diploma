@@ -43,14 +43,18 @@ test("creating, editing and confirmed deletion keep the calendar and selected da
   fireEvent.change(screen.getByLabelText("Your note"), { target: { value: note.comment } });
   fireEvent.click(screen.getByRole("button", { name: "Save note" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-  expect(datesApi.createDate).toHaveBeenCalledWith(today, note.comment);
+  expect(datesApi.createDate).toHaveBeenCalledWith(today, note.comment, null);
   expect(panel().getByText(note.comment)).toBeInTheDocument();
   fireEvent.click(panel().getByRole("button", { name: "Edit note" }));
-  expect(screen.getByLabelText("Date")).toBeDisabled();
+  expect(screen.getByLabelText("Date")).toBeEnabled();
   fireEvent.change(screen.getByLabelText("Your note"), { target: { value: "An updated thought" } });
   fireEvent.click(screen.getByRole("button", { name: "Save note" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-  expect(datesApi.updateDate).toHaveBeenCalledWith(today, "An updated thought");
+  expect(datesApi.updateDate).toHaveBeenCalledWith(note.id, {
+    date: today,
+    comment: "An updated thought",
+    time: null,
+  });
   expect(panel().getByText("An updated thought")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /Note: An updated thought/ })).toBeInTheDocument();
   fireEvent.click(panel().getByRole("button", { name: "Delete", exact: true }));
@@ -59,7 +63,7 @@ test("creating, editing and confirmed deletion keep the calendar and selected da
   fireEvent.click(panel().getByRole("button", { name: "Delete", exact: true }));
   fireEvent.click(screen.getByRole("button", { name: "Delete note", exact: true }));
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-  expect(datesApi.deleteDate).toHaveBeenCalledWith(today);
+  expect(datesApi.deleteDate).toHaveBeenCalledWith(note.id);
   expect(panel().getByRole("button", { name: "Add a note" })).toBeInTheDocument();
   expect(screen.queryByText("An updated thought")).not.toBeInTheDocument();
 });
@@ -73,6 +77,58 @@ test("selecting an empty day prefills its date without creating any data", async
   expect(screen.getByLabelText("Date")).toHaveValue(tomorrow);
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   expect(datesApi.createDate).not.toHaveBeenCalled();
+});
+
+test("same-day notes are sorted by time and editing or deleting one preserves its neighbours", async () => {
+  const day = [
+    { id: 10, date: today, time: "16:00", comment: "Afternoon meeting" },
+    { id: 11, date: today, time: null, comment: "All-day reminder" },
+    { id: 12, date: today, time: "09:30", comment: "Morning meeting" },
+  ];
+  datesApi.getAllDates.mockResolvedValue(day);
+  datesApi.updateDate.mockResolvedValue({});
+  datesApi.deleteDate.mockResolvedValue({});
+  mount();
+  await calendarReady();
+  expect(
+    panel()
+      .getAllByRole("article")
+      .map((article) => article.getAttribute("aria-label")),
+  ).toEqual(["All day — All-day reminder", "09:30 — Morning meeting", "16:00 — Afternoon meeting"]);
+  fireEvent.click(screen.getByRole("button", { name: "New note" }));
+  fireEvent.input(screen.getByLabelText(/Time/), { target: { value: "11:45" } });
+  fireEvent.change(screen.getByLabelText("Your note"), { target: { value: "Another note" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save note" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(datesApi.createDate).toHaveBeenCalledWith(today, "Another note", "11:45");
+  const morning = panel().getByRole("article", { name: "09:30 — Morning meeting" });
+  fireEvent.click(within(morning).getByRole("button", { name: "Edit note" }));
+  const tomorrow = moveDays(today, 1);
+  fireEvent.input(screen.getByLabelText("Date"), { target: { value: tomorrow } });
+  fireEvent.input(screen.getByLabelText(/Time/), { target: { value: "10:00" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save note" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(datesApi.updateDate).toHaveBeenCalledWith(12, {
+    date: tomorrow,
+    comment: "Morning meeting",
+    time: "10:00",
+  });
+  expect(panel().getAllByRole("article")).toHaveLength(1);
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(formatDay(today) + ".*2 notes") }));
+  expect(panel().getAllByRole("article")).toHaveLength(2);
+  const afternoon = panel().getByRole("article", { name: "16:00 — Afternoon meeting" });
+  fireEvent.click(within(afternoon).getByRole("button", { name: "Delete", exact: true }));
+  expect(screen.getByRole("dialog")).toHaveTextContent("Afternoon meeting");
+  fireEvent.click(screen.getByRole("button", { name: "Delete note", exact: true }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(datesApi.deleteDate).toHaveBeenCalledWith(10);
+  expect(panel().getByText("All-day reminder")).toBeInTheDocument();
+  fireEvent.change(screen.getByRole("searchbox", { name: "Search notes" }), {
+    target: { value: "10:00" },
+  });
+  expect(screen.getByRole("region", { name: "Search results" })).toHaveTextContent(
+    "Morning meeting",
+  );
 });
 test("search spans all dates while the agenda and grid share the same month and selected day", async () => {
   const past = { id: 2, date: moveMonths(monthStart(today), -1), comment: "Old journal" };
