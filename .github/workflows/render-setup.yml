@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  checks: read
 
 concurrency:
   group: render-setup
@@ -25,11 +26,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Create the free Render API and verify its deployment
+      - name: Configure the free Render API and verify its deployment
         run: node scripts/setup-render.mjs
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GOOGLE_MAIL_URL: ${{ secrets.GOOGLE_MAIL_URL }}
+          GOOGLE_MAIL_SECRET: ${{ secrets.GOOGLE_MAIL_SECRET }}
+          GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

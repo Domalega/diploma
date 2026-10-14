@@ -11,3 +11,8 @@ export const register = (email, password) =>
     body: { email, password },
   });
 export const check = (token, signal) => request("/user/auth", { token, signal });
+export const recoveryStatus = () => request("/user/password-recovery");
+export const forgotPassword = (email) =>
+  request("/user/forgot-password", { method: "POST", body: { email } });
+export const resetPassword = (token, password) =>
+  request("/user/reset-password", { method: "POST", body: { token, password } });

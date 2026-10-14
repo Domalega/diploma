@@ -1,4 +1,4 @@
-const { test, before, after } = require("node:test");
+const { test, before, after, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 const { once } = require("node:events");
 
@@ -17,9 +17,13 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = require("../src/app");
 const sequelize = require("../src/config/database");
-const { User, UserDate } = require("../src/models");
+const { User, UserDate, AccountSecurity } = require("../src/models");
 const { generateToken } = require("../src/services/tokenService");
 
+beforeEach((t) => {
+  t.mock.method(AccountSecurity, "findByPk", async () => null);
+  t.mock.method(User, "findByPk", async () => User.findOne());
+});
 let server;
 let baseUrl;
 const token = generateToken({ id: 7, email: "user@example.com" });
@@ -51,20 +55,20 @@ test("registration returns a token object and stores a password hash", async (t)
   const create = t.mock.method(User, "create", async (values) => ({ id: 7, ...values }));
   const result = await request("/user/registration", {
     method: "POST",
-    body: { email: "user@example.com", password: "password" },
+    body: { email: "user@example.com", password: "secure-password" },
   });
   assert.equal(result.status, 200);
   assert.equal(jwt.verify(result.data.token, process.env.SECRET_KEY).id, 7);
   const stored = create.mock.calls[0].arguments[0];
-  assert.notEqual(stored.password, "password");
-  assert.equal(await bcrypt.compare("password", stored.password), true);
+  assert.notEqual(stored.password, "secure-password");
+  assert.equal(await bcrypt.compare("secure-password", stored.password), true);
 });
 
 test("registration rejects duplicates with 409", async (t) => {
   t.mock.method(User, "findOne", async () => ({ id: 7 }));
   const result = await request("/user/registration", {
     method: "POST",
-    body: { email: "user@example.com", password: "password" },
+    body: { email: "user@example.com", password: "secure-password" },
   });
   assert.equal(result.status, 409);
 });
@@ -75,7 +79,7 @@ test("invalid credentials are rejected before database access", async (t) => {
   });
   for (const body of [
     {},
-    { email: "invalid", password: "password" },
+    { email: "invalid", password: "secure-password" },
     { email: "user@example.com", password: "" },
     { email: "user@example.com", password: "я".repeat(37) },
   ]) {

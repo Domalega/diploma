@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const { User } = require("../models");
+const { User, AccountSecurity } = require("../models");
 const ApiError = require("../errors/ApiError");
 const { generateToken } = require("./tokenService");
 
@@ -14,10 +14,24 @@ async function register(email, password) {
 
 async function login(email, password) {
   const user = await User.findOne({ where: { email } });
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  if (!user) throw ApiError.unauthorized("Email or password is incorrect");
+  const security = await AccountSecurity.findByPk(user.id);
+  // Do not grant the new session version to an old password during a reset race.
+  const current = await User.findByPk(user.id, { attributes: ["password"] });
+  if (
+    !current ||
+    current.password !== user.password ||
+    !(await bcrypt.compare(password, user.password))
+  ) {
     throw ApiError.unauthorized("Email or password is incorrect");
   }
-  return { token: generateToken(user) };
+  return {
+    token: generateToken({
+      id: user.id,
+      email: user.email,
+      sessionVersion: security?.sessionVersion || 0,
+    }),
+  };
 }
 
 module.exports = { register, login };

@@ -1,6 +1,6 @@
 # Online Calendar
 
-A personal calendar with user accounts, notes by date, and browser notifications for today's notes while the calendar is open.
+A personal calendar with user accounts, password recovery, notes by date, and browser notifications for today's notes while the calendar is open.
 
 [Live demo](https://domalega.github.io/diploma/) · [API health](https://diploma-api-zozr.onrender.com/api/health)
 
@@ -13,6 +13,7 @@ Originally created as a graduation thesis project. It is now being revisited to 
 - **Frontend:** React 18, React Router, React Bootstrap, React Big Calendar, Moment.js.
 - **Backend:** Node.js, Express, Sequelize, JWT, bcrypt.
 - **Database:** SQLite for local use; PostgreSQL is also supported.
+- **Email:** Google Apps Script for password recovery.
 
 ## Run locally
 
@@ -45,6 +46,8 @@ Requires **Node.js 22+** and npm. Run all commands from the project root.
 4. Open [http://localhost:3000](http://localhost:3000). The API runs on port `5000`.
 
 For a different API address, copy `client/.env.example` to `client/.env`, update `REACT_APP_API_URL`, and restart the frontend. To use PostgreSQL, set `DB_DIALECT=postgres` and provide the connection settings listed in `server/.env.example`.
+
+Local password recovery messages are saved in `server/data/mail/`. Open the link from the generated JSON file to test recovery. Hosted recovery requires the [Google mail setup](integrations/google-mail/README.md); without it, recovery is shown as unavailable.
 
 ### Deploy from `redesign`
 
