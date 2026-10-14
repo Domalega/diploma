@@ -1,0 +1,39 @@
+name: Render setup
+
+on:
+  push:
+    branches: [redesign]
+    paths:
+      - .github/workflows/render-setup.yml
+      - scripts/setup-render.mjs
+      - render.yaml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-setup
+  cancel-in-progress: false
+
+jobs:
+  setup:
+    if: vars.RENDER_SETUP_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Create the free Render API and verify its deployment
+        run: node scripts/setup-render.mjs
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: render-deployment
+          path: render-deployment.json
+          if-no-files-found: ignore
+          retention-days: 1
