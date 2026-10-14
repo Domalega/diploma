@@ -59,4 +59,4 @@ The hosted setup uses GitHub Pages for the frontend, Render for the API, and Neo
 2. Deploy the API using `render.yaml` with a random `SECRET_KEY`. Use the free plan; PostgreSQL connections use verified TLS.
 3. Enable GitHub Pages with GitHub Actions and set the repository variable `REACT_APP_API_URL` to the API's HTTPS address ending in `/api`.
 
-Successful checks on `redesign` publish the frontend. Pages uses hash routes such as `/diploma/#/calendar`; SQLite remains available for local development.
+Successful checks on `redesign` publish the frontend. For Render services connected through a public repository URL, deploy the latest commit manually after checks pass; automatic API deployments require a connected Git provider. Pages uses hash routes such as `/diploma/#/calendar`; SQLite remains available for local development.

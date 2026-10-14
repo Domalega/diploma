@@ -77,6 +77,7 @@ const deployment = {
   url: service.serviceDetails.url,
   branch: service.branch,
   plan: service.serviceDetails.plan,
+  commit: GITHUB_SHA,
 };
 await writeFile("render-deployment.json", JSON.stringify(deployment, null, 2));
 console.log(JSON.stringify(deployment));
@@ -90,29 +91,33 @@ if (GOOGLE_MAIL_URL || GOOGLE_MAIL_SECRET) {
   ) {
     throw new Error("A deployed Google mail URL and 32-byte shared secret are required");
   }
-  if (!GITHUB_SHA || !GITHUB_TOKEN) throw new Error("GitHub verification context is required");
-  let verified = false;
-  for (let attempt = 0; attempt < 120; attempt++) {
-    const response = await fetch(
-      `https://api.github.com/repos/Domalega/diploma/commits/${GITHUB_SHA}/check-runs`,
-      {
-        headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json" },
-        signal: AbortSignal.timeout(30_000),
-      },
-    );
-    if (!response.ok) throw new Error(`GitHub checks: HTTP ${response.status}`);
-    const checks = await response.json();
-    const check = checks.check_runs.find(
-      (item) => item.name === "verify" && item.app?.slug === "github-actions",
-    );
-    if (check?.status === "completed") {
-      if (check.conclusion !== "success") throw new Error("Project verification did not pass");
-      verified = true;
-      break;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+}
+
+// Public repository URL services require an explicit deploy, even with checksPass configured.
+if (!GITHUB_SHA || !GITHUB_TOKEN) throw new Error("GitHub verification context is required");
+let verified = false;
+for (let attempt = 0; attempt < 120; attempt++) {
+  const response = await fetch(
+    `https://api.github.com/repos/Domalega/diploma/commits/${GITHUB_SHA}/check-runs`,
+    {
+      headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json" },
+      signal: AbortSignal.timeout(30_000),
+    },
+  );
+  if (!response.ok) throw new Error(`GitHub checks: HTTP ${response.status}`);
+  const checks = await response.json();
+  const check = checks.check_runs.find(
+    (item) => item.name === "verify" && item.app?.slug === "github-actions",
+  );
+  if (check?.status === "completed") {
+    if (check.conclusion !== "success") throw new Error("Project verification did not pass");
+    verified = true;
+    break;
   }
-  if (!verified) throw new Error("Project verification timed out");
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+}
+if (!verified) throw new Error("Project verification timed out");
+if (GOOGLE_MAIL_URL || GOOGLE_MAIL_SECRET) {
   for (const [key, value] of Object.entries({
     GOOGLE_MAIL_URL,
     GOOGLE_MAIL_SECRET,
@@ -121,15 +126,16 @@ if (GOOGLE_MAIL_URL || GOOGLE_MAIL_SECRET) {
   })) {
     await request(`/services/${service.id}/env-vars/${key}`, { value }, "PUT");
   }
-  await request(`/services/${service.id}/deploys`, { commitId: GITHUB_SHA });
-  console.log("Google mail configured; deployment requested for the verified commit");
 }
+
+await request(`/services/${service.id}/deploys`, { commitId: GITHUB_SHA });
+console.log("Deployment requested for the verified commit");
 
 for (let attempt = 0; attempt < 60; attempt++) {
   const deploys = await request(`/services/${service.id}/deploys?limit=1`);
   const status = deploys[0]?.deploy.status;
   console.log(`Render deployment: ${status || "pending"}`);
-  if (status === "live" && (!GOOGLE_MAIL_URL || deploys[0]?.deploy.commit?.id === GITHUB_SHA)) {
+  if (status === "live" && deploys[0]?.deploy.commit?.id === GITHUB_SHA) {
     const health = await fetch(`${deployment.url}/api/health`, {
       signal: AbortSignal.timeout(60_000),
     });
