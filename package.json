@@ -1,1 +1,23 @@
-{}
+{
+  "name": "diploma-calendar",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal calendar with React, Express and SQLite or PostgreSQL",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "npm ci && npm ci --prefix server && npm ci --prefix client",
+    "dev:client": "npm start --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "start": "npm start --prefix server",
+    "build": "npm run build --prefix client",
+    "test": "npm test --prefix server && npm test --prefix client -- --watchAll=false --runInBand",
+    "lint": "npm run lint --prefix client && npm run format:check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

@@ -2,9 +2,16 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "private": true,
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "start:dev": "nodemon index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "start:dev": "npm run dev",
+    "test": "node --test"
   },
   "author": "",
   "license": "ISC",
@@ -17,7 +24,8 @@
     "jsonwebtoken": "^9.0.0",
     "pg": "^8.8.0",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.28.0"
+    "sequelize": "^6.28.0",
+    "sqlite3": "5.1.7"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"

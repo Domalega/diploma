@@ -1,0 +1,142 @@
+const { test, before, after } = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { once } = require("node:events");
+const { Sequelize, QueryTypes } = require("sequelize");
+const bcrypt = require("bcrypt");
+
+// A fresh temporary file exercises real SQL without touching the local calendar.
+const directory = fs.mkdtempSync(path.join(os.tmpdir(), "diploma-sqlite-test-"));
+const storage = path.join(directory, "test.sqlite");
+Object.assign(process.env, {
+  DB_DIALECT: "sqlite",
+  SQLITE_STORAGE: storage,
+  SECRET_KEY: "sqlite-test-only-secret",
+  PORT: "5000",
+});
+const app = require("../src/app");
+const sequelize = require("../src/config/database");
+const { User } = require("../src/models");
+let server;
+let baseUrl;
+
+before(async () => {
+  await sequelize.authenticate();
+  await sequelize.sync();
+  server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  baseUrl = `http://127.0.0.1:${server.address().port}/api`;
+});
+after(async () => {
+  if (server) await new Promise((resolve) => server.close(resolve));
+  await sequelize.close();
+  fs.rmSync(directory, { recursive: true, force: true });
+});
+
+async function request(route, { method = "GET", token, body } = {}) {
+  const response = await fetch(`${baseUrl}${route}`, {
+    method,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  return { status: response.status, data: await response.json() };
+}
+
+test("real SQLite supports registration, login, persistence and private notes", async () => {
+  const credentials = { email: "alice@example.com", password: "test-password" };
+  const registered = await request("/user/registration", { method: "POST", body: credentials });
+  assert.equal(registered.status, 200);
+  assert.ok(registered.data.token);
+  const duplicate = await request("/user/registration", { method: "POST", body: credentials });
+  assert.equal(duplicate.status, 409);
+
+  const storedUser = await User.findOne({ where: { email: credentials.email } });
+  assert.notEqual(storedUser.password, credentials.password);
+  assert.equal(await bcrypt.compare(credentials.password, storedUser.password), true);
+
+  const loggedIn = await request("/user/login", { method: "POST", body: credentials });
+  assert.equal(loggedIn.status, 200);
+  const alice = loggedIn.data.token;
+  assert.equal((await request("/user/auth", { token: alice })).status, 200);
+  assert.equal(
+    (
+      await request("/user/login", {
+        method: "POST",
+        body: { ...credentials, password: "wrong" },
+      })
+    ).status,
+    401,
+  );
+
+  const bobRegistration = await request("/user/registration", {
+    method: "POST",
+    body: { email: "bob@example.com", password: "other-password" },
+  });
+  assert.equal(bobRegistration.status, 200);
+  const bob = bobRegistration.data.token;
+  const note = { date: "2026-10-14", comment: "Проверка сохранения" };
+  assert.equal(
+    (await request("/userDate/create", { method: "POST", token: alice, body: note })).status,
+    200,
+  );
+  assert.equal(
+    (await request("/userDate/create", { method: "POST", token: alice, body: note })).status,
+    409,
+  );
+  assert.equal((await request("/userDate/get")).status, 401);
+
+  const aliceNotes = await request("/userDate/get", { token: alice });
+  assert.equal(aliceNotes.status, 200);
+  assert.equal(aliceNotes.data.length, 1);
+  assert.equal(aliceNotes.data[0].date, note.date);
+  assert.equal(aliceNotes.data[0].comment, note.comment);
+  assert.deepEqual((await request("/userDate/get", { token: bob })).data, []);
+  assert.equal(
+    (
+      await request("/userDate/delete", {
+        method: "DELETE",
+        token: bob,
+        body: { date: note.date },
+      })
+    ).status,
+    404,
+  );
+
+  // A separate connection reads the same disk file, proving writes were persisted.
+  const reader = new Sequelize({ dialect: "sqlite", storage, logging: false });
+  try {
+    const persisted = await reader.query('SELECT date, comment FROM "userDates"', {
+      type: QueryTypes.SELECT,
+    });
+    assert.deepEqual(persisted, [{ date: note.date, comment: note.comment }]);
+  } finally {
+    await reader.close();
+  }
+
+  assert.equal(
+    (
+      await request("/userDate/delete", {
+        method: "DELETE",
+        token: alice,
+        body: { date: note.date },
+      })
+    ).status,
+    200,
+  );
+  assert.deepEqual((await request("/userDate/get", { token: alice })).data, []);
+  assert.equal(
+    (
+      await request("/userDate/create", {
+        method: "POST",
+        token: bob,
+        body: note,
+      })
+    ).status,
+    200,
+  );
+});

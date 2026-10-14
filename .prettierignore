@@ -1,0 +1,15 @@
+node_modules/
+build/
+coverage/
+.artifacts/
+package-lock.json
+client/package-lock.json
+server/package-lock.json
+.env
+.env.*
+!.env.example
+Диплом.*
+local/
+server/data/
+*.sqlite*
+*.db*

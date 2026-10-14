@@ -1,0 +1,45 @@
+# Online Calendar
+
+A personal calendar with user accounts, notes by date, and browser notifications for today's notes while the calendar is open.
+
+## Background
+
+Originally created as a graduation thesis project. It is now being revisited to improve the code structure and make it easier to maintain.
+
+## Tech stack
+
+- **Frontend:** React 18, React Router, React Bootstrap, React Big Calendar, Moment.js.
+- **Backend:** Node.js, Express, Sequelize, JWT, bcrypt.
+- **Database:** SQLite for local use; PostgreSQL is also supported.
+
+## Run locally
+
+Requires **Node.js 22+** and npm. Run all commands from the project root.
+
+1. Install dependencies:
+
+   ```sh
+   npm run setup
+   ```
+
+2. Copy `server/.env.example` to `server/.env`. Replace `SECRET_KEY` with a random secret, which you can generate with:
+
+   ```sh
+   node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+   ```
+
+   SQLite is configured in the example. Its database file is created automatically at `server/data/calendar.sqlite`; no database server is required.
+
+3. Start the API and frontend in separate terminals:
+
+   ```sh
+   npm run dev:server
+   ```
+
+   ```sh
+   npm run dev:client
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000). The API runs on port `5000`.
+
+For a different API address, copy `client/.env.example` to `client/.env`, update `REACT_APP_API_URL`, and restart the frontend. To use PostgreSQL, set `DB_DIALECT=postgres` and provide the connection settings listed in `server/.env.example`.
