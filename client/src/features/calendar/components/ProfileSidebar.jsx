@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Offcanvas } from "react-bootstrap";
-import { FiUser, FiLogOut, FiBell } from "react-icons/fi";
+import { FiSettings, FiLogOut, FiBell, FiSun } from "react-icons/fi";
+import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
 import { clearToken } from "../../../shared/api/tokenStorage";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 export default function ProfileSidebar({ notifications = { supported: false } }) {
@@ -12,13 +13,13 @@ export default function ProfileSidebar({ notifications = { supported: false } })
   return (
     <>
       <Button
-        aria-label="Account"
+        aria-label="Settings"
         variant="outline-secondary"
         className="theme-button-outline account-button"
         onClick={() => setShow(true)}
       >
-        <FiUser aria-hidden="true" />
-        <span>Account</span>
+        <FiSettings aria-hidden="true" />
+        <span>Settings</span>
       </Button>
       <Offcanvas
         show={show}
@@ -28,9 +29,15 @@ export default function ProfileSidebar({ notifications = { supported: false } })
         className="planner-drawer"
       >
         <Offcanvas.Header closeButton>
-          <Offcanvas.Title id="account-title">Your account</Offcanvas.Title>
+          <Offcanvas.Title id="account-title">Settings</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
+          <section className="account-section settings-appearance">
+            <h2>
+              <FiSun aria-hidden="true" /> Appearance
+            </h2>
+            <ThemeSwitcher />
+          </section>
           <section className="account-section">
             <h2>
               <FiBell aria-hidden="true" /> Notifications

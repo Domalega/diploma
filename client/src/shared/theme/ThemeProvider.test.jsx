@@ -135,7 +135,7 @@ test("restricted browser storage does not break rendering or switching themes", 
   expect(document.documentElement.dataset.theme).toBe("light");
 });
 
-test("auth and calendar share one theme preference without a duplicate in the account menu", async () => {
+test("auth and calendar settings share a theme preference without a control in the calendar header", async () => {
   render(
     <ThemeProvider>
       <MemoryRouter initialEntries={["/login"]}>
@@ -163,15 +163,15 @@ test("auth and calendar share one theme preference without a duplicate in the ac
   );
   select("dark");
   fireEvent.click(screen.getByRole("link", { name: "Open calendar" }));
-  expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
-  select("light");
-  fireEvent.click(screen.getByRole("button", { name: "Account" }));
+  expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Settings" }));
   const dialog = await screen.findByRole("dialog");
-  expect(within(dialog).queryByRole("group", { name: "Theme" })).not.toBeInTheDocument();
+  expect(within(dialog).getByRole("radio", { name: "Dark" })).toBeChecked();
   expect(screen.getAllByRole("radio", { hidden: true })).toHaveLength(3);
+  select("light");
   expect(document.documentElement.dataset.theme).toBe("light");
+  select("dark");
   fireEvent.click(screen.getByRole("button", { name: "Close" }));
-  fireEvent.click(await screen.findByRole("radio", { name: "Dark" }));
   fireEvent.click(screen.getByRole("link", { name: "Back to login" }));
   expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
 });

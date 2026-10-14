@@ -48,9 +48,6 @@
   display: grid;
   place-items: center;
   border-radius: 13px;
-  background: var(--primary-bg);
-  color: var(--primary-text);
-  font-size: 23px;
 }
 .auth-brand-caption {
   display: block;

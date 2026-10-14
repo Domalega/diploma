@@ -25,6 +25,9 @@ export function ThemeProvider({ children }) {
     root.dataset.themePreference = preference;
     root.style.colorScheme = resolvedTheme;
     document
+      .querySelector("#daymark-icon")
+      ?.setAttribute("href", process.env.PUBLIC_URL + "/daymark-" + resolvedTheme + ".svg");
+    document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", resolvedTheme === "dark" ? "#101a17" : "#fcfcf9");
   }, [preference, resolvedTheme]);

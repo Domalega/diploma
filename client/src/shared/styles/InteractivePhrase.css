@@ -22,14 +22,6 @@
   color: var(--accent);
   transition: transform 220ms;
 }
-.phrase-button:hover {
-  background: var(--accent-soft);
-  color: var(--text);
-  border-color: var(--border-strong);
-}
-.phrase-button:hover > svg {
-  transform: rotate(35deg);
-}
 .phrase-button:focus-visible {
   outline: 3px solid var(--focus-border);
   outline-offset: 3px;
@@ -81,8 +73,5 @@
   }
   .phrase-button > svg {
     transition: none;
-  }
-  .phrase-button:hover > svg {
-    transform: none;
   }
 }

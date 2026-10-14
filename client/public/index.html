@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/logo.png" />
+    <link id="daymark-icon" rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/daymark-light.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#fcfcf9" />
     <meta name="color-scheme" content="light dark" />
@@ -24,11 +24,14 @@
         document.documentElement.dataset.themePreference = preference;
         document.documentElement.style.colorScheme = theme;
         document
+          .querySelector("#daymark-icon")
+          .setAttribute("href", "%PUBLIC_URL%/daymark-" + theme + ".svg");
+        document
           .querySelector('meta[name="theme-color"]')
           .setAttribute("content", dark ? "#101a17" : "#fcfcf9");
       })();
     </script>
-    <title>Online calendar</title>
+    <title>Daymark — Personal calendar</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

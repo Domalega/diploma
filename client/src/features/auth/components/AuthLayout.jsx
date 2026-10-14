@@ -1,20 +1,21 @@
 import { Link } from "react-router-dom";
-import { FiCalendar, FiArrowUpRight } from "react-icons/fi";
+import { FiArrowUpRight } from "react-icons/fi";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
 import InteractivePhrase from "../../../shared/components/InteractivePhrase";
+import BrandMark from "../../../shared/components/BrandMark";
 import "../styles/Auth.css";
 
 export default function AuthLayout({ children }) {
   return (
     <main className="auth-shell">
-      <section className="auth-story" aria-label="Online Calendar">
+      <section className="auth-story" aria-label="Daymark">
         <Link className="auth-brand" to={LOGIN_ROUTE}>
           <span className="auth-brand-icon">
-            <FiCalendar aria-hidden="true" />
+            <BrandMark />
           </span>
           <span>
-            Online Calendar<span className="auth-brand-caption">A little more organised.</span>
+            Daymark<span className="auth-brand-caption">Your personal calendar</span>
           </span>
         </Link>
         <div className="auth-story-content">

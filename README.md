@@ -1,8 +1,8 @@
-# Online Calendar
+# Daymark
 
 A personal calendar with user accounts, password recovery, editable notes by date, search, a month view and a notes list. Browser notifications can remind you about today's note while the calendar is open.
 
-The theme follows your device by default. Choose System, Light, or Dark on the account pages or in the calendar; your preference is saved in your browser.
+The theme follows your device by default. Choose System, Light, or Dark on the sign-in page or in calendar Settings; your preference is saved in your browser.
 
 [Live demo](https://domalega.github.io/diploma/) · [API health](https://diploma-api-zozr.onrender.com/api/health)
 

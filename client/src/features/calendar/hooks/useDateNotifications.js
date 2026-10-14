@@ -18,7 +18,11 @@ export default function useDateNotifications(dates, enabled, permission) {
           try {
             const notification = new Notification("A note for today", {
               body: item.comment || "Open your calendar to see today's note.",
-              icon: process.env.PUBLIC_URL + "/logo.png",
+              icon:
+                process.env.PUBLIC_URL +
+                "/daymark-" +
+                (document.documentElement.dataset.theme === "dark" ? "dark" : "light") +
+                ".svg",
             });
             notification.onclick = () => {
               window.focus();

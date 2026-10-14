@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { FiCalendar, FiSearch, FiX } from "react-icons/fi";
+import { FiSearch, FiX } from "react-icons/fi";
 import ProfileSidebar from "./ProfileSidebar";
-import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
+import BrandMark from "../../../shared/components/BrandMark";
 import { CALENDAR_ROUTE } from "../../../shared/config/routes";
 export default function NavBar({ query = "", onQueryChange = () => {}, notifications }) {
   return (
@@ -12,9 +12,9 @@ export default function NavBar({ query = "", onQueryChange = () => {}, notificat
       <div className="planner-header-inner">
         <Link className="planner-brand" to={CALENDAR_ROUTE}>
           <span className="planner-brand-icon">
-            <FiCalendar aria-hidden="true" />
+            <BrandMark />
           </span>
-          <span>Online Calendar</span>
+          <span>Daymark</span>
         </Link>
         <div className="planner-search" role="search">
           <FiSearch aria-hidden="true" />
@@ -40,7 +40,6 @@ export default function NavBar({ query = "", onQueryChange = () => {}, notificat
           )}
         </div>
         <nav className="planner-account" aria-label="Account controls">
-          <ThemeSwitcher />
           <ProfileSidebar notifications={notifications} />
         </nav>
       </div>
