@@ -105,7 +105,9 @@ test("recovery only requests email when mail delivery is available", async () =>
     target: { value: "user@example.com" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Send reset link" }));
-  expect(await screen.findByRole("status")).toHaveTextContent("If an account exists");
+  expect(await screen.findByRole("status", { name: "Account status" })).toHaveTextContent(
+    "If an account exists",
+  );
   expect(authApi.forgotPassword).toHaveBeenCalledWith("user@example.com");
   fireEvent.click(screen.getByRole("button", { name: "Use another email" }));
   expect(screen.getByLabelText("Email address")).toBeInTheDocument();
@@ -135,7 +137,9 @@ test("reset removes the link token from the URL and returns to login without aut
     target: { value: "replacement-password" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Update password" }));
-  expect(await screen.findByRole("status")).toHaveTextContent("Password updated");
+  expect(await screen.findByRole("status", { name: "Account status" })).toHaveTextContent(
+    "Password updated",
+  );
   expect(authApi.resetPassword).toHaveBeenCalledWith(token, "replacement-password");
   expect(localStorage.getItem("token")).toBeNull();
 });

@@ -60,7 +60,7 @@ export default function AuthForm({
   }
   if (success) {
     return (
-      <div className="auth-result" role="status">
+      <div className="auth-result" role="status" aria-label="Account status">
         <span className="auth-result-icon">
           {mode === "forgot" ? <FiMail aria-hidden="true" /> : <FiCheck aria-hidden="true" />}
         </span>

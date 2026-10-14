@@ -14,9 +14,7 @@ export default function NavBar({ query = "", onQueryChange = () => {}, notificat
           <span className="planner-brand-icon">
             <FiCalendar aria-hidden="true" />
           </span>
-          <span>
-            Online Calendar<small>A little more organised.</small>
-          </span>
+          <span>Online Calendar</span>
         </Link>
         <div className="planner-search" role="search">
           <FiSearch aria-hidden="true" />

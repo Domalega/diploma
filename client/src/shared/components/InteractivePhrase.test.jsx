@@ -1,0 +1,30 @@
+import { render, screen, fireEvent, act } from "@testing-library/react";
+import InteractivePhrase from "./InteractivePhrase";
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => jest.useRealTimers());
+test("phrases rotate every minute, pause while being read, and all timers are cleaned up", () => {
+  const view = render(<InteractivePhrase />);
+  expect(screen.getByText("One day at a time.")).toBeInTheDocument();
+  const button = screen.getByRole("button", { name: /One day at a time/ });
+  fireEvent.mouseEnter(button);
+  act(() => jest.advanceTimersByTime(60000));
+  expect(screen.getByText("One day at a time.")).toBeInTheDocument();
+  fireEvent.mouseLeave(button);
+  act(() => jest.advanceTimersByTime(60000));
+  expect(screen.getByText("Make room for what matters.")).toBeInTheDocument();
+  fireEvent.focus(button);
+  act(() => jest.advanceTimersByTime(60000));
+  expect(screen.getByText("Make room for what matters.")).toBeInTheDocument();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+test("clicking a phrase reveals another thought and announces only the requested change", () => {
+  render(<InteractivePhrase />);
+  expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  fireEvent.click(screen.getByRole("button", { name: /One day at a time/ }));
+  expect(screen.getByRole("button", { name: /Make room for what matters/ })).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent("Make room for what matters.");
+  act(() => jest.advanceTimersByTime(60000));
+  expect(screen.getByRole("button", { name: /Small steps count/ })).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent("Make room for what matters.");
+});

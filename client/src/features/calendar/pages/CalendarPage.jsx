@@ -19,6 +19,7 @@ import useDates from "../hooks/useDates";
 import useDateNotifications from "../hooks/useDateNotifications";
 import useNotificationSettings from "../hooks/useNotificationSettings";
 import useToday from "../hooks/useToday";
+import InteractivePhrase from "../../../shared/components/InteractivePhrase";
 import { formatDay, formatMonth, monthStart, moveMonths, todayKey } from "../utils/calendarDates";
 import "../styles/Calendar.css";
 
@@ -27,7 +28,6 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(() => monthStart(todayKey()));
   const [view, setView] = useState("month");
   const [query, setQuery] = useState("");
-  const [showPast, setShowPast] = useState(false);
   const [mobileDay, setMobileDay] = useState(false);
   const [editor, setEditor] = useState(null);
   const [deleting, setDeleting] = useState(null);
@@ -53,7 +53,7 @@ export default function CalendarPage() {
         ? [note.comment || "", note.date, formatDay(note.date)].some((text) =>
             text.toLocaleLowerCase().includes(search),
           )
-        : showPast || note.date >= today,
+        : note.date.slice(0, 7) === month.slice(0, 7),
     )
     .sort((a, b) => a.date.localeCompare(b.date));
   function selectDay(date) {
@@ -87,11 +87,9 @@ export default function CalendarPage() {
       <main id="planner-main" tabIndex={-1} className="planner-main">
         <div className="planner-intro">
           <div>
-            <p className="planner-eyebrow">ROOM FOR WHAT MATTERS</p>
             <h1>
-              Your days, <em>at a glance.</em>
+              Your <em>calendar.</em>
             </h1>
-            <p>A little space to plan, remember, and make time for yourself.</p>
           </div>
           <Button
             ref={newNoteButton}
@@ -128,13 +126,9 @@ export default function CalendarPage() {
             <div className="calendar-toolbar">
               <div className="month-navigation">
                 <h2 aria-live="polite" aria-atomic="true">
-                  {searching
-                    ? "Find your notes"
-                    : view === "month"
-                      ? formatMonth(month)
-                      : "Your notes"}
+                  {searching ? "Find your notes" : formatMonth(month)}
                 </h2>
-                {!searching && view === "month" && (
+                {!searching && (
                   <div className="month-buttons">
                     <button
                       className="icon-button"
@@ -201,8 +195,8 @@ export default function CalendarPage() {
                 selectedDate={selectedDate}
                 onSelect={selectDay}
                 query={searching ? query.trim() : ""}
-                showPast={showPast}
-                onShowPastChange={setShowPast}
+                month={month}
+                today={today}
               />
             ) : (
               <MainCalendar
@@ -225,7 +219,7 @@ export default function CalendarPage() {
           </aside>
         </div>
         <footer className="planner-footer">
-          <span>One day at a time.</span>
+          <InteractivePhrase />
           <span>Made by Domalega</span>
         </footer>
       </main>

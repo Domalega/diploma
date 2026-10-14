@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { FiCalendar, FiArrowUpRight } from "react-icons/fi";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
+import InteractivePhrase from "../../../shared/components/InteractivePhrase";
 import "../styles/Auth.css";
 
 export default function AuthLayout({ children }) {
@@ -63,7 +64,6 @@ export default function AuthLayout({ children }) {
           </div>
         </div>
         <div className="auth-story-footer">
-          <span>One day at a time.</span>
           <span>
             Made by Domalega <FiArrowUpRight aria-hidden="true" />
           </span>
@@ -74,7 +74,9 @@ export default function AuthLayout({ children }) {
           <ThemeSwitcher />
         </div>
         <div className="auth-form-wrap">{children}</div>
-        <p className="auth-main-footer">Your plans. Your pace.</p>
+        <div className="auth-main-footer">
+          <InteractivePhrase />
+        </div>
       </section>
     </main>
   );

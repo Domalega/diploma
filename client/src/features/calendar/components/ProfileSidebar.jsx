@@ -4,7 +4,6 @@ import { Button, Offcanvas } from "react-bootstrap";
 import { FiUser, FiLogOut, FiBell } from "react-icons/fi";
 import { clearToken } from "../../../shared/api/tokenStorage";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
-import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
 export default function ProfileSidebar({ notifications = { supported: false } }) {
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
@@ -32,11 +31,6 @@ export default function ProfileSidebar({ notifications = { supported: false } })
           <Offcanvas.Title id="account-title">Your account</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
-          <section className="account-section">
-            <h2>Appearance</h2>
-            <p>Make this space feel like yours.</p>
-            <ThemeSwitcher />
-          </section>
           <section className="account-section">
             <h2>
               <FiBell aria-hidden="true" /> Notifications

@@ -3,7 +3,14 @@ import { MemoryRouter } from "react-router-dom";
 import CalendarPage from "./CalendarPage";
 import { ThemeProvider } from "../../../shared/theme/ThemeProvider";
 import * as datesApi from "../api/datesApi";
-import { todayKey, moveDays, formatDay } from "../utils/calendarDates";
+import {
+  todayKey,
+  moveDays,
+  moveMonths,
+  monthStart,
+  formatDay,
+  formatMonth,
+} from "../utils/calendarDates";
 jest.mock("../api/datesApi");
 const today = todayKey();
 const note = { id: 1, date: today, comment: "Read a little" };
@@ -67,9 +74,9 @@ test("selecting an empty day prefills its date without creating any data", async
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   expect(datesApi.createDate).not.toHaveBeenCalled();
 });
-test("search finds past notes, clear restores the month, and List separates upcoming from all dates", async () => {
-  const past = { id: 2, date: moveDays(today, -2), comment: "Old journal" };
-  const future = { id: 3, date: moveDays(today, 2), comment: "Walk in the park" };
+test("search spans all dates while the agenda and grid share the same month and selected day", async () => {
+  const past = { id: 2, date: moveMonths(monthStart(today), -1), comment: "Old journal" };
+  const future = { id: 3, date: monthStart(today), comment: "Walk in the park" };
   datesApi.getAllDates.mockResolvedValue([past, future]);
   mount();
   await calendarReady();
@@ -83,8 +90,19 @@ test("search finds past notes, clear restores the month, and List separates upco
   fireEvent.click(screen.getByRole("button", { name: "List", exact: true }));
   expect(screen.getByRole("region", { name: "Notes list" })).toHaveTextContent("Walk in the park");
   expect(screen.queryByText("Old journal")).not.toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText("Notes to show"), { target: { value: "all" } });
+  expect(screen.queryByLabelText("Notes to show")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Previous month" }));
   expect(screen.getByText("Old journal")).toBeInTheDocument();
+  expect(screen.queryByText("Walk in the park")).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: formatMonth(past.date) })).toBeInTheDocument();
+  fireEvent.click(
+    screen.getByRole("button", { name: formatDay(past.date) + ", Old journal", exact: true }),
+  );
+  expect(panel().getByText("Old journal")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Month", exact: true }));
+  expect(
+    screen.getByRole("button", { name: formatDay(past.date) + ", Note: Old journal", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   fireEvent.change(screen.getByRole("searchbox", { name: "Search notes" }), {
     target: { value: "no match" },
   });

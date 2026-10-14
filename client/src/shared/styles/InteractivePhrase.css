@@ -1,0 +1,88 @@
+.interactive-phrase {
+  position: relative;
+  min-width: 0;
+}
+.interactive-phrase .phrase-button {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+}
+.phrase-button > svg {
+  flex-shrink: 0;
+  color: var(--accent);
+  transition: transform 220ms;
+}
+.phrase-button:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.phrase-button:hover > svg {
+  transform: rotate(35deg);
+}
+.phrase-button:focus-visible {
+  outline: 3px solid var(--focus-border);
+  outline-offset: 3px;
+}
+.phrase-text {
+  animation: phrase-in 240ms ease-out;
+}
+.phrase-sparks {
+  position: absolute;
+  left: 19px;
+  top: 50%;
+  pointer-events: none;
+}
+.phrase-sparks > svg {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  color: var(--accent);
+  animation: phrase-spark 700ms var(--spark-delay) ease-out both;
+}
+@keyframes phrase-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes phrase-spark {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--spark-x), var(--spark-y)) rotate(90deg) scale(0.7);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .phrase-text,
+  .phrase-sparks > svg {
+    animation: none;
+  }
+  .phrase-sparks {
+    display: none;
+  }
+  .phrase-button > svg {
+    transition: none;
+  }
+  .phrase-button:hover > svg {
+    transform: none;
+  }
+}

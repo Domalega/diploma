@@ -5,9 +5,7 @@ export default function NoteDetails({ date, note, onEdit, onDelete, ready }) {
   const day = parseDate(date);
   return (
     <div className="day-details">
-      <span className="planner-eyebrow">
-        {date === todayKey() ? "A LITTLE SPACE FOR TODAY" : "YOUR SELECTED DAY"}
-      </span>
+      <span className="planner-eyebrow">{date === todayKey() ? "TODAY" : "SELECTED DAY"}</span>
       <div className="detail-date">
         <span>{day.getDate()}</span>
         <div>
@@ -47,15 +45,13 @@ export default function NoteDetails({ date, note, onEdit, onDelete, ready }) {
           <span className="empty-day-icon">
             <FiFeather aria-hidden="true" />
           </span>
-          <h3>A little room for a thought.</h3>
-          <p>Nothing planned for this day yet. Leave a note for your future self.</p>
+          <h3>No note for this day.</h3>
           <Button className="theme-button" onClick={onEdit}>
             <FiPlus aria-hidden="true" />
             Add a note
           </Button>
         </div>
       )}
-      <p className="detail-footnote">Your plans. Your pace.</p>
     </div>
   );
 }

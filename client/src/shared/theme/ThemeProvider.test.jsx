@@ -47,11 +47,14 @@ function mount() {
     </ThemeProvider>,
   );
 }
-const select = (value) => fireEvent.change(screen.getByLabelText("Theme"), { target: { value } });
+const select = (value) =>
+  fireEvent.click(
+    screen.getByRole("radio", { name: { system: "System", light: "Light", dark: "Dark" }[value] }),
+  );
 
 test("the default follows the system and reacts to changes without saving an override", () => {
   mount();
-  expect(screen.getByLabelText("Theme")).toHaveValue("system");
+  expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
   expect(document.documentElement.dataset.theme).toBe("dark");
   expect(document.documentElement.style.colorScheme).toBe("dark");
   systemChange(false);
@@ -68,7 +71,7 @@ test("a manual preference survives remounting and takes priority over the device
   expect(document.documentElement.dataset.theme).toBe("light");
   view.unmount();
   mount();
-  expect(screen.getByLabelText("Theme")).toHaveValue("light");
+  expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
   expect(document.documentElement.dataset.theme).toBe("light");
 });
 
@@ -95,7 +98,7 @@ test("theme preferences synchronize across tabs and invalid values fall back to 
       }),
     ),
   );
-  expect(screen.getByLabelText("Theme")).toHaveValue("light");
+  expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
   act(() =>
     window.dispatchEvent(
       new StorageEvent("storage", {
@@ -105,7 +108,7 @@ test("theme preferences synchronize across tabs and invalid values fall back to 
       }),
     ),
   );
-  expect(screen.getByLabelText("Theme")).toHaveValue("system");
+  expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
   expect(document.documentElement.dataset.theme).toBe("dark");
   act(() =>
     window.dispatchEvent(
@@ -116,7 +119,7 @@ test("theme preferences synchronize across tabs and invalid values fall back to 
       }),
     ),
   );
-  expect(screen.getByLabelText("Theme")).toHaveValue("system");
+  expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
 });
 
 test("restricted browser storage does not break rendering or switching themes", () => {
@@ -132,7 +135,7 @@ test("restricted browser storage does not break rendering or switching themes", 
   expect(document.documentElement.dataset.theme).toBe("light");
 });
 
-test("auth, calendar and the profile menu share the same preference across navigation", async () => {
+test("auth and calendar share one theme preference without a duplicate in the account menu", async () => {
   render(
     <ThemeProvider>
       <MemoryRouter initialEntries={["/login"]}>
@@ -160,18 +163,17 @@ test("auth, calendar and the profile menu share the same preference across navig
   );
   select("dark");
   fireEvent.click(screen.getByRole("link", { name: "Open calendar" }));
-  expect(screen.getByLabelText("Theme")).toHaveValue("dark");
+  expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
   select("light");
   fireEvent.click(screen.getByRole("button", { name: "Account" }));
   const dialog = await screen.findByRole("dialog");
-  expect(within(dialog).getByRole("combobox", { name: "Theme" })).toHaveValue("light");
-  fireEvent.change(within(dialog).getByRole("combobox", { name: "Theme" }), {
-    target: { value: "dark" },
-  });
-  expect(document.documentElement.dataset.theme).toBe("dark");
+  expect(within(dialog).queryByRole("group", { name: "Theme" })).not.toBeInTheDocument();
+  expect(screen.getAllByRole("radio", { hidden: true })).toHaveLength(3);
+  expect(document.documentElement.dataset.theme).toBe("light");
   fireEvent.click(screen.getByRole("button", { name: "Close" }));
+  fireEvent.click(await screen.findByRole("radio", { name: "Dark" }));
   fireEvent.click(screen.getByRole("link", { name: "Back to login" }));
-  expect(screen.getByLabelText("Theme")).toHaveValue("dark");
+  expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
 });
 
 test("listeners are removed when the provider unmounts", () => {
