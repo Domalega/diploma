@@ -20,6 +20,7 @@ import useDateNotifications from "../hooks/useDateNotifications";
 import useNotificationSettings from "../hooks/useNotificationSettings";
 import useToday from "../hooks/useToday";
 import InteractivePhrase from "../../../shared/components/InteractivePhrase";
+import CalendarLoading from "../../../shared/components/CalendarLoading";
 import { formatDay, formatMonth, monthStart, moveMonths, todayKey } from "../utils/calendarDates";
 import "../styles/Calendar.css";
 
@@ -185,10 +186,7 @@ export default function CalendarPage() {
               </div>
             </div>
             {loading && !dates.length ? (
-              <div className="calendar-skeleton" role="status">
-                <span className="loading-ring" aria-hidden="true" />
-                <p>Bringing your notes together…</p>
-              </div>
+              <CalendarLoading label="Bringing your notes together…" />
             ) : searching || view === "list" ? (
               <NotesList
                 notes={filtered}

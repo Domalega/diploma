@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { check } from "../api/authApi";
 import { getToken, setToken } from "../../../shared/api/tokenStorage";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
+import CalendarLoading from "../../../shared/components/CalendarLoading";
 
 export default function ProtectedRoute({ children }) {
   const [status, setStatus] = useState("loading");
@@ -27,12 +28,7 @@ export default function ProtectedRoute({ children }) {
     return () => controller.abort();
   }, [attempt]);
 
-  if (status === "loading")
-    return (
-      <p role="status" className="p-4">
-        Loading...
-      </p>
-    );
+  if (status === "loading") return <CalendarLoading fullPage />;
   if (status === "error")
     return (
       <div className="p-4">

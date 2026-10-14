@@ -478,28 +478,6 @@
   flex-wrap: wrap;
   gap: 8px;
 }
-.calendar-skeleton {
-  min-height: 480px;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 16px;
-  color: var(--muted);
-  font-size: 13px;
-}
-.loading-ring {
-  width: 28px;
-  height: 28px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: planner-spin 1s linear infinite;
-}
-@keyframes planner-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 .notes-list {
   min-height: 480px;
   padding: 8px 24px 28px;
@@ -919,9 +897,6 @@
     padding: 12px;
     min-height: 440px;
   }
-  .calendar-skeleton {
-    min-height: 440px;
-  }
   .planner-error {
     display: block;
   }
@@ -930,9 +905,6 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .loading-ring {
-    animation: none;
-  }
   .planner *,
   .planner-drawer *,
   .planner-modal * {

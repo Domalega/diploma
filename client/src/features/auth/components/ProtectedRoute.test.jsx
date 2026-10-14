@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import { check } from "../api/authApi";
@@ -31,6 +31,22 @@ test("a missing token redirects without making an auth request", async () => {
   renderRoute();
   expect(await screen.findByText("Login page")).toBeInTheDocument();
   expect(check).not.toHaveBeenCalled();
+});
+
+test("shows the calendar animation until session validation finishes", async () => {
+  localStorage.setItem("token", "existing-token");
+  let finish;
+  check.mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  renderRoute();
+  expect(screen.getByRole("status")).toHaveTextContent("Opening your calendar…");
+  expect(screen.queryByText("Protected calendar")).not.toBeInTheDocument();
+  await act(async () => finish({ token: "refreshed-token" }));
+  expect(screen.queryByText("Opening your calendar…")).not.toBeInTheDocument();
+  expect(screen.getByText("Protected calendar")).toBeInTheDocument();
 });
 
 test("a server outage offers retry and preserves the existing session", async () => {
