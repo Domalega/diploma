@@ -1,26 +1,44 @@
 const { UserDate } = require("../models");
 const ApiError = require("../errors/ApiError");
 
-async function create(userId, date, comment) {
-  const existing = await UserDate.findOne({ where: { userId, date } });
-  if (existing) throw ApiError.conflict("A note for this date already exists");
-
-  await UserDate.create({ userId, date, comment });
-  return { message: "ok" };
+async function create(userId, date, comment, time = null) {
+  const note = await UserDate.create({ userId, date, comment, time });
+  return { message: "ok", note };
 }
 
 function getAll(userId) {
-  return UserDate.findAll({ where: { userId }, order: [["date", "ASC"]] });
+  return UserDate.findAll({
+    where: { userId },
+    order: [
+      ["date", "ASC"],
+      ["id", "ASC"],
+    ],
+  });
 }
 
-async function update(userId, date, comment) {
-  const [count] = await UserDate.update({ comment }, { where: { userId, date } });
+async function noteWhere(userId, id, date) {
+  if (id !== undefined) return { userId, id };
+  // Older clients address notes by date. Never let that update or delete an entire day.
+  const notes = await UserDate.findAll({ where: { userId, date }, attributes: ["id"], limit: 2 });
+  if (!notes.length) throw ApiError.notFound("Note was not found");
+  if (notes.length > 1)
+    throw ApiError.conflict("Select an individual note. Reload the calendar to update the app.");
+  return { userId, id: notes[0].id };
+}
+
+async function update(userId, { id, date, comment, time }) {
+  const where = await noteWhere(userId, id, date);
+  const changes = { comment };
+  if (date !== undefined) changes.date = date;
+  if (time !== undefined) changes.time = time;
+  const [count] = await UserDate.update(changes, { where });
   if (!count) throw ApiError.notFound("Note was not found");
   return { message: "Note was updated successfully" };
 }
 
-async function remove(userId, date) {
-  const deleted = await UserDate.destroy({ where: { userId, date } });
+async function remove(userId, { id, date }) {
+  const where = await noteWhere(userId, id, date);
+  const deleted = await UserDate.destroy({ where });
   if (!deleted) throw ApiError.notFound("Note was not found");
   return { message: "Note was deleted successfully" };
 }

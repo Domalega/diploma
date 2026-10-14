@@ -85,8 +85,14 @@ test("real SQLite supports registration, login, persistence and private notes", 
     200,
   );
   assert.equal(
-    (await request("/userDate/create", { method: "POST", token: alice, body: note })).status,
-    409,
+    (
+      await request("/userDate/create", {
+        method: "POST",
+        token: alice,
+        body: { ...note, time: "12:99" },
+      })
+    ).status,
+    400,
   );
   assert.equal((await request("/userDate/get")).status, 401);
 
@@ -173,5 +179,97 @@ test("real SQLite supports registration, login, persistence and private notes", 
       })
     ).status,
     200,
+  );
+});
+
+test("same-day notes retain individual IDs, times and ownership through edits and deletion", async () => {
+  const owner = (
+    await request("/user/registration", {
+      method: "POST",
+      body: { email: "schedule@example.com", password: "test-password" },
+    })
+  ).data.token;
+  const other = (
+    await request("/user/login", {
+      method: "POST",
+      body: { email: "bob@example.com", password: "other-password" },
+    })
+  ).data.token;
+  const date = "2026-11-02";
+  const ids = [];
+  for (const time of [null, "09:30", "14:00", "09:30"]) {
+    const result = await request("/userDate/create", {
+      method: "POST",
+      token: owner,
+      body: { date, time, comment: "Note " + ids.length },
+    });
+    assert.equal(result.status, 200);
+    ids.push(result.data.note.id);
+  }
+  assert.equal(new Set(ids).size, 4);
+  let notes = (await request("/userDate/get", { token: owner })).data;
+  assert.deepEqual(
+    notes.map((note) => note.time),
+    [null, "09:30", "14:00", "09:30"],
+  );
+  for (const method of ["PATCH", "DELETE"]) {
+    const path = method === "PATCH" ? "/update" : "/delete";
+    assert.equal(
+      (
+        await request("/userDate" + path, {
+          method,
+          token: owner,
+          body: { date, comment: "Ambiguous" },
+        })
+      ).status,
+      409,
+    );
+    assert.equal(
+      (
+        await request("/userDate" + path, {
+          method,
+          token: other,
+          body: { id: ids[1], date, comment: "Wrong owner" },
+        })
+      ).status,
+      404,
+    );
+  }
+  const changed = { id: ids[1], date: "2026-11-03", time: "00:00", comment: "Moved note" };
+  assert.equal(
+    (await request("/userDate/update", { method: "PATCH", token: owner, body: changed })).status,
+    200,
+  );
+  assert.equal(
+    (await request("/userDate/delete", { method: "DELETE", token: owner, body: { id: ids[2] } }))
+      .status,
+    200,
+  );
+  notes = (await request("/userDate/get", { token: owner })).data;
+  assert.equal(notes.length, 3);
+  assert.equal(notes.find((note) => note.id === ids[0]).comment, "Note 0");
+  assert.equal(notes.find((note) => note.id === ids[3]).time, "09:30");
+  assert.deepEqual(
+    {
+      id: notes.find((note) => note.id === ids[1]).id,
+      date: notes.find((note) => note.id === ids[1]).date,
+      time: notes.find((note) => note.id === ids[1]).time,
+      comment: notes.find((note) => note.id === ids[1]).comment,
+    },
+    changed,
+  );
+  assert.equal(
+    (
+      await request("/userDate/update", {
+        method: "PATCH",
+        token: owner,
+        body: { ...changed, time: null },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await request("/userDate/get", { token: owner })).data.find((note) => note.id === ids[1]).time,
+    null,
   );
 });

@@ -4,6 +4,7 @@ on:
   push:
     branches: [redesign]
     paths:
+      - server/**
       - .github/workflows/render-setup.yml
       - scripts/setup-render.mjs
       - render.yaml

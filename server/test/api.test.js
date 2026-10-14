@@ -139,12 +139,12 @@ test("reading and deleting notes use the token's user id, not supplied ids", asy
       await request("/userDate/delete", {
         method: "DELETE",
         authorization,
-        body: { date: "2026-10-14", userId: 99 },
+        body: { id: 123, userId: 99 },
       })
     ).status,
     200,
   );
-  assert.deepEqual(destroy.mock.calls[0].arguments[0].where, { userId: 7, date: "2026-10-14" });
+  assert.deepEqual(destroy.mock.calls[0].arguments[0].where, { userId: 7, id: 123 });
 });
 
 test("creating notes validates dates and comments, and assigns the authenticated owner", async (t) => {
@@ -156,6 +156,10 @@ test("creating notes validates dates and comments, and assigns the authenticated
     { date: "2026-10-14T12:00:00Z" },
     { date: "2026-10-14", comment: "x".repeat(256) },
     { date: "2026-10-14", comment: {} },
+    { date: "2026-10-14", time: "24:00" },
+    { date: "2026-10-14", time: "12:60" },
+    { date: "2026-10-14", time: "9:00" },
+    { date: "2026-10-14", time: 900 },
   ]) {
     assert.equal(
       (await request("/userDate/create", { method: "POST", authorization, body })).status,
@@ -173,17 +177,18 @@ test("creating notes validates dates and comments, and assigns the authenticated
     date: "2026-10-14",
     comment: "Meeting",
     userId: 7,
+    time: null,
   });
 });
 
-test("duplicate dates and missing notes have distinct HTTP statuses", async (t) => {
-  t.mock.method(UserDate, "findOne", async () => ({ id: 1 }));
+test("ambiguous legacy dates never delete several notes, and missing IDs return 404", async (t) => {
+  t.mock.method(UserDate, "findAll", async () => [{ id: 1 }, { id: 2 }]);
   t.mock.method(UserDate, "destroy", async () => 0);
   const authorization = `Bearer ${token}`;
   assert.equal(
     (
-      await request("/userDate/create", {
-        method: "POST",
+      await request("/userDate/delete", {
+        method: "DELETE",
         authorization,
         body: { date: "2026-10-14" },
       })
@@ -195,7 +200,7 @@ test("duplicate dates and missing notes have distinct HTTP statuses", async (t) 
       await request("/userDate/delete", {
         method: "DELETE",
         authorization,
-        body: { date: "2026-10-14" },
+        body: { id: 123 },
       })
     ).status,
     404,
@@ -238,8 +243,8 @@ test("updating a note validates input and scopes the write to its authenticated 
     200,
   );
   assert.deepEqual(update.mock.calls[0].arguments, [
-    { comment: "Updated" },
-    { where: { userId: 7, date: "2026-10-14" } },
+    { comment: "Updated", date: "2026-10-14" },
+    { where: { userId: 7, id: 99 } },
   ]);
   t.mock.method(UserDate, "update", async () => [0]);
   assert.equal(
@@ -247,7 +252,7 @@ test("updating a note validates input and scopes the write to its authenticated 
       await request("/userDate/update", {
         method: "PATCH",
         authorization,
-        body: { date: "2026-10-14", comment: "" },
+        body: { id: 99, comment: "" },
       })
     ).status,
     404,
