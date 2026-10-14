@@ -1,3 +1,18 @@
+.calendar-navbar {
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
+}
+.calendar-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.navbar-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  filter: var(--logo-filter);
+}
 .navbar-logo:hover {
   transform: scale(1.1);
   transition: all 0.2s ease-in-out;

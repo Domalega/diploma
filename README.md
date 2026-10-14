@@ -2,6 +2,8 @@
 
 A personal calendar with user accounts, password recovery, notes by date, and browser notifications for today's notes while the calendar is open.
 
+The theme follows your device by default. Choose System, Light, or Dark on the account pages or in the calendar; your preference is saved in your browser.
+
 [Live demo](https://domalega.github.io/diploma/) · [API health](https://diploma-api-zozr.onrender.com/api/health)
 
 ## Background

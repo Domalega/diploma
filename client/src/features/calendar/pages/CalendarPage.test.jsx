@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import CalendarPage from "./CalendarPage";
+import { ThemeProvider } from "../../../shared/theme/ThemeProvider";
 import * as datesApi from "../api/datesApi";
 
 jest.mock("../api/datesApi");
@@ -16,9 +17,11 @@ test("adding and deleting a note updates both calendar and profile without reloa
   datesApi.createDate.mockResolvedValue({ message: "ok" });
   datesApi.deleteDate.mockResolvedValue({ message: "ok" });
   render(
-    <MemoryRouter>
-      <CalendarPage />
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter>
+        <CalendarPage />
+      </MemoryRouter>
+    </ThemeProvider>,
   );
   await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
   fireEvent.click(screen.getByRole("button", { name: "Add date" }));

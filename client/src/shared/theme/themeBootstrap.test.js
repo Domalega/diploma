@@ -1,0 +1,25 @@
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
+const html = fs.readFileSync(path.resolve(__dirname, "../../../public/index.html"), "utf8");
+const bootstrap = html.match(/<script id="theme-init">([\s\S]*?)<\/script>/)[1];
+
+test.each([
+  ["dark", false, "dark"],
+  ["light", true, "light"],
+  [null, true, "dark"],
+  ["invalid", false, "light"],
+  ["system", true, "dark"],
+])(
+  "the page applies saved %s with system dark=%s before React loads",
+  (saved, systemDark, expected) => {
+    const root = { dataset: {}, style: {} };
+    vm.runInNewContext(bootstrap, {
+      localStorage: { getItem: () => saved },
+      window: { matchMedia: () => ({ matches: systemDark }) },
+      document: { documentElement: root, querySelector: () => ({ setAttribute() {} }) },
+    });
+    expect(root.dataset.theme).toBe(expected);
+    expect(root.style.colorScheme).toBe(expected);
+  },
+);

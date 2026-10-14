@@ -4,7 +4,30 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#fcfcf9" />
+    <meta name="color-scheme" content="light dark" />
+    <script id="theme-init">
+      // Apply the preference before rendering the page to avoid a light-theme flash.
+      (function () {
+        var preference = "system";
+        try {
+          var saved = localStorage.getItem("calendar.theme");
+          if (["light", "dark", "system"].indexOf(saved) !== -1) preference = saved;
+        } catch (error) {}
+        var dark =
+          preference === "dark" ||
+          (preference === "system" &&
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        var theme = dark ? "dark" : "light";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.themePreference = preference;
+        document.documentElement.style.colorScheme = theme;
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute("content", dark ? "#101a17" : "#fcfcf9");
+      })();
+    </script>
     <title>Online calendar</title>
   </head>
   <body>

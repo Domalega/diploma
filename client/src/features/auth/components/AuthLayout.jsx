@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { FiCalendar, FiArrowUpRight } from "react-icons/fi";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
+import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
 import "../styles/Auth.css";
 
 export default function AuthLayout({ children }) {
@@ -69,6 +70,9 @@ export default function AuthLayout({ children }) {
         </div>
       </section>
       <section className="auth-main" aria-label="Account access">
+        <div className="auth-theme-bar">
+          <ThemeSwitcher />
+        </div>
         <div className="auth-form-wrap">{children}</div>
         <p className="auth-main-footer">Your plans. Your pace.</p>
       </section>

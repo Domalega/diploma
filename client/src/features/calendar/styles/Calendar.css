@@ -2,6 +2,8 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--page);
+  color: var(--text);
 }
 
 .main {
@@ -21,4 +23,31 @@
 
 .footer {
   width: 100%;
+}
+.calendar-loading {
+  color: var(--muted);
+}
+.profile-theme {
+  margin: 0 4px 24px;
+}
+.profile-note {
+  border: 1px solid var(--border);
+  background: var(--preview);
+  border-radius: 9px;
+  padding: 12px;
+  margin: 12px 4px;
+}
+.profile-note .border-bottom {
+  border-color: var(--border) !important;
+}
+.profile-note .profile-note-delete {
+  --bs-btn-color: var(--muted);
+  --bs-btn-disabled-color: var(--muted);
+  --bs-btn-active-color: var(--danger-text);
+  color: var(--muted);
+}
+.profile-note .profile-note-delete:hover,
+.profile-note .profile-note-delete:focus-visible {
+  color: var(--danger-text);
+  background: var(--danger-bg);
 }

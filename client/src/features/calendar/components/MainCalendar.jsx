@@ -3,27 +3,23 @@ import moment from "moment";
 import "moment/locale/ru";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../styles/MainCalendar.css";
-import colors from "../../../shared/config/colors";
 
 moment.locale("ru");
 const localizer = momentLocalizer(moment);
 
 function CalendarToolbar({ label, onNavigate }) {
-  const style = { background: colors.BgColorDark, color: colors.TextColorDark, margin: 10 };
   return (
     <div className="containerBar">
       <div className="containerBar__label">{label}</div>
       <button
         onClick={() => onNavigate("PREV")}
-        className="btn containerBar__btn-prev"
-        style={style}
+        className="btn theme-button-outline containerBar__btn-prev"
       >
         Previous
       </button>
       <button
         onClick={() => onNavigate("NEXT")}
-        className="btn containerBar__btn-next"
-        style={style}
+        className="btn theme-button-outline containerBar__btn-next"
       >
         Next
       </button>

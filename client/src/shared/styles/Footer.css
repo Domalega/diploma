@@ -5,13 +5,15 @@
   flex-flow: column nowrap;
   align-items: center;
   width: 100%;
+  background: var(--surface-alt);
+  color: var(--muted);
 }
 
 .Footer-line {
   margin-top: 30px;
   width: 80%;
   height: 1px;
-  background-color: #78b1ee;
+  background-color: var(--border);
 }
 
 .flex-containerFtr {
@@ -33,3 +35,9 @@
   flex: 0 1 auto;
 }
 /*///////*/
+.footer-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: var(--logo-filter);
+}

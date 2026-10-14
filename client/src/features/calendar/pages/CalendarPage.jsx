@@ -4,7 +4,6 @@ import NavBar from "../components/NavBar";
 import MainCalendar from "../components/MainCalendar";
 import AddDateModal from "../components/AddDateModal";
 import Footer from "../../../shared/components/Footer";
-import colors from "../../../shared/config/colors";
 import useDates from "../hooks/useDates";
 import useDateNotifications from "../hooks/useDateNotifications";
 import "../styles/Calendar.css";
@@ -27,17 +26,21 @@ export default function CalendarPage() {
     }
   }
   return (
-    <div className="wrapper">
+    <div className="wrapper calendar-page">
       <header className="header">
         <NavBar dates={dates} onDelete={remove} />
       </header>
-      <main className="main" style={{ background: colors.WrapperColorDark }}>
+      <main className="main">
         <div className="d-flex flex-wrap justify-content-center gap-2">
-          <Button onClick={() => setModalOpen(true)} style={{ background: colors.BgColorDark }}>
+          <Button onClick={() => setModalOpen(true)} className="theme-button">
             Add date
           </Button>
           {"Notification" in window && (
-            <Button onClick={enableNotifications} variant="outline-light">
+            <Button
+              onClick={enableNotifications}
+              variant="outline-secondary"
+              className="theme-button-outline"
+            >
               Enable notifications
             </Button>
           )}
@@ -50,17 +53,17 @@ export default function CalendarPage() {
         {error && (
           <Alert className="mt-3" variant="danger" role="alert">
             {error}{" "}
-            <Button size="sm" onClick={() => reload()}>
+            <Button size="sm" className="theme-button" onClick={() => reload()}>
               Retry
             </Button>
           </Alert>
         )}
         {loading && (
-          <p role="status" className="text-light">
+          <p role="status" className="calendar-loading">
             Loading...
           </p>
         )}
-        <div className="calendar-container" style={{ color: colors.TextColorDark }}>
+        <div className="calendar-container">
           <MainCalendar dates={dates} />
         </div>
         {modalOpen && <AddDateModal open onClose={() => setModalOpen(false)} onCreate={create} />}

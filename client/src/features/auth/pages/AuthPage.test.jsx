@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AuthPage from "./AuthPage";
 import { useLocation } from "react-router-dom";
+import { ThemeProvider } from "../../../shared/theme/ThemeProvider";
 import * as authApi from "../api/authApi";
 
 jest.mock("../api/authApi");
@@ -12,13 +13,15 @@ beforeEach(() => {
 
 function renderPage(path) {
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/login" element={<AuthPage />} />
-        <Route path="/registration" element={<AuthPage />} />
-        <Route path="/calendar" element={<p>Calendar opened</p>} />
-      </Routes>
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/registration" element={<AuthPage />} />
+          <Route path="/calendar" element={<p>Calendar opened</p>} />
+        </Routes>
+      </MemoryRouter>
+    </ThemeProvider>,
   );
   fireEvent.change(screen.getByLabelText("Email address"), {
     target: { value: "user@example.com" },
@@ -79,14 +82,16 @@ function LocationProbe() {
 }
 function renderRecovery(path) {
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <LocationProbe />
-      <Routes>
-        {["/login", "/forgot-password", "/reset-password"].map((route) => (
-          <Route key={route} path={route} element={<AuthPage key={route} />} />
-        ))}
-      </Routes>
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <LocationProbe />
+        <Routes>
+          {["/login", "/forgot-password", "/reset-password"].map((route) => (
+            <Route key={route} path={route} element={<AuthPage key={route} />} />
+          ))}
+        </Routes>
+      </MemoryRouter>
+    </ThemeProvider>,
   );
 }
 
