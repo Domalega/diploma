@@ -217,7 +217,14 @@ export default function CalendarPage() {
         </div>
         <footer className="planner-footer">
           <InteractivePhrase />
-          <span>Made by Domalega</span>
+          <a
+            className="creator-link"
+            href="https://github.com/Domalega"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Made by Domalega
+          </a>
         </footer>
       </main>
       <Offcanvas

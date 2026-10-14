@@ -589,22 +589,16 @@
 .agenda-week li {
   position: relative;
 }
-.agenda-week li:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  width: 1px;
-  background: var(--border-strong);
-  top: 44px;
-  bottom: -18px;
-  left: 73px;
-  pointer-events: none;
-}
 .agenda-note {
+  --agenda-date-width: 52px;
+  --agenda-marker-width: 10px;
+  --agenda-gap: 16px;
+  --agenda-inset: 0px;
   position: relative;
   display: grid;
-  grid-template-columns: 52px 10px minmax(0, 1fr) 20px;
+  grid-template-columns: var(--agenda-date-width) var(--agenda-marker-width) minmax(0, 1fr) 20px;
   align-items: center;
-  gap: 16px;
+  gap: var(--agenda-gap);
   width: 100%;
   padding: 16px 0;
   color: var(--text);
@@ -612,6 +606,25 @@
   border: 1px solid transparent;
   border-radius: 10px;
   text-align: left;
+}
+.agenda-note::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: calc(
+    var(--agenda-inset) + var(--agenda-date-width) + var(--agenda-gap) +
+      var(--agenda-marker-width) / 2 - 0.5px
+  );
+  width: 1px;
+  background: var(--border-strong);
+  pointer-events: none;
+}
+.agenda-week li:first-child .agenda-note::before {
+  top: 50%;
+}
+.agenda-week li:last-child .agenda-note::before {
+  bottom: 50%;
 }
 .agenda-note:hover {
   background: var(--preview);
@@ -647,6 +660,7 @@
   font-weight: 650;
 }
 .agenda-marker {
+  justify-self: center;
   width: 9px;
   height: 9px;
   border: 2px solid var(--accent);
@@ -687,15 +701,15 @@
 }
 @media (max-width: 600px) {
   .agenda-note {
-    grid-template-columns: 38px 8px minmax(0, 1fr) 16px;
-    gap: 12px;
+    --agenda-date-width: 38px;
+    --agenda-marker-width: 8px;
+    --agenda-gap: 12px;
+    --agenda-inset: 4px;
+    grid-template-columns: var(--agenda-date-width) var(--agenda-marker-width) minmax(0, 1fr) 16px;
     padding: 14px 4px;
   }
   .agenda-week h3 {
     margin-left: 54px;
-  }
-  .agenda-week li:not(:last-child)::after {
-    left: 57px;
   }
   .agenda-note-content {
     font-size: 13px;

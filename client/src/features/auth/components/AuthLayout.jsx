@@ -65,9 +65,14 @@ export default function AuthLayout({ children }) {
           </div>
         </div>
         <div className="auth-story-footer">
-          <span>
+          <a
+            className="creator-link"
+            href="https://github.com/Domalega"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Made by Domalega <FiArrowUpRight aria-hidden="true" />
-          </span>
+          </a>
         </div>
       </section>
       <section className="auth-main" aria-label="Account access">
