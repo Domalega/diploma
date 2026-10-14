@@ -13,10 +13,16 @@ function getAll(userId) {
   return UserDate.findAll({ where: { userId }, order: [["date", "ASC"]] });
 }
 
+async function update(userId, date, comment) {
+  const [count] = await UserDate.update({ comment }, { where: { userId, date } });
+  if (!count) throw ApiError.notFound("Note was not found");
+  return { message: "Note was updated successfully" };
+}
+
 async function remove(userId, date) {
   const deleted = await UserDate.destroy({ where: { userId, date } });
   if (!deleted) throw ApiError.notFound("Note was not found");
   return { message: "Note was deleted successfully" };
 }
 
-module.exports = { create, getAll, remove };
+module.exports = { create, getAll, update, remove };

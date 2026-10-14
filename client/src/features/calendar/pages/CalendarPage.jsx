@@ -1,76 +1,278 @@
-import { useState } from "react";
-import { Alert, Button } from "react-bootstrap";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Button, Offcanvas } from "react-bootstrap";
+import {
+  FiArrowLeft,
+  FiArrowRight,
+  FiPlus,
+  FiEdit3,
+  FiCalendar,
+  FiList,
+  FiCheck,
+} from "react-icons/fi";
 import NavBar from "../components/NavBar";
 import MainCalendar from "../components/MainCalendar";
-import AddDateModal from "../components/AddDateModal";
-import Footer from "../../../shared/components/Footer";
+import NoteDetails from "../components/NoteDetails";
+import NoteEditor from "../components/NoteEditor";
+import DeleteNoteDialog from "../components/DeleteNoteDialog";
+import NotesList from "../components/NotesList";
 import useDates from "../hooks/useDates";
 import useDateNotifications from "../hooks/useDateNotifications";
+import useNotificationSettings from "../hooks/useNotificationSettings";
+import useToday from "../hooks/useToday";
+import { formatDay, formatMonth, monthStart, moveMonths, todayKey } from "../utils/calendarDates";
 import "../styles/Calendar.css";
 
 export default function CalendarPage() {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [notificationError, setNotificationError] = useState("");
-  const [notificationVersion, setNotificationVersion] = useState(0);
-  const { dates, loading, error, reload, create, remove } = useDates();
-  useDateNotifications(dates, notificationVersion);
-  async function enableNotifications() {
-    try {
-      const permission = await Notification.requestPermission();
-      setNotificationError(
-        permission === "granted" ? "" : "Notifications are blocked in your browser.",
-      );
-      setNotificationVersion((value) => value + 1);
-    } catch {
-      setNotificationError("Notifications are unavailable in this browser.");
-    }
+  const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [month, setMonth] = useState(() => monthStart(todayKey()));
+  const [view, setView] = useState("month");
+  const [query, setQuery] = useState("");
+  const [showPast, setShowPast] = useState(false);
+  const [mobileDay, setMobileDay] = useState(false);
+  const [editor, setEditor] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+  const [message, setMessage] = useState("");
+  const newNoteButton = useRef(null);
+  const queuedDialog = useRef(null);
+  const dialogWasOpen = useRef(false);
+  const today = useToday();
+  useEffect(() => {
+    const open = !!editor || !!deleting;
+    if (!open && dialogWasOpen.current) newNoteButton.current?.focus();
+    dialogWasOpen.current = open;
+  }, [editor, deleting]);
+  const { dates, loading, error, reload, create, update, remove } = useDates();
+  const notifications = useNotificationSettings();
+  useDateNotifications(dates, notifications.enabled, notifications.permission);
+  const selectedNote = dates.find((note) => note.date === selectedDate);
+  const ready = !loading && !error;
+  const search = query.trim().toLocaleLowerCase();
+  const filtered = dates
+    .filter((note) =>
+      search
+        ? [note.comment || "", note.date, formatDay(note.date)].some((text) =>
+            text.toLocaleLowerCase().includes(search),
+          )
+        : showPast || note.date >= today,
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
+  function selectDay(date) {
+    setSelectedDate(date);
+    setMonth(monthStart(date));
+    setMessage("");
+    if (window.matchMedia("(max-width: 1000px)").matches) setMobileDay(true);
   }
+  function editSelected() {
+    openDialog(() => setEditor({ date: selectedDate, note: selectedNote }));
+  }
+  function openDialog(action) {
+    if (mobileDay) {
+      queuedDialog.current = action;
+      setMobileDay(false);
+    } else action();
+  }
+  const detailsProps = {
+    date: selectedDate,
+    note: selectedNote,
+    ready,
+    onEdit: editSelected,
+    onDelete: () => {
+      openDialog(() => setDeleting(selectedDate));
+    },
+  };
+  const searching = !!search;
   return (
-    <div className="wrapper calendar-page">
-      <header className="header">
-        <NavBar dates={dates} onDelete={remove} />
-      </header>
-      <main className="main">
-        <div className="d-flex flex-wrap justify-content-center gap-2">
-          <Button onClick={() => setModalOpen(true)} className="theme-button">
-            Add date
+    <div className="planner">
+      <NavBar query={query} onQueryChange={setQuery} notifications={notifications} />
+      <main id="planner-main" tabIndex={-1} className="planner-main">
+        <div className="planner-intro">
+          <div>
+            <p className="planner-eyebrow">ROOM FOR WHAT MATTERS</p>
+            <h1>
+              Your days, <em>at a glance.</em>
+            </h1>
+            <p>A little space to plan, remember, and make time for yourself.</p>
+          </div>
+          <Button
+            ref={newNoteButton}
+            className="theme-button new-note-button"
+            disabled={!ready}
+            onClick={editSelected}
+          >
+            {selectedNote ? <FiEdit3 aria-hidden="true" /> : <FiPlus aria-hidden="true" />}
+            {selectedNote ? "Edit note" : "New note"}
           </Button>
-          {"Notification" in window && (
-            <Button
-              onClick={enableNotifications}
-              variant="outline-secondary"
-              className="theme-button-outline"
-            >
-              Enable notifications
-            </Button>
+        </div>
+        <div className="planner-feedback" role="status" aria-live="polite">
+          {message && (
+            <>
+              <FiCheck aria-hidden="true" />
+              {message}
+            </>
           )}
         </div>
-        {notificationError && (
-          <Alert className="mt-3" variant="warning">
-            {notificationError}
-          </Alert>
-        )}
         {error && (
-          <Alert className="mt-3" variant="danger" role="alert">
-            {error}{" "}
-            <Button size="sm" className="theme-button" onClick={() => reload()}>
-              Retry
+          <Alert variant="danger" role="alert" className="planner-error">
+            {error}
+            <Button
+              className="theme-button-outline ms-3"
+              variant="outline-secondary"
+              onClick={() => reload()}
+            >
+              Try again
             </Button>
           </Alert>
         )}
-        {loading && (
-          <p role="status" className="calendar-loading">
-            Loading...
-          </p>
-        )}
-        <div className="calendar-container">
-          <MainCalendar dates={dates} />
+        <div className="planner-layout">
+          <section className="calendar-card" aria-label="Your calendar" aria-busy={loading}>
+            <div className="calendar-toolbar">
+              <div className="month-navigation">
+                <h2 aria-live="polite" aria-atomic="true">
+                  {searching
+                    ? "Find your notes"
+                    : view === "month"
+                      ? formatMonth(month)
+                      : "Your notes"}
+                </h2>
+                {!searching && view === "month" && (
+                  <div className="month-buttons">
+                    <button
+                      className="icon-button"
+                      type="button"
+                      aria-label="Previous month"
+                      onClick={() => setMonth(moveMonths(month, -1))}
+                    >
+                      <FiArrowLeft aria-hidden="true" />
+                    </button>
+                    <button
+                      className="icon-button"
+                      type="button"
+                      aria-label="Next month"
+                      onClick={() => setMonth(moveMonths(month, 1))}
+                    >
+                      <FiArrowRight aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="calendar-view-actions">
+                <Button
+                  variant="outline-secondary"
+                  className="theme-button-outline today-button"
+                  onClick={() => {
+                    setMonth(monthStart(todayKey()));
+                    setSelectedDate(todayKey());
+                    setQuery("");
+                  }}
+                >
+                  Today
+                </Button>
+                <div className="view-switch" role="group" aria-label="Calendar view">
+                  <button
+                    type="button"
+                    aria-pressed={!searching && view === "month"}
+                    onClick={() => {
+                      setView("month");
+                      setQuery("");
+                    }}
+                  >
+                    <FiCalendar aria-hidden="true" />
+                    Month
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={searching || view === "list"}
+                    onClick={() => setView("list")}
+                  >
+                    <FiList aria-hidden="true" />
+                    List
+                  </button>
+                </div>
+              </div>
+            </div>
+            {loading && !dates.length ? (
+              <div className="calendar-skeleton" role="status">
+                <span className="loading-ring" aria-hidden="true" />
+                <p>Bringing your notes together…</p>
+              </div>
+            ) : searching || view === "list" ? (
+              <NotesList
+                notes={filtered}
+                selectedDate={selectedDate}
+                onSelect={selectDay}
+                query={searching ? query.trim() : ""}
+                showPast={showPast}
+                onShowPastChange={setShowPast}
+              />
+            ) : (
+              <MainCalendar
+                today={today}
+                month={month}
+                selectedDate={selectedDate}
+                dates={dates}
+                onSelect={selectDay}
+                onMonthChange={(date) => setMonth(monthStart(date))}
+              />
+            )}
+            {!loading && !error && !dates.length && !searching && view === "month" && (
+              <p className="calendar-empty-hint">
+                Your calendar is a fresh page. Choose a day to leave your first note.
+              </p>
+            )}
+          </section>
+          <aside className="desktop-day-panel" aria-label="Selected day">
+            <NoteDetails {...detailsProps} />
+          </aside>
         </div>
-        {modalOpen && <AddDateModal open onClose={() => setModalOpen(false)} onCreate={create} />}
+        <footer className="planner-footer">
+          <span>One day at a time.</span>
+          <span>Made by Domalega</span>
+        </footer>
       </main>
-      <footer className="footer">
-        <Footer />
-      </footer>
+      <Offcanvas
+        show={mobileDay}
+        onHide={() => setMobileDay(false)}
+        onExited={() => {
+          const action = queuedDialog.current;
+          queuedDialog.current = null;
+          action?.();
+        }}
+        placement="end"
+        aria-labelledby="mobile-day-title"
+        className="planner-drawer mobile-day-drawer"
+      >
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title id="mobile-day-title">Your selected day</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <NoteDetails {...detailsProps} />
+        </Offcanvas.Body>
+      </Offcanvas>
+      {editor && (
+        <NoteEditor
+          {...editor}
+          onCreate={create}
+          onUpdate={update}
+          onClose={() => setEditor(null)}
+          onSaved={(date) => {
+            setEditor(null);
+            setSelectedDate(date);
+            setMonth(monthStart(date));
+            setMessage("Note saved.");
+          }}
+        />
+      )}
+      {deleting && (
+        <DeleteNoteDialog
+          date={deleting}
+          onDelete={remove}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => {
+            setDeleting(null);
+            setMessage("Note deleted.");
+          }}
+        />
+      )}
     </div>
   );
 }

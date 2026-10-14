@@ -202,6 +202,58 @@ test("duplicate dates and missing notes have distinct HTTP statuses", async (t) 
   );
 });
 
+test("updating a note validates input and scopes the write to its authenticated owner", async (t) => {
+  const update = t.mock.method(UserDate, "update", async () => [1]);
+  const authorization = `Bearer ${token}`;
+  assert.equal(
+    (
+      await request("/userDate/update", {
+        method: "PATCH",
+        body: { date: "2026-10-14", comment: "Updated" },
+      })
+    ).status,
+    401,
+  );
+  for (const body of [
+    { date: "2026-02-30", comment: "Updated" },
+    { date: "2026-10-14" },
+    { date: "2026-10-14", comment: null },
+    { date: "2026-10-14", comment: {} },
+    { date: "2026-10-14", comment: "x".repeat(256) },
+  ]) {
+    assert.equal(
+      (await request("/userDate/update", { method: "PATCH", authorization, body })).status,
+      400,
+    );
+  }
+  assert.equal(update.mock.callCount(), 0);
+  assert.equal(
+    (
+      await request("/userDate/update", {
+        method: "PATCH",
+        authorization,
+        body: { date: "2026-10-14", comment: "Updated", userId: 99, id: 99 },
+      })
+    ).status,
+    200,
+  );
+  assert.deepEqual(update.mock.calls[0].arguments, [
+    { comment: "Updated" },
+    { where: { userId: 7, date: "2026-10-14" } },
+  ]);
+  t.mock.method(UserDate, "update", async () => [0]);
+  assert.equal(
+    (
+      await request("/userDate/update", {
+        method: "PATCH",
+        authorization,
+        body: { date: "2026-10-14", comment: "" },
+      })
+    ).status,
+    404,
+  );
+});
+
 test("unknown routes and malformed JSON return JSON errors", async () => {
   const health = await request("/health");
   assert.equal(health.status, 200);

@@ -43,7 +43,7 @@ export default function useDates() {
       await datesApi.createDate(date, comment);
       await reload();
     } catch (error) {
-      handleError(error);
+      if (error.status === 401) handleError(error);
       throw error;
     }
   }
@@ -53,9 +53,19 @@ export default function useDates() {
       setDates((items) => items.filter((item) => item.date !== date));
       setError("");
     } catch (error) {
-      handleError(error);
+      if (error.status === 401) handleError(error);
       throw error;
     }
   }
-  return { dates, loading, error, reload, create, remove };
+  async function update(date, comment) {
+    try {
+      await datesApi.updateDate(date, comment);
+      setDates((items) => items.map((item) => (item.date === date ? { ...item, comment } : item)));
+      setError("");
+    } catch (error) {
+      if (error.status === 401) handleError(error);
+      throw error;
+    }
+  }
+  return { dates, loading, error, reload, create, update, remove };
 }

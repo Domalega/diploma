@@ -24,3 +24,12 @@ exports.delete = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.update = async (req, res, next) => {
+  try {
+    const { date, comment } = req.body;
+    res.json(await userDateService.update(req.user.id, date, comment));
+  } catch (error) {
+    next(error);
+  }
+};

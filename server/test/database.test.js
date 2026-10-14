@@ -107,13 +107,48 @@ test("real SQLite supports registration, login, persistence and private notes", 
     404,
   );
 
+  assert.equal(
+    (
+      await request("/userDate/update", {
+        method: "PATCH",
+        token: bob,
+        body: { ...note, comment: "Wrong owner" },
+      })
+    ).status,
+    404,
+  );
+  const edited = "Updated text\nWith another line";
+  assert.equal(
+    (
+      await request("/userDate/update", {
+        method: "PATCH",
+        token: alice,
+        body: { ...note, comment: edited },
+      })
+    ).status,
+    200,
+  );
+  // Saving the same value is still a successful update.
+  assert.equal(
+    (
+      await request("/userDate/update", {
+        method: "PATCH",
+        token: alice,
+        body: { ...note, comment: edited },
+      })
+    ).status,
+    200,
+  );
+  const updated = (await request("/userDate/get", { token: alice })).data;
+  assert.equal(updated[0].id, aliceNotes.data[0].id);
+  assert.equal(updated[0].comment, edited);
   // A separate connection reads the same disk file, proving writes were persisted.
   const reader = new Sequelize({ dialect: "sqlite", storage, logging: false });
   try {
     const persisted = await reader.query('SELECT date, comment FROM "userDates"', {
       type: QueryTypes.SELECT,
     });
-    assert.deepEqual(persisted, [{ date: note.date, comment: note.comment }]);
+    assert.deepEqual(persisted, [{ date: note.date, comment: edited }]);
   } finally {
     await reader.close();
   }

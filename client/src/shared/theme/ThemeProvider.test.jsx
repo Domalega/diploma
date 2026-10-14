@@ -162,7 +162,7 @@ test("auth, calendar and the profile menu share the same preference across navig
   fireEvent.click(screen.getByRole("link", { name: "Open calendar" }));
   expect(screen.getByLabelText("Theme")).toHaveValue("dark");
   select("light");
-  fireEvent.click(screen.getByRole("button", { name: "Profile" }));
+  fireEvent.click(screen.getByRole("button", { name: "Account" }));
   const dialog = await screen.findByRole("dialog");
   expect(within(dialog).getByRole("combobox", { name: "Theme" })).toHaveValue("light");
   fireEvent.change(within(dialog).getByRole("combobox", { name: "Theme" }), {

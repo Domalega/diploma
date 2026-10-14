@@ -28,6 +28,17 @@ router.post(
   userDateController.create,
 );
 router.get("/get", userDateController.getAll);
+router.patch(
+  "/update",
+  dateValidator(),
+  body("comment")
+    .isString()
+    .bail()
+    .isLength({ max: 255 })
+    .withMessage("Comment must not exceed 255 characters"),
+  validateRequest,
+  userDateController.update,
+);
 router.delete("/delete", dateValidator(), validateRequest, userDateController.delete);
 
 module.exports = router;

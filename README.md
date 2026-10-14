@@ -1,6 +1,6 @@
 # Online Calendar
 
-A personal calendar with user accounts, password recovery, notes by date, and browser notifications for today's notes while the calendar is open.
+A personal calendar with user accounts, password recovery, editable notes by date, search, a month view and a notes list. Browser notifications can remind you about today's note while the calendar is open.
 
 The theme follows your device by default. Choose System, Light, or Dark on the account pages or in the calendar; your preference is saved in your browser.
 
@@ -12,7 +12,7 @@ Originally created as a graduation thesis project. It is now being revisited to 
 
 ## Tech stack
 
-- **Frontend:** React 18, React Router, React Bootstrap, React Big Calendar, Moment.js.
+- **Frontend:** React 18, React Router, React Bootstrap, React Icons, native date handling.
 - **Backend:** Node.js, Express, Sequelize, JWT, bcrypt.
 - **Database:** SQLite for local use; PostgreSQL is also supported.
 - **Email:** Google Apps Script for password recovery.

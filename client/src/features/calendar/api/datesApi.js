@@ -14,3 +14,9 @@ export const deleteDate = (date) =>
     token: getToken(),
     body: { date },
   });
+export const updateDate = (date, comment) =>
+  request("/userDate/update", {
+    method: "PATCH",
+    token: getToken(),
+    body: { date, comment },
+  });

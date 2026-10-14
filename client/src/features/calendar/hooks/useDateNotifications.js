@@ -1,28 +1,43 @@
 import { useEffect, useRef } from "react";
-import moment from "moment";
-
-export default function useDateNotifications(dates, permissionVersion) {
+import { todayKey } from "../utils/calendarDates";
+export default function useDateNotifications(dates, enabled, permission) {
   const notified = useRef(new Set());
   useEffect(() => {
-    if (!("Notification" in window) || Notification.permission !== "granted") return;
-    const today = moment().format("YYYY-MM-DD");
-    dates
-      .filter((item) => item.date === today)
-      .forEach((item) => {
-        if (notified.current.has(item.id)) return;
-        try {
-          const notification = new Notification("Today", {
-            body: item.comment || "",
-            icon: `${process.env.PUBLIC_URL}/logo.png`,
-          });
-          notification.onclick = () => {
-            window.focus();
-            notification.close();
-          };
-          notified.current.add(item.id);
-        } catch {
-          // Some browsers expose Notification but cannot create desktop notifications.
-        }
+    if (!enabled || !("Notification" in window) || permission !== "granted") return;
+    function remind() {
+      if (Notification.permission !== "granted") return;
+      const today = todayKey();
+      notified.current.forEach((key) => {
+        if (!key.startsWith(today + ":")) notified.current.delete(key);
       });
-  }, [dates, permissionVersion]);
+      dates
+        .filter((item) => item.date === today)
+        .forEach((item) => {
+          const key = today + ":" + item.id;
+          if (notified.current.has(key)) return;
+          try {
+            const notification = new Notification("A note for today", {
+              body: item.comment || "Open your calendar to see today's note.",
+              icon: process.env.PUBLIC_URL + "/logo.png",
+            });
+            notification.onclick = () => {
+              window.focus();
+              notification.close();
+            };
+            notified.current.add(key);
+          } catch {
+            /* Some browsers expose the API but cannot create desktop notifications. */
+          }
+        });
+    }
+    remind();
+    const timer = window.setInterval(remind, 60000);
+    window.addEventListener("focus", remind);
+    document.addEventListener("visibilitychange", remind);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", remind);
+      document.removeEventListener("visibilitychange", remind);
+    };
+  }, [dates, enabled, permission]);
 }
