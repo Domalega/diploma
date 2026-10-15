@@ -131,6 +131,16 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
           (arranging ? " is-arranging" : "") +
           (compactGroup ? " has-stacked-calendar" : "")
         }
+        style={
+          compactGroup
+            ? {
+                "--dashboard-rows": visible
+                  .filter((id) => id !== "calendar")
+                  .map((id) => (id === "today" ? "286px" : "auto"))
+                  .join(" "),
+              }
+            : undefined
+        }
         role="group"
         aria-label={t("Calendar panels")}
       >

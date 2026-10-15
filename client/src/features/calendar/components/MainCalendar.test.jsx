@@ -7,7 +7,20 @@ test("date-only arithmetic handles leap years, month ends and DST without shifti
   expect(moveMonths("2026-01-31", 1)).toBe("2026-02-28");
   expect(moveMonths("2026-12-31", 1)).toBe("2027-01-31");
   expect(moveDays("2026-03-08", 1)).toBe("2026-03-09");
-  expect(monthDays("2026-02-01")).toHaveLength(35);
+  expect(monthDays("2026-02-01")).toHaveLength(42);
+});
+
+test("four-, five- and six-week months keep six full weeks without losing any dates", () => {
+  for (const month of ["2027-02-01", "2026-10-01", "2026-08-01"]) {
+    const days = monthDays(month);
+    expect(days).toHaveLength(42);
+    expect(new Set(days).size).toBe(42);
+    expect(new Date(days[0] + "T12:00:00").getDay()).toBe(1);
+    expect(new Date(days[41] + "T12:00:00").getDay()).toBe(0);
+    const last = moveDays(moveMonths(month, 1), -1);
+    expect(days).toContain(month);
+    expect(days).toContain(last);
+  }
 });
 test("arrow keys cross month boundaries with focus retained and Enter can select that day", () => {
   const select = jest.fn();

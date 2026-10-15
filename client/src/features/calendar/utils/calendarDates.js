@@ -45,10 +45,6 @@ export const formatMonth = (value, locale = "en") =>
 export function monthDays(value) {
   const first = monthStart(value);
   const start = moveDays(first, -((parseDate(first).getDay() + 6) % 7));
-  const last = parseDate(first);
-  last.setMonth(last.getMonth() + 1);
-  last.setDate(0);
-  const offset = (parseDate(first).getDay() + 6) % 7;
-  const count = Math.ceil((offset + last.getDate()) / 7) * 7;
-  return Array.from({ length: count }, (_, index) => moveDays(start, index));
+  // Keep six weeks visible so navigating between months never resizes the board.
+  return Array.from({ length: 42 }, (_, index) => moveDays(start, index));
 }

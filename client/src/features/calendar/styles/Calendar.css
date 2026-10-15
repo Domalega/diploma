@@ -362,8 +362,23 @@
   margin-bottom: 12px;
   font-variant-numeric: tabular-nums;
 }
+.note-paper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+}
+.note-paper-time,
+.note-paper p {
+  grid-column: 1;
+  min-width: 0;
+}
 .note-paper .detail-actions {
-  margin-top: 16px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  flex-wrap: nowrap;
+  gap: 0;
+  margin: 0;
 }
 .note-time-control {
   display: flex;

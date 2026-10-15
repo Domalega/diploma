@@ -54,22 +54,24 @@ export default function NoteDetails({
                   </div>
                   <p>{note.comment || t("No text added yet.")}</p>
                   <div className="detail-actions">
-                    <Button
-                      className="theme-button-outline"
-                      variant="outline-secondary"
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label={t("Edit note")}
+                      title={t("Edit note")}
                       onClick={() => onEdit(note)}
                     >
                       <FiEdit3 aria-hidden="true" />
-                      {t("Edit note")}
-                    </Button>
-                    <Button
-                      variant="outline-secondary"
-                      className="theme-button-outline delete-note-button"
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-button delete-note-button"
+                      aria-label={t("Delete")}
+                      title={t("Delete")}
                       onClick={() => onDelete(note)}
                     >
                       <FiTrash2 aria-hidden="true" />
-                      {t("Delete")}
-                    </Button>
+                    </button>
                   </div>
                 </article>
               </li>

@@ -82,9 +82,16 @@
 .has-stacked-calendar .tile-calendar {
   grid-row: span 2;
 }
+.planner .has-stacked-calendar {
+  grid-template-rows: var(--dashboard-rows);
+}
+.planner .has-stacked-calendar.is-arranging {
+  grid-template-rows: none;
+}
 .dashboard-tile.tile-today,
 .dashboard-tile.tile-notes {
   grid-column: span 4;
+  align-self: start;
 }
 .dashboard-tile.tile-medications {
   grid-column: 1 / -1;
@@ -159,6 +166,8 @@
 }
 .planner .tile-calendar .month-navigation h2 {
   font-size: 18px;
+  width: 185px;
+  flex-shrink: 0;
 }
 .planner .tile-calendar .day-cell {
   height: clamp(112px, calc((100svh - 320px) / 6), 128px);
@@ -176,6 +185,7 @@
 }
 .tile-today {
   background: var(--accent-soft);
+  align-self: start;
 }
 .current-date-tile {
   padding: 20px 24px;
@@ -183,8 +193,7 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  min-height: 190px;
-  height: 100%;
+  min-height: 220px;
 }
 .current-date-tile time {
   display: grid;
@@ -301,6 +310,7 @@
 @media (max-width: 1000px) {
   .planner .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
   }
   .dashboard-tile.tile-calendar,
   .dashboard-tile.tile-medications {
@@ -350,6 +360,11 @@
   .planner .tile-calendar .day-cell {
     height: 78px;
     min-height: 0;
+  }
+  .planner .tile-calendar .month-navigation h2 {
+    width: auto;
+    flex-shrink: 1;
+    font-size: clamp(14px, 4vw, 18px);
   }
   .planner .tile-notes .day-details {
     max-height: 480px;
