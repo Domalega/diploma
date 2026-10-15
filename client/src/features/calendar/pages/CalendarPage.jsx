@@ -34,6 +34,8 @@ import useMedicationTracker from "../../medications/hooks/useMedicationTracker";
 import useMedicationReminders from "../../medications/hooks/useMedicationReminders";
 import MedicationManager from "../../medications/components/MedicationManager";
 import MedicationMatrix from "../../medications/components/MedicationMatrix";
+import MedicationViewControl from "../../medications/components/MedicationViewControl";
+import useMedicationView from "../../medications/hooks/useMedicationView";
 import "../styles/Calendar.css";
 import useDeviceReminders from "../../../shared/reminders/useDeviceReminders";
 
@@ -51,6 +53,7 @@ export default function CalendarPage() {
   const [message, setMessage] = useState("");
   const [medicationManager, setMedicationManager] = useState(null);
   const [medicationExpanded, setMedicationExpanded] = useState(false);
+  const [medicationView, setMedicationView] = useMedicationView();
   const newNoteButton = useRef(null);
   const queuedDialog = useRef(null);
   const dialogWasOpen = useRef(false);
@@ -303,7 +306,6 @@ export default function CalendarPage() {
                   subtitle: formatDay(selectedDate, locale),
                   actions: (
                     <>
-                      <span className="experimental-badge">{t("Experimental")}</span>
                       <button
                         type="button"
                         className="icon-button"
@@ -322,8 +324,12 @@ export default function CalendarPage() {
                       </button>
                     </>
                   ),
+                  arrangeActions: (
+                    <MedicationViewControl value={medicationView} onChange={setMedicationView} />
+                  ),
                   content: (
                     <MedicationMatrix
+                      view={medicationView}
                       tracker={medications}
                       date={selectedDate}
                       onConfigure={configureMedications}
@@ -402,6 +408,7 @@ export default function CalendarPage() {
         </Modal.Header>
         <Modal.Body>
           <MedicationMatrix
+            view={medicationView}
             tracker={medications}
             date={selectedDate}
             onConfigure={configureMedications}

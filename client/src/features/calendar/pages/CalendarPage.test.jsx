@@ -284,3 +284,68 @@ test("medications, notes and today's date are independent tiles that share the s
   expect(screen.getByRole("button", { name: "Today", exact: true })).toBeInTheDocument();
   expect(panel().getByRole("heading", { name: formatDay(tomorrow) })).toBeInTheDocument();
 });
+
+test("tracker view is chosen only while arranging, persists after reopening, and experimental labels stay in Settings", async () => {
+  localStorage.setItem("daymark.medication-view.v1", "unknown");
+  useMedicationTracker.mockReturnValue({
+    plan: {
+      ...emptyPlan,
+      enabled: true,
+      slots: [{ id: "morning", time: "08:00", label: "Morning" }],
+      rows: [
+        {
+          id: "a",
+          name: "Example A",
+          detail: "",
+          weekdays: [0, 1, 2, 3, 4, 5, 6],
+          startDate: today,
+          slotIds: ["morning"],
+        },
+      ],
+    },
+    records: [],
+    todayRecords: [],
+    loading: false,
+    pending: false,
+    error: "",
+    reload: jest.fn(),
+    savePlan: jest.fn(),
+    mark: jest.fn(),
+  });
+  let view = mount();
+  await calendarReady();
+  const tile = () =>
+    within(screen.getByRole("region", { name: "Medication tracker", exact: true }));
+  expect(screen.queryByRole("group", { name: "Medication tracker view" })).not.toBeInTheDocument();
+  expect(tile().queryByText("Experimental")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
+  const controls = within(screen.getByRole("group", { name: "Medication tracker view" }));
+  expect(controls.getByRole("button", { name: "Auto" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(controls.getByRole("button", { name: "Buttons" }));
+  expect(tile().getByRole("list", { name: "Intake times" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Done arranging" }));
+  expect(screen.queryByRole("group", { name: "Medication tracker view" })).not.toBeInTheDocument();
+  view.unmount();
+  view = mount();
+  await calendarReady();
+  expect(tile().getByRole("list", { name: "Intake times" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Medication tracker view" })).getByRole("button", {
+      name: "Table",
+    }),
+  );
+  expect(tile().getByRole("table")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Done arranging" }));
+  view.unmount();
+  mount();
+  await calendarReady();
+  expect(tile().getByRole("table")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Manage medication schedule" }));
+  const manager = await screen.findByRole("dialog", { name: "Medication schedule" });
+  expect(within(manager).queryByText("Experimental")).not.toBeInTheDocument();
+  fireEvent.click(within(manager).getByRole("button", { name: "Close" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  fireEvent.click(screen.getByRole("button", { name: "Settings", exact: true }));
+  expect(await screen.findByRole("heading", { name: "Experimental options" })).toBeInTheDocument();
+});

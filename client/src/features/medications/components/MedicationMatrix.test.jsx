@@ -57,6 +57,7 @@ function Fixture({
   standalone = false,
   onConfigure = () => {},
   schedule = plan,
+  presentation = "auto",
 }) {
   const [records, setRecords] = useState(initial);
   const [pending, setPending] = useState(false);
@@ -93,6 +94,7 @@ function Fixture({
   }
   return (
     <MedicationMatrix
+      view={presentation}
       standalone={standalone}
       date={date}
       tracker={{ plan: schedule, records, pending, error, loading: false, mark, reload() {} }}
@@ -306,5 +308,45 @@ test("portrait intake buttons preserve marks and bulk actions when switching to 
   } finally {
     geometry.mockRestore();
     global.ResizeObserver = originalObserver;
+  }
+});
+
+test("explicit table and button views override the tile shape without losing marks", async () => {
+  let bounds = { width: 360, height: 600 };
+  const geometry = jest
+    .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+    .mockImplementation(() => bounds);
+  const fixture = (presentation) => (
+    <div className="dashboard-tile">
+      <Fixture standalone presentation={presentation} />
+    </div>
+  );
+  try {
+    const view = render(fixture("table"));
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Example A at 08:00/ }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Example A at 08:00/ })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+    view.rerender(fixture("auto"));
+    expect(screen.getByRole("list", { name: "Intake times" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Example A at 08:00/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    bounds = { width: 1000, height: 400 };
+    fireEvent(window, new Event("resize"));
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    view.rerender(fixture("buttons"));
+    expect(screen.getByRole("list", { name: "Intake times" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Example A at 08:00/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  } finally {
+    geometry.mockRestore();
   }
 });

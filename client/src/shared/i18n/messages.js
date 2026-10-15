@@ -55,6 +55,13 @@ export const ru = {
   Appearance: "Оформление",
   Notifications: "Уведомления",
   "Experimental options": "Экспериментальные опции",
+  "Medication tracker view": "Вид трекера препаратов",
+  Auto: "Авто",
+  Table: "Таблица",
+  Buttons: "Кнопки",
+  "Adapt to the tile shape": "Подбирать вид по форме плитки",
+  "Keep the table at any width": "Показывать таблицу при любой ширине",
+  "Show compact intake buttons": "Показывать компактные кнопки приёмов",
   "Timed notes remind you when their time arrives. All-day notes remind you when you open the calendar. Keep the calendar open to receive reminders.":
     "Заметки со временем напомнят о себе в назначенный час, а заметки на весь день — при открытии календаря. Для напоминаний держите календарь открытым.",
   "Notifications are unavailable in this browser.": "Этот браузер не поддерживает уведомления.",

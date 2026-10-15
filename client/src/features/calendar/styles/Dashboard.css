@@ -90,9 +90,6 @@
   min-width: 0;
 }
 @container (max-width: 500px) {
-  .dashboard-tile-actions .experimental-badge {
-    display: none;
-  }
   .dashboard-tile-label h2,
   .dashboard-tile-label p {
     white-space: nowrap;
@@ -140,9 +137,7 @@
   gap: 2px;
   flex-shrink: 0;
 }
-.dashboard-tile-actions .experimental-badge {
-  margin-right: 10px;
-}
+
 .dashboard-tile-actions .icon-button {
   padding: 0;
   flex-shrink: 0;
@@ -153,6 +148,11 @@
 .dashboard-tile-body {
   min-width: 0;
   flex: 1;
+}
+.dashboard-tile-options {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
 }
 .dashboard-tile.has-custom-height {
   height: var(--panel-height);
@@ -469,9 +469,7 @@
   .planner .tile-medications .dashboard-tile-body {
     padding: 12px;
   }
-  .tile-medications .dashboard-tile-actions .experimental-badge {
-    display: none;
-  }
+
   .planner .tile-calendar .day-cell {
     height: 78px;
     min-height: 0;

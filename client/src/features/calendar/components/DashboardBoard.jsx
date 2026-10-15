@@ -326,6 +326,9 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
                   )}
                 </div>
               </header>
+              {arranging && panel.arrangeActions && (
+                <div className="dashboard-tile-options">{panel.arrangeActions}</div>
+              )}
               <div className="dashboard-tile-body">{panel.content}</div>
               {arranging &&
                 (columns === GRID_COLUMNS ? ["e", "s", "se"] : ["s", "se"]).map((axis) => (

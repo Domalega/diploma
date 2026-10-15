@@ -15,6 +15,7 @@ export default function MedicationMatrix({
   onExpand,
   expanded = false,
   standalone = false,
+  view = "auto",
 }) {
   const { t, locale } = useLanguage();
   const helpId = useId();
@@ -40,7 +41,10 @@ export default function MedicationMatrix({
   const { plan, records, loading, pending, error, mark, reload } = tracker;
   const { rows, slots, marks, scheduled } = matrixForDay(plan, records, date);
   const busy = loading || pending;
-  const vertical = verticalSpace && rows.length > 0 && slots.length > 0;
+  const vertical =
+    (view === "buttons" || (view !== "table" && verticalSpace)) &&
+    rows.length > 0 &&
+    slots.length > 0;
   function celebrate(slot) {
     window.clearTimeout(timer.current);
     setCelebration({ id: slot.id, key: Date.now() });
@@ -260,7 +264,6 @@ export default function MedicationMatrix({
               <FiGrid aria-hidden="true" />
               {t("Medication tracker")}
             </h3>
-            <span className="experimental-badge">{t("Experimental")}</span>
           </div>
           <div className="medication-heading-actions">
             {!expanded && (

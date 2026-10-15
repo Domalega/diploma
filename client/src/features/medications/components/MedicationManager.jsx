@@ -136,10 +136,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
       className="planner-modal medication-manager"
     >
       <Modal.Header closeButton={!busy} closeLabel={t("Close")}>
-        <Modal.Title id="medication-manager-title">
-          {t("Medication schedule") + " "}
-          <span className="experimental-badge">{t("Experimental")}</span>
-        </Modal.Title>
+        <Modal.Title id="medication-manager-title">{t("Medication schedule")}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <div className="medication-manager-tabs" role="group" aria-label={t("Schedule section")}>
