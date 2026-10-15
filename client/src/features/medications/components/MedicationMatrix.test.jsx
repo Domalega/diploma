@@ -210,7 +210,7 @@ test("a completed request for the previous day does not celebrate on the newly s
 test("a tall narrow tile transposes time headings, preserves marks, and remaps add edges", async () => {
   const originalObserver = global.ResizeObserver;
   let notify;
-  let allocated = { width: 360, height: 650 };
+  let allocated = { width: 460, height: 586 };
   const observe = jest.fn();
   const disconnect = jest.fn();
   global.ResizeObserver = class {
@@ -224,15 +224,15 @@ test("a tall narrow tile transposes time headings, preserves marks, and remaps a
     .spyOn(HTMLElement.prototype, "getBoundingClientRect")
     .mockImplementation(function () {
       // Content is deliberately wide: only the tile's allocated space must drive orientation.
-      return this.classList.contains("dashboard-tile-body")
-        ? allocated
-        : { width: 1000, height: 200 };
+      return this.classList.contains("dashboard-tile") ? allocated : { width: 1000, height: 200 };
     });
   const onConfigure = jest.fn();
   try {
     const view = render(
-      <div className="dashboard-tile-body" data-testid="allocated-tile">
-        <Fixture standalone onConfigure={onConfigure} />
+      <div className="dashboard-tile" data-testid="allocated-tile">
+        <div className="dashboard-tile-body">
+          <Fixture standalone onConfigure={onConfigure} />
+        </div>
       </div>,
     );
     expect(observe).toHaveBeenCalledWith(screen.getByTestId("allocated-tile"));

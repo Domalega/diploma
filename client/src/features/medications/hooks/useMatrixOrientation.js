@@ -7,12 +7,14 @@ export default function useMatrixOrientation(enabled, standalone, expanded) {
   useEffect(() => {
     const element = ref.current;
     if (!enabled || !element) return;
-    const target = standalone ? element.closest(".dashboard-tile-body") || element : element;
+    const target = standalone
+      ? element.closest(".dashboard-tile") || element.closest(".dashboard-tile-body") || element
+      : element;
     function measure() {
       const { width, height } = target.getBoundingClientRect();
       setVertical((previous) => {
         if (!width || !height || (expanded && !standalone)) return false;
-        return previous ? width < 680 && height > width : width < 620 && height > width * 1.15;
+        return height > width * (previous ? 0.96 : 1.05);
       });
     }
     measure();

@@ -138,14 +138,18 @@ export default function MedicationMatrix({
             )}
           </span>
           <time dateTime={date + "T" + slot.time}>{slot.time}</time>
-          {slot.label && <span className="medication-slot-label">{slot.label}</span>}
+          {slot.label && (
+            <span className="medication-slot-label" title={slot.label}>
+              {slot.label}
+            </span>
+          )}
           <span className="medication-column-progress">
             {slot.historical ? (
               t("Archived")
             ) : complete ? (
               <>
                 <FiCheckCircle aria-hidden="true" />
-                {t("Taken")}
+                <span className="medication-progress-label">{t("Taken")}</span>
               </>
             ) : (
               done + "/" + due.length
@@ -158,8 +162,8 @@ export default function MedicationMatrix({
   function medicationLabel(row) {
     return (
       <>
-        <span>{row.name}</span>
-        {row.detail && <small>{row.detail}</small>}
+        <span title={row.name}>{row.name}</span>
+        {row.detail && <small title={row.detail}>{row.detail}</small>}
         {row.historical && <small>{t("Archived schedule")}</small>}
       </>
     );
@@ -288,7 +292,7 @@ export default function MedicationMatrix({
           </button>
         </div>
       ) : (
-        <div className="medication-table-frame" key={date}>
+        <div className={"medication-table-frame" + (vertical ? " is-transposed" : "")} key={date}>
           <div
             className="medication-table-scroll"
             tabIndex={0}
@@ -297,6 +301,7 @@ export default function MedicationMatrix({
           >
             <table
               className={"medication-table" + (vertical ? " is-transposed" : "")}
+              style={{ "--matrix-columns": vertical ? rows.length : slots.length }}
               aria-describedby={helpId}
             >
               <caption className="visually-hidden">

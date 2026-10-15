@@ -404,6 +404,9 @@
   display: flex;
   margin-bottom: 6px;
 }
+.tile-medications .medication-table-frame.is-transposed {
+  flex: 1;
+}
 .planner .tile-medications .medication-table-scroll {
   min-height: 0;
   max-height: none;
