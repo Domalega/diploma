@@ -1,6 +1,12 @@
 import { createEvent, fireEvent, render, screen, within } from "@testing-library/react";
 import DashboardBoard from "./DashboardBoard";
-import { normalizePanelOrder, PANEL_LAYOUT_KEY, PANEL_ORDER } from "../hooks/usePanelLayout";
+import {
+  normalizePanelOrder,
+  normalizePanelSizes,
+  PANEL_LAYOUT_KEY,
+  PANEL_SIZES_KEY,
+  PANEL_ORDER,
+} from "../hooks/usePanelLayout";
 
 const panels = {
   calendar: { title: "Calendar", content: <p>Month view</p> },
@@ -87,4 +93,111 @@ test("dragging moves only on release and Escape cancels without changing the sto
   } finally {
     document.elementFromPoint = original;
   }
+});
+
+test("keyboard resizing persists sizes, preserves drafts, and reset restores order and dimensions", () => {
+  let view = render(<DashboardBoard panels={panels} />);
+  expect(screen.queryByRole("button", { name: "Resize Notes panel" })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Unsaved test draft"), {
+    target: { value: "Keep this draft" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
+  const handle = screen.getByRole("button", { name: "Resize Notes panel" });
+  jest
+    .spyOn(screen.getByRole("region", { name: "Notes", exact: true }), "getBoundingClientRect")
+    .mockReturnValue({ height: 400 });
+  fireEvent.keyDown(handle, { key: "ArrowRight" });
+  fireEvent.keyDown(handle, { key: "ArrowDown" });
+  expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)).notes).toEqual({
+    columns: 5,
+    height: 440,
+  });
+  expect(screen.getByLabelText("Unsaved test draft")).toHaveValue("Keep this draft");
+  fireEvent.click(screen.getByRole("button", { name: "Done arranging" }));
+  expect(screen.getByRole("region", { name: "Notes", exact: true })).toHaveStyle({
+    "--panel-columns": "5",
+    "--panel-height": "440px",
+  });
+  view.unmount();
+  view = render(<DashboardBoard panels={panels} />);
+  expect(screen.getByRole("region", { name: "Notes", exact: true })).toHaveStyle({
+    "--panel-height": "440px",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
+  fireEvent.click(screen.getByRole("button", { name: "Reset layout" }));
+  expect(visibleOrder()).toEqual(PANEL_ORDER);
+  expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY))).toEqual({});
+  expect(screen.getByRole("region", { name: "Notes", exact: true })).not.toHaveClass(
+    "has-custom-height",
+  );
+});
+
+test("corner dragging previews without saving, Escape/cancel discard, and release commits", () => {
+  render(<DashboardBoard panels={panels} />);
+  fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
+  jest
+    .spyOn(screen.getByRole("group", { name: "Calendar panels" }), "getBoundingClientRect")
+    .mockReturnValue({ width: 1200 });
+  const tile = screen.getByRole("region", { name: "Today", exact: true });
+  jest.spyOn(tile, "getBoundingClientRect").mockReturnValue({ width: 400, height: 286 });
+  const handle = screen.getByRole("button", { name: "Resize Today panel" });
+  pointerEvent(handle, "pointerDown");
+  pointerEvent(handle, "pointerMove", { clientX: 300, clientY: 200 });
+  expect(tile).toHaveClass("is-resizing");
+  expect(localStorage.getItem(PANEL_SIZES_KEY)).toBeNull();
+  fireEvent.keyDown(window, { key: "Escape" });
+  pointerEvent(handle, "pointerUp");
+  expect(tile).not.toHaveClass("has-custom-height");
+  expect(localStorage.getItem(PANEL_SIZES_KEY)).toBeNull();
+  pointerEvent(handle, "pointerDown");
+  pointerEvent(handle, "pointerMove", { clientX: 300, clientY: 200 });
+  pointerEvent(handle, "pointerCancel");
+  expect(localStorage.getItem(PANEL_SIZES_KEY)).toBeNull();
+  pointerEvent(handle, "pointerDown");
+  pointerEvent(handle, "pointerMove", { clientX: 300, clientY: 200 });
+  pointerEvent(handle, "pointerUp");
+  expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)).today).toEqual({
+    columns: 6,
+    height: 380,
+  });
+});
+
+test("small screens change height without overwriting the saved desktop width", () => {
+  const width = window.innerWidth;
+  window.innerWidth = 480;
+  localStorage.setItem(PANEL_SIZES_KEY, JSON.stringify({ today: { columns: 5, height: 300 } }));
+  try {
+    render(<DashboardBoard panels={panels} />);
+    fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
+    const handle = screen.getByRole("button", { name: "Resize Today panel" });
+    fireEvent.keyDown(handle, { key: "ArrowLeft" });
+    fireEvent.keyDown(handle, { key: "ArrowDown" });
+    expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)).today).toEqual({
+      columns: 5,
+      height: 340,
+    });
+  } finally {
+    window.innerWidth = width;
+  }
+});
+
+test("saved dimensions are bounded, unknown panels are ignored, and hidden tiles keep their sizes", () => {
+  expect(
+    normalizePanelSizes({
+      today: { columns: -9, height: 9000 },
+      calendar: { columns: 99, height: 1 },
+      notes: { columns: true, height: "400" },
+      unknown: { columns: 4 },
+    }),
+  ).toEqual({ today: { columns: 3, height: 1600 }, calendar: { columns: 12, height: 600 } });
+  expect(normalizePanelSizes([])).toEqual({});
+  localStorage.setItem(
+    PANEL_SIZES_KEY,
+    JSON.stringify({ medications: { columns: 6, height: 460 } }),
+  );
+  const view = render(<DashboardBoard panels={{ ...panels, medications: null }} />);
+  view.rerender(<DashboardBoard panels={panels} />);
+  expect(screen.getByRole("region", { name: "Medication tracker", exact: true })).toHaveStyle({
+    "--panel-height": "460px",
+  });
 });

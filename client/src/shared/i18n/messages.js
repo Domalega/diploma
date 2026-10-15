@@ -145,8 +145,13 @@ export const ru = {
   "The server did not return an access token": "Сервер не вернул данные для входа",
   "Go to today": "К сегодняшнему дню",
   "Drag a handle or use the arrows.": "Перетаскивайте за значок или используйте стрелки.",
-  "Default panel layout restored.": "Исходный порядок панелей восстановлен.",
-  "Reset layout": "Сбросить порядок",
+  "Default panel layout restored.": "Исходное расположение и размеры панелей восстановлены.",
+  "Reset layout": "Сбросить раскладку",
+  "Resize {panel} panel": "Изменить размер панели «{panel}»",
+  "Drag this corner to resize. Arrow keys change width and height. Escape cancels. On small screens only height changes.":
+    "Перетащите угол для изменения размера. Стрелки меняют ширину и высоту. Escape отменяет изменение. На небольших экранах меняется только высота.",
+  "{panel} resized to {columns}/12 width and {height}px height.":
+    "Размер панели «{panel}»: ширина {columns}/12, высота {height} пикселей.",
   "Done arranging": "Готово",
   "Arrange panels": "Расположение панелей",
   "Calendar panels": "Панели календаря",

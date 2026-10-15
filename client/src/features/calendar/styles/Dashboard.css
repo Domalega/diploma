@@ -85,9 +85,6 @@
 .planner .has-stacked-calendar {
   grid-template-rows: var(--dashboard-rows);
 }
-.planner .has-stacked-calendar.is-arranging {
-  grid-template-rows: none;
-}
 .dashboard-tile.tile-today,
 .dashboard-tile.tile-notes {
   grid-column: span 4;
@@ -150,6 +147,113 @@
 .dashboard-tile-body {
   min-width: 0;
   flex: 1;
+}
+.dashboard-tile.has-custom-height {
+  height: var(--panel-height);
+}
+.has-custom-height .dashboard-tile-body {
+  min-height: 0;
+  overflow: auto;
+  scrollbar-color: var(--border-strong) var(--surface);
+}
+.planner .has-custom-height.tile-today .current-date-tile {
+  height: 100%;
+  min-height: 0;
+  padding: 16px 20px;
+}
+.has-custom-height .current-date-number {
+  font-size: clamp(48px, calc((var(--panel-height) - 150px) * 0.7), 100px);
+}
+.planner .has-custom-height.tile-notes .day-details,
+.has-custom-height .medication-table-scroll {
+  max-height: none;
+}
+.planner .has-custom-height.tile-calendar .calendar-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+.has-custom-height.tile-calendar .calendar-toolbar {
+  flex-shrink: 0;
+}
+.has-custom-height.tile-calendar .month-grid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 428px;
+}
+.has-custom-height.tile-calendar .month-grid thead {
+  flex-shrink: 0;
+}
+.has-custom-height.tile-calendar .month-grid tbody {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: repeat(6, minmax(64px, 1fr));
+}
+.has-custom-height.tile-calendar .month-grid tr {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.has-custom-height.tile-calendar .month-grid td {
+  min-width: 0;
+  min-height: 0;
+}
+.planner .has-custom-height.tile-calendar .day-cell {
+  height: 100%;
+  min-height: 0;
+}
+.panel-resize-handle {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+.panel-resize-handle:hover {
+  background: var(--accent-soft);
+}
+.panel-resize-handle > svg {
+  width: 17px;
+  height: 17px;
+}
+.dashboard-tile.is-resizing {
+  outline: 2px solid var(--accent);
+}
+.panel-size-preview {
+  position: absolute;
+  right: 32px;
+  bottom: 6px;
+  z-index: 6;
+  padding: 5px 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 11px;
+  pointer-events: none;
+}
+@media (min-width: 1001px) {
+  .planner .dashboard-tile.has-custom-width {
+    grid-column: span var(--panel-columns);
+  }
+}
+@media (pointer: coarse) {
+  .panel-resize-handle {
+    width: 44px;
+    height: 44px;
+  }
 }
 .planner .dashboard-tile .calendar-card {
   background: transparent;
