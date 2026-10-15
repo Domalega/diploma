@@ -8,12 +8,16 @@ export default function useMedicationTracker(date, today) {
   const [plan, setPlan] = useState(emptyPlan);
   const [recordsByDate, setRecords] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loadedSelection, setLoadedSelection] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const epoch = useRef(0);
   const controller = useRef(null);
   const mutating = useRef(false);
+  const refreshAfterWrite = useRef(false);
+  const latestReload = useRef(null);
+  const selection = date + ":" + today;
   const handleError = useCallback(
     (error) => {
       if (error.status === 401) navigate(LOGIN_ROUTE, { replace: true });
@@ -22,6 +26,10 @@ export default function useMedicationTracker(date, today) {
     [navigate],
   );
   const reload = useCallback(async () => {
+    if (mutating.current) {
+      refreshAfterWrite.current = true;
+      return;
+    }
     controller.current?.abort();
     const abort = new AbortController();
     controller.current = abort;
@@ -37,12 +45,14 @@ export default function useMedicationTracker(date, today) {
       if (abort.signal.aborted || current !== epoch.current) return;
       setPlan((previous) => (previous.revision > saved.revision ? previous : saved));
       setRecords((previous) => ({ ...previous, ...Object.fromEntries(entries) }));
+      setLoadedSelection(date + ":" + today);
     } catch (error) {
       if (!abort.signal.aborted && current === epoch.current) handleError(error);
     } finally {
       if (current === epoch.current) setLoading(false);
     }
   }, [date, today, handleError]);
+  latestReload.current = reload;
   useEffect(() => {
     reload();
     return () => controller.current?.abort();
@@ -63,6 +73,10 @@ export default function useMedicationTracker(date, today) {
     } finally {
       mutating.current = false;
       setPending(false);
+      if (refreshAfterWrite.current) {
+        refreshAfterWrite.current = false;
+        latestReload.current();
+      }
     }
   }
   function savePlan(changes) {
@@ -97,7 +111,7 @@ export default function useMedicationTracker(date, today) {
     plan,
     records: recordsByDate[date] || [],
     todayRecords: recordsByDate[today] || [],
-    loading,
+    loading: loading || (!error && loadedSelection !== selection),
     pending,
     error,
     reload,

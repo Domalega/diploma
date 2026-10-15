@@ -213,6 +213,32 @@
 .medication-table .medication-add-column,
 .medication-table td:last-child:not(:first-child) {
   min-width: 46px;
+  width: 46px;
+}
+.medication-tracker:not(.is-expanded) .medication-table th,
+.medication-tracker:not(.is-expanded) .medication-table td {
+  min-width: 64px;
+  padding: 4px;
+}
+.medication-tracker:not(.is-expanded) .medication-table .medication-name-column {
+  min-width: 80px;
+  width: 80px;
+  max-width: 110px;
+  padding: 8px;
+}
+.medication-tracker:not(.is-expanded) .medication-column-button {
+  min-width: 54px;
+}
+.medication-tracker:not(.is-expanded) .medication-column-progress {
+  flex-wrap: wrap;
+}
+.medication-tracker:not(.is-expanded) .medication-add-column,
+.medication-tracker:not(.is-expanded) .medication-table td:last-child:not(:first-child) {
+  min-width: 40px;
+  width: 40px;
+}
+.medication-tracker:not(.is-expanded) .medication-table tfoot td {
+  padding: 0;
 }
 .medication-add-row {
   display: inline-flex;
@@ -558,6 +584,9 @@
   }
 }
 @media (max-width: 600px) {
+  .is-expanded .medication-table .medication-name-column {
+    width: 110px;
+  }
   .medication-form-columns {
     grid-template-columns: 1fr;
   }

@@ -2,7 +2,13 @@ import { useEffect, useRef } from "react";
 import { todayKey } from "../../calendar/utils/calendarDates";
 import { intakeKey, isDue } from "../utils/schedule";
 
-export default function useMedicationReminders(plan, records, permission, ready) {
+export default function useMedicationReminders(
+  plan,
+  records,
+  permission,
+  ready,
+  recordsDate = todayKey(),
+) {
   const sent = useRef(new Set());
   useEffect(() => {
     sent.current.clear();
@@ -20,6 +26,7 @@ export default function useMedicationReminders(plan, records, permission, ready)
       if (Notification.permission !== "granted") return;
       const date = todayKey(),
         now = new Date();
+      if (date !== recordsDate) return;
       const clock =
         String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
       const marks = new Set(
@@ -88,5 +95,5 @@ export default function useMedicationReminders(plan, records, permission, ready)
       window.removeEventListener("focus", remind);
       document.removeEventListener("visibilitychange", remind);
     };
-  }, [plan, records, permission, ready]);
+  }, [plan, records, permission, ready, recordsDate]);
 }

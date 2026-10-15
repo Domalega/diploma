@@ -15,6 +15,9 @@ export default function MedicationMatrix({
   const [celebration, setCelebration] = useState(null);
   const [announcement, setAnnouncement] = useState("");
   const timer = useRef(null);
+  const context = date + ":" + tracker?.plan.enabled + ":" + tracker?.plan.revision;
+  const latestContext = useRef(context);
+  latestContext.current = context;
   useEffect(() => () => window.clearTimeout(timer.current), []);
   useEffect(() => {
     setCelebration(null);
@@ -32,12 +35,14 @@ export default function MedicationMatrix({
     timer.current = window.setTimeout(() => setCelebration(null), 2400);
   }
   async function toggle(row, slot) {
+    const startedIn = context;
     const taken = !marks.has(intakeKey(row.id, slot.id));
     const column = rows.filter((item) => scheduled(item, slot));
     const completes =
       taken && column.every((item) => item.id === row.id || marks.has(intakeKey(item.id, slot.id)));
     try {
       await mark({ date, medicationId: row.id, slotId: slot.id, taken });
+      if (latestContext.current !== startedIn) return;
       if (!taken) {
         window.clearTimeout(timer.current);
         setCelebration(null);
@@ -52,8 +57,10 @@ export default function MedicationMatrix({
     }
   }
   async function toggleColumn(slot, complete) {
+    const startedIn = context;
     try {
       await mark({ date, slotId: slot.id, taken: !complete }, true);
+      if (latestContext.current !== startedIn) return;
       if (!complete) celebrate(slot);
       else {
         window.clearTimeout(timer.current);
@@ -202,7 +209,7 @@ export default function MedicationMatrix({
                             ) : complete ? (
                               <>
                                 <FiCheckCircle aria-hidden="true" />
-                                All taken · undo
+                                Taken
                               </>
                             ) : (
                               done + "/" + due.length

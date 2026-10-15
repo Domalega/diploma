@@ -1,12 +1,12 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import useMedicationTracker from "./useMedicationTracker";
 import * as api from "../api/medicationApi";
 import { emptyPlan } from "../utils/schedule";
 jest.mock("../api/medicationApi");
 beforeEach(() => jest.resetAllMocks());
-function Probe({ date = "2026-10-14" }) {
-  const tracker = useMedicationTracker(date, "2026-10-14");
+function Probe({ date = "2026-10-14", today = "2026-10-14" }) {
+  const tracker = useMedicationTracker(date, today);
   return (
     <>
       <p data-testid="plan">
@@ -54,6 +54,39 @@ test("the default stays disabled, enabling saves its revision and a different da
   );
   await waitFor(() => expect(screen.getByTestId("today-count")).toHaveTextContent("1"));
   expect(screen.getByTestId("count")).toHaveTextContent("0");
+});
+
+test("switching days during a write waits for it before loading the new day's marks", async () => {
+  api.getPlan.mockResolvedValue({ ...emptyPlan, userId: 7, enabled: true, revision: 4 });
+  api.getIntakes.mockResolvedValue([]);
+  let finish;
+  api.markCell.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const view = render(
+    <MemoryRouter>
+      <Probe />
+    </MemoryRouter>,
+  );
+  await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
+  fireEvent.click(screen.getByText("Mark"));
+  view.rerender(
+    <MemoryRouter>
+      <Probe date="2026-10-15" today="2026-10-15" />
+    </MemoryRouter>,
+  );
+  expect(screen.getByTestId("loading")).toHaveTextContent("true");
+  expect(api.getPlan).toHaveBeenCalledTimes(1);
+  api.getIntakes.mockResolvedValue([{ medicationId: "b", slotId: "morning", date: "2026-10-15" }]);
+  await act(async () =>
+    finish({ records: [{ medicationId: "a", slotId: "morning", date: "2026-10-14" }] }),
+  );
+  await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
+  expect(api.getIntakes).toHaveBeenLastCalledWith("2026-10-15", expect.any(AbortSignal));
+  expect(screen.getByTestId("today-count")).toHaveTextContent("1");
 });
 test("failed intake writes preserve marks and a successful write sends the schedule revision", async () => {
   api.getPlan.mockResolvedValue({ ...emptyPlan, userId: 7, enabled: true, revision: 4 });

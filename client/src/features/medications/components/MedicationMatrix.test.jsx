@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import MedicationMatrix from "./MedicationMatrix";
 import { EVERY_DAY, matrixForDay } from "../utils/schedule";
@@ -166,4 +166,21 @@ test("removed rows and columns still show the snapshots of previously recorded i
   expect(result.rows[0]).toMatchObject({ name: "Previous label", historical: true });
   expect(result.slots[0]).toMatchObject({ time: "09:00", historical: true });
   expect(result.scheduled(result.rows[0], result.slots[0])).toBe(false);
+});
+
+test("a completed request for the previous day does not celebrate on the newly selected day", async () => {
+  let finish;
+  const mark = jest.fn(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const tracker = { plan, records: [], loading: false, pending: false, mark };
+  const view = render(<MedicationMatrix date={date} tracker={tracker} />);
+  fireEvent.click(screen.getByRole("button", { name: /Mark all scheduled medications at 08:00/ }));
+  view.rerender(<MedicationMatrix date="2026-10-15" tracker={tracker} />);
+  await act(async () => finish([]));
+  expect(screen.queryByTestId("medication-column-completion")).not.toBeInTheDocument();
+  expect(screen.getByRole("status", { name: "Medication update" })).toBeEmptyDOMElement();
 });

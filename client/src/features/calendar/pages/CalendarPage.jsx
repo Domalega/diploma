@@ -51,6 +51,7 @@ export default function CalendarPage() {
     medications.todayRecords,
     notifications.permission,
     !medications.loading && !medications.pending && !medications.error,
+    today,
   );
   const selectedNotes = dates.filter((note) => note.date === selectedDate).sort(compareNotes);
   const ready = !loading && !error;

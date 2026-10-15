@@ -41,8 +41,14 @@ afterEach(() => {
   window.Notification = original;
   jest.useRealTimers();
 });
-function Fixture({ schedule = plan, records = [], ready = true, permission = "granted" }) {
-  useMedicationReminders(schedule, records, permission, ready);
+function Fixture({
+  schedule = plan,
+  records = [],
+  ready = true,
+  permission = "granted",
+  recordsDate,
+}) {
+  useMedicationReminders(schedule, records, permission, ready, recordsDate);
   return null;
 }
 test("reminders wait for the slot time, omit medication names and skip previously taken cells", () => {
@@ -91,4 +97,32 @@ test("notification deduplication survives remounts and remains scoped to the acc
   expect(Notification).toHaveBeenCalledTimes(2);
   view.rerender(<Fixture schedule={{ ...plan, userId: 8, reminders: false }} />);
   expect(jest.getTimerCount()).toBe(0);
+});
+
+test("a timer crossing midnight waits for records belonging to the new local day", () => {
+  jest.setSystemTime(new Date(2026, 9, 14, 23, 59));
+  const schedule = {
+    ...plan,
+    slots: [{ id: "midnight", time: "00:00" }],
+    rows: [{ ...plan.rows[0], slotIds: ["midnight"] }],
+  };
+  const view = render(
+    <Fixture
+      schedule={schedule}
+      recordsDate="2026-10-14"
+      records={[{ date: "2026-10-14", medicationId: "a", slotId: "midnight" }]}
+    />,
+  );
+  act(() => jest.advanceTimersByTime(60000));
+  expect(Notification).not.toHaveBeenCalled();
+  view.rerender(
+    <Fixture
+      schedule={schedule}
+      recordsDate="2026-10-15"
+      records={[{ date: "2026-10-15", medicationId: "a", slotId: "midnight" }]}
+    />,
+  );
+  expect(Notification).not.toHaveBeenCalled();
+  view.rerender(<Fixture schedule={schedule} recordsDate="2026-10-15" />);
+  expect(Notification).toHaveBeenCalledTimes(1);
 });
