@@ -148,7 +148,7 @@ export default function MainCalendar({
           ))}
         </tbody>
       </table>
-      <p id="calendar-keyboard-help" className="keyboard-help">
+      <p id="calendar-keyboard-help" className="visually-hidden">
         {t(
           "Use arrow keys to explore dates, Enter to open a day, and Page Up / Down to change months.",
         )}

@@ -403,7 +403,6 @@
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
-.keyboard-help,
 .calendar-empty-hint {
   font-size: 10px;
   color: var(--muted);
@@ -902,9 +901,6 @@
   .note-dot {
     width: 6px;
     height: 6px;
-  }
-  .keyboard-help {
-    display: none;
   }
   .calendar-empty-hint {
     padding: 16px;

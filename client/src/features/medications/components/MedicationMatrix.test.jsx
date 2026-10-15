@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState } from "react";
 import MedicationMatrix from "./MedicationMatrix";
 import { EVERY_DAY, matrixForDay } from "../utils/schedule";
@@ -30,6 +30,27 @@ const plan = {
     },
   ],
 };
+
+test("edge actions open the correct schedule editor without permanent add rows or columns", () => {
+  const onConfigure = jest.fn();
+  render(
+    <MedicationMatrix
+      date={date}
+      tracker={{ plan, records: [], loading: false }}
+      onConfigure={onConfigure}
+    />,
+  );
+  const table = screen.getByRole("table");
+  expect(within(table).getAllByRole("columnheader")).toHaveLength(3);
+  expect(within(table).getAllByRole("rowgroup")).toHaveLength(2);
+  expect(table).toHaveAccessibleDescription(
+    "Times follow your device's local clock. Unscheduled cells stay empty.",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Add intake time" }));
+  expect(onConfigure).toHaveBeenLastCalledWith({ section: "times", create: true });
+  fireEvent.click(screen.getByRole("button", { name: "Add medication" }));
+  expect(onConfigure).toHaveBeenLastCalledWith({ section: "medications", create: true });
+});
 function Fixture({ fail = false, initial = [] }) {
   const [records, setRecords] = useState(initial);
   const [pending, setPending] = useState(false);

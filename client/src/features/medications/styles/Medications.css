@@ -51,6 +51,106 @@
   outline: 3px solid var(--focus-border);
   outline-offset: 3px;
 }
+.medication-table-frame {
+  position: relative;
+}
+.matrix-add-control {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary-text);
+  cursor: pointer;
+}
+.matrix-add-column {
+  top: 12px;
+  right: -24px;
+  width: 24px;
+  height: calc(100% - 24px);
+  min-height: 44px;
+}
+.matrix-add-row {
+  bottom: -24px;
+  left: 12px;
+  width: calc(100% - 24px);
+  height: 24px;
+}
+.matrix-add-affordance,
+.matrix-add-caption {
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 160ms,
+    transform 160ms;
+}
+.matrix-add-affordance {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: var(--primary-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--focus-shadow);
+  transform: scale(0.8);
+}
+.matrix-add-affordance svg {
+  width: 16px;
+  height: 16px;
+}
+.matrix-add-caption {
+  position: absolute;
+  padding: 5px 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.matrix-add-column .matrix-add-caption {
+  right: calc(100% + 3px);
+}
+.matrix-add-row .matrix-add-caption {
+  bottom: calc(100% + 3px);
+}
+.matrix-add-control.is-revealed:not(:disabled) .matrix-add-affordance,
+.matrix-add-control.is-revealed:not(:disabled) .matrix-add-caption {
+  opacity: 1;
+  transform: scale(1);
+}
+.medication-tracker .matrix-add-control:focus-visible {
+  outline: 0;
+  box-shadow: none;
+}
+.matrix-add-control:focus-visible .matrix-add-affordance {
+  outline: 3px solid var(--focus-border);
+  outline-offset: 3px;
+}
+.matrix-add-control:disabled {
+  pointer-events: none;
+}
+@media (pointer: coarse) {
+  .matrix-add-column {
+    width: 44px;
+    right: -30px;
+  }
+  .matrix-add-row {
+    height: 44px;
+    bottom: -30px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .matrix-add-affordance,
+  .matrix-add-caption {
+    transition: none;
+  }
+}
 .medication-table {
   border-collapse: separate;
   border-spacing: 0;
@@ -210,11 +310,6 @@
 .medication-unscheduled {
   color: var(--muted);
 }
-.medication-table .medication-add-column,
-.medication-table td:last-child:not(:first-child) {
-  min-width: 46px;
-  width: 46px;
-}
 .medication-tracker:not(.is-expanded):not(.is-standalone) .medication-table th,
 .medication-tracker:not(.is-expanded):not(.is-standalone) .medication-table td {
   min-width: 64px;
@@ -234,37 +329,6 @@
 .medication-tracker:not(.is-expanded):not(.is-standalone) .medication-column-progress {
   flex-wrap: wrap;
 }
-.medication-tracker:not(.is-expanded):not(.is-standalone) .medication-add-column,
-.medication-tracker:not(.is-expanded):not(.is-standalone)
-  .medication-table
-  td:last-child:not(:first-child) {
-  min-width: 40px;
-  width: 40px;
-}
-.medication-tracker:not(.is-expanded):not(.is-standalone) .medication-table tfoot td {
-  padding: 0;
-}
-.medication-add-row {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 44px;
-  background: transparent;
-  color: var(--accent);
-  border: 0;
-  font-size: 12px;
-}
-.medication-add-row:hover {
-  background: var(--accent-soft);
-}
-.medication-table tfoot td {
-  border-bottom: 0;
-  padding: 0;
-  text-align: left;
-}
-.medication-table-help,
 .medication-manager-help {
   color: var(--muted);
   font-size: 11px;
@@ -328,10 +392,6 @@
 .is-standalone .medication-table th,
 .is-standalone .medication-table td {
   min-width: 100px;
-}
-.is-standalone .medication-table .medication-add-column,
-.is-standalone .medication-table td:last-child:not(:first-child) {
-  min-width: 46px;
 }
 .is-standalone .medication-dose {
   width: 48px;

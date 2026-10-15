@@ -1,9 +1,10 @@
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
-import { useEffect, useRef, useState } from "react";
-import { FiCheck, FiCheckCircle, FiGrid, FiMaximize2, FiPlus, FiSettings } from "react-icons/fi";
+import { useEffect, useId, useRef, useState } from "react";
+import { FiCheck, FiCheckCircle, FiGrid, FiMaximize2, FiSettings } from "react-icons/fi";
 import { formatDay } from "../../calendar/utils/calendarDates";
 import { intakeKey, matrixForDay } from "../utils/schedule";
 import TimeSymbol from "./TimeSymbol";
+import MatrixAddControl from "./MatrixAddControl";
 import "../styles/Medications.css";
 
 export default function MedicationMatrix({
@@ -15,6 +16,7 @@ export default function MedicationMatrix({
   standalone = false,
 }) {
   const { t, locale } = useLanguage();
+  const helpId = useId();
 
   const [celebration, setCelebration] = useState(null);
   const [announcement, setAnnouncement] = useState("");
@@ -150,14 +152,14 @@ export default function MedicationMatrix({
           </button>
         </div>
       ) : (
-        <>
+        <div className="medication-table-frame" key={date}>
           <div
             className="medication-table-scroll"
             tabIndex={0}
             role="region"
             aria-label={t("Scroll medication table")}
           >
-            <table className="medication-table">
+            <table className="medication-table" aria-describedby={helpId}>
               <caption className="visually-hidden">
                 {t(
                   "Medication intake for {date}. Select a cell to mark or undo an intake; select a column heading to mark or undo all scheduled items in that column.",
@@ -236,23 +238,12 @@ export default function MedicationMatrix({
                       </th>
                     );
                   })}
-                  <th scope="col" className="medication-add-column">
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label={t("Add intake time")}
-                      disabled={busy}
-                      onClick={() => onConfigure({ section: "times", create: true })}
-                    >
-                      <FiPlus aria-hidden="true" />
-                    </button>
-                  </th>
                 </tr>
               </thead>
               <tbody>
                 {!rows.length && (
                   <tr>
-                    <td colSpan={slots.length + 2} className="medication-empty-day">
+                    <td colSpan={slots.length + 1} className="medication-empty-day">
                       {t("No medications are scheduled for this day.")}
                     </td>
                   </tr>
@@ -318,36 +309,29 @@ export default function MedicationMatrix({
                         </td>
                       );
                     })}
-                    <td aria-hidden="true" />
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr>
-                  <td colSpan={slots.length + 2}>
-                    <button
-                      type="button"
-                      className="medication-add-row"
-                      disabled={busy}
-                      onClick={() =>
-                        onConfigure({
-                          section: plan.slots.length ? "medications" : "times",
-                          create: true,
-                        })
-                      }
-                    >
-                      <FiPlus aria-hidden="true" />
-                      {t("Add medication")}
-                    </button>
-                  </td>
-                </tr>
-              </tfoot>
             </table>
           </div>
-          <p className="medication-table-help">
+          <MatrixAddControl
+            axis="column"
+            label={t("Add intake time")}
+            disabled={busy}
+            onAdd={() => onConfigure({ section: "times", create: true })}
+          />
+          <MatrixAddControl
+            axis="row"
+            label={t("Add medication")}
+            disabled={busy}
+            onAdd={() =>
+              onConfigure({ section: plan.slots.length ? "medications" : "times", create: true })
+            }
+          />
+          <p id={helpId} className="visually-hidden">
             {t("Times follow your device's local clock. Unscheduled cells stay empty.")}
           </p>
-        </>
+        </div>
       )}
       <span role="status" aria-label={t("Medication update")} className="visually-hidden">
         {announcement}
