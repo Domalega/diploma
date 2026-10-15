@@ -8,7 +8,7 @@ The theme follows your device by default. Choose System, Light, or Dark on the s
 
 The interface supports English and Russian. The language follows your browser by default; choose System, Russian, or English on the sign-in page or in Settings. Your choice is saved in the browser.
 
-The calendar, current date, notes and medication tracker use independent tiles. Choose **Arrange panels** to move tiles and drag their bottom-right corners to resize them. A focused resize handle also supports arrow keys; Escape cancels a drag. Order and sizes are saved in your browser; **Reset layout** restores both. Width adapts automatically on small screens. The medication table spans the full workspace width by default.
+The calendar, current date, notes and medication tracker use independent tiles. Choose **Arrange panels** to drag tiles into open space or resize them using a side, bottom edge or corner. Neighbouring tiles automatically make room. Focused handles support arrow keys; Escape cancels a drag. Positions and sizes are saved in your browser; **Reset layout** restores the defaults. Smaller screens use a separate adaptive arrangement and preserve desktop widths.
 
 Enable **Settings → Experimental options → Medication tracker** to create a personal intake table. Add medications, intake times and repeating weekdays, with optional course dates. Mark individual cells or a whole time column; completing a column plays a short animation. Previous marks remain when a schedule is changed or disabled. Optional reminders use your device's local clock and work while the calendar is open.
 
@@ -24,7 +24,7 @@ The [roadmap](docs/ROADMAP.md) describes the planned Kanban view.
 
 ## Tech stack
 
-- **Frontend:** React 18, React Router, React Bootstrap, React Icons, native date handling.
+- **Frontend:** React 18, React Router, React Bootstrap, React Icons, [React Grid Layout core](https://github.com/react-grid-layout/react-grid-layout) for collision handling, native date handling.
 - **Backend:** Node.js, Express, Sequelize, JWT, bcrypt.
 - **Database:** SQLite for local use; PostgreSQL is also supported.
 - **Email:** Google Apps Script for password recovery.

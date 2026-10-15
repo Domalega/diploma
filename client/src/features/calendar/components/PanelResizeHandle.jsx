@@ -1,9 +1,17 @@
 import { useEffect, useId, useRef } from "react";
 import { FiMaximize2 } from "react-icons/fi";
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
-import { clampPanelSize, PANEL_COLUMNS } from "../hooks/usePanelLayout";
+import { clampPanelSize, PANEL_COLUMNS } from "../utils/panelLayoutConfig";
 
-export default function PanelResizeHandle({ id, title, size, onPreview, onResize }) {
+export default function PanelResizeHandle({
+  id,
+  title,
+  size,
+  onPreview,
+  onResize,
+  axis = "se",
+  widthEnabled = true,
+}) {
   const { t } = useLanguage();
   const helpId = useId();
   const pointer = useRef(null);
@@ -27,8 +35,16 @@ export default function PanelResizeHandle({ id, title, size, onPreview, onResize
     <>
       <button
         type="button"
-        className="panel-resize-handle"
-        aria-label={t("Resize {panel} panel", { panel: title })}
+        className={"panel-resize-handle panel-resize-" + axis}
+        tabIndex={axis === "se" ? 0 : -1}
+        aria-label={t(
+          axis === "e"
+            ? "Resize width of {panel}"
+            : axis === "s"
+              ? "Resize height of {panel}"
+              : "Resize {panel} panel",
+          { panel: title },
+        )}
         aria-describedby={helpId}
         title={t("Resize {panel} panel", { panel: title })}
         onPointerDown={(event) => {
@@ -43,7 +59,7 @@ export default function PanelResizeHandle({ id, title, size, onPreview, onResize
             gridWidth: grid.getBoundingClientRect().width,
             gap: parseFloat(window.getComputedStyle(grid).columnGap) || 16,
             columns: size?.columns || PANEL_COLUMNS[id],
-            horizontal: window.innerWidth > 1000,
+            horizontal: widthEnabled && axis !== "s",
             next: null,
           };
           event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -61,7 +77,10 @@ export default function PanelResizeHandle({ id, title, size, onPreview, onResize
                   (start.gridWidth + start.gap)) *
                 12
               : start.columns,
-            height: Math.round((start.rect.height + event.clientY - start.y) / 20) * 20,
+            height:
+              axis === "e"
+                ? start.rect.height
+                : Math.round((start.rect.height + event.clientY - start.y) / 20) * 20,
           });
           onPreview(start.next);
         }}
@@ -75,13 +94,14 @@ export default function PanelResizeHandle({ id, title, size, onPreview, onResize
           if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
           event.preventDefault();
           const horizontal = ["ArrowLeft", "ArrowRight"].includes(event.key);
-          if (horizontal && window.innerWidth <= 1000) return;
+          if ((horizontal && (!widthEnabled || axis === "s")) || (!horizontal && axis === "e"))
+            return;
           const rect = dimensions(event.currentTarget);
           onResize(
             clampPanelSize(id, {
               columns:
                 (size?.columns || PANEL_COLUMNS[id]) +
-                (horizontal ? (event.key === "ArrowLeft" ? -1 : 1) : 0),
+                (horizontal ? (event.key === "ArrowLeft" ? -0.5 : 0.5) : 0),
               height:
                 (size?.height || rect.height) +
                 (!horizontal ? (event.key === "ArrowUp" ? -40 : 40) : 0),

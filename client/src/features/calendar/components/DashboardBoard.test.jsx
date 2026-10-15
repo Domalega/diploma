@@ -5,6 +5,7 @@ import {
   normalizePanelSizes,
   PANEL_LAYOUT_KEY,
   PANEL_SIZES_KEY,
+  PANEL_POSITIONS_KEY,
   PANEL_ORDER,
 } from "../hooks/usePanelLayout";
 
@@ -34,13 +35,14 @@ test("moving with the controls or keyboard preserves panel content and persists 
   fireEvent.keyDown(screen.getByRole("button", { name: "Drag Medication tracker panel" }), {
     key: "ArrowUp",
   });
-  expect(visibleOrder()).toEqual(["calendar", "medications", "today", "notes"]);
+  const savedOrder = visibleOrder();
+  expect(JSON.parse(localStorage.getItem(PANEL_POSITIONS_KEY))).toHaveProperty("medications");
   expect(screen.getByLabelText("Unsaved test draft")).toHaveValue("Still editing");
   expect(JSON.parse(localStorage.getItem(PANEL_LAYOUT_KEY))).toEqual(visibleOrder());
   expect(screen.getByRole("button", { name: "Drag Medication tracker panel" })).toHaveFocus();
   view.unmount();
   view = render(<DashboardBoard panels={panels} />);
-  expect(visibleOrder()).toEqual(["calendar", "medications", "today", "notes"]);
+  expect(visibleOrder()).toEqual(savedOrder);
   fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
   fireEvent.click(screen.getByRole("button", { name: "Reset layout" }));
   expect(visibleOrder()).toEqual(PANEL_ORDER);
@@ -88,7 +90,7 @@ test("dragging moves only on release and Escape cancels without changing the sto
     pointerEvent(handle, "pointerUp", { clientX: 130 });
     expect(visibleOrder()).toEqual(["medications", "calendar", "today", "notes"]);
     expect(screen.getByRole("status", { name: "Panel layout update" })).toHaveTextContent(
-      "Medication tracker moved before Calendar",
+      "Medication tracker position saved.",
     );
   } finally {
     document.elementFromPoint = original;
@@ -109,27 +111,27 @@ test("keyboard resizing persists sizes, preserves drafts, and reset restores ord
   fireEvent.keyDown(handle, { key: "ArrowRight" });
   fireEvent.keyDown(handle, { key: "ArrowDown" });
   expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)).notes).toEqual({
-    columns: 5,
-    height: 440,
+    columns: 4.5,
+    height: 464,
   });
   expect(screen.getByLabelText("Unsaved test draft")).toHaveValue("Keep this draft");
   fireEvent.click(screen.getByRole("button", { name: "Done arranging" }));
   expect(screen.getByRole("region", { name: "Notes", exact: true })).toHaveStyle({
-    "--panel-columns": "5",
-    "--panel-height": "440px",
+    "--panel-columns": "4.5",
+    "--panel-height": "464px",
   });
   view.unmount();
   view = render(<DashboardBoard panels={panels} />);
   expect(screen.getByRole("region", { name: "Notes", exact: true })).toHaveStyle({
-    "--panel-height": "440px",
+    "--panel-height": "464px",
   });
   fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
   fireEvent.click(screen.getByRole("button", { name: "Reset layout" }));
   expect(visibleOrder()).toEqual(PANEL_ORDER);
   expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY))).toEqual({});
-  expect(screen.getByRole("region", { name: "Notes", exact: true })).not.toHaveClass(
-    "has-custom-height",
-  );
+  expect(screen.getByRole("region", { name: "Notes", exact: true })).toHaveStyle({
+    height: "424px",
+  });
 });
 
 test("corner dragging previews without saving, Escape/cancel discard, and release commits", () => {
@@ -147,7 +149,7 @@ test("corner dragging previews without saving, Escape/cancel discard, and releas
   expect(localStorage.getItem(PANEL_SIZES_KEY)).toBeNull();
   fireEvent.keyDown(window, { key: "Escape" });
   pointerEvent(handle, "pointerUp");
-  expect(tile).not.toHaveClass("has-custom-height");
+  expect(tile).toHaveStyle({ height: "284px" });
   expect(localStorage.getItem(PANEL_SIZES_KEY)).toBeNull();
   pointerEvent(handle, "pointerDown");
   pointerEvent(handle, "pointerMove", { clientX: 300, clientY: 200 });
@@ -158,7 +160,7 @@ test("corner dragging previews without saving, Escape/cancel discard, and releas
   pointerEvent(handle, "pointerUp");
   expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)).today).toEqual({
     columns: 6,
-    height: 380,
+    height: 384,
   });
 });
 
@@ -174,11 +176,37 @@ test("small screens change height without overwriting the saved desktop width", 
     fireEvent.keyDown(handle, { key: "ArrowDown" });
     expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)).today).toEqual({
       columns: 5,
-      height: 340,
+      height: 344,
     });
   } finally {
     window.innerWidth = width;
   }
+});
+
+test("side and bottom handles change only their own dimension", () => {
+  render(<DashboardBoard panels={panels} />);
+  fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
+  jest
+    .spyOn(screen.getByRole("group", { name: "Calendar panels" }), "getBoundingClientRect")
+    .mockReturnValue({ width: 1200 });
+  const tile = screen.getByRole("region", { name: "Today", exact: true });
+  jest.spyOn(tile, "getBoundingClientRect").mockReturnValue({ width: 400, height: 284 });
+  const side = screen.getByRole("button", { name: "Resize width of Today" });
+  pointerEvent(side, "pointerDown");
+  pointerEvent(side, "pointerMove", { clientX: 200, clientY: 400 });
+  pointerEvent(side, "pointerUp");
+  expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)).today).toEqual({
+    columns: 5,
+    height: 284,
+  });
+  const bottom = screen.getByRole("button", { name: "Resize height of Today" });
+  pointerEvent(bottom, "pointerDown");
+  pointerEvent(bottom, "pointerMove", { clientX: 500, clientY: 180 });
+  pointerEvent(bottom, "pointerUp");
+  expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)).today).toEqual({
+    columns: 5,
+    height: 364,
+  });
 });
 
 test("saved dimensions are bounded, unknown panels are ignored, and hidden tiles keep their sizes", () => {
@@ -189,7 +217,7 @@ test("saved dimensions are bounded, unknown panels are ignored, and hidden tiles
       notes: { columns: true, height: "400" },
       unknown: { columns: 4 },
     }),
-  ).toEqual({ today: { columns: 3, height: 1600 }, calendar: { columns: 12, height: 600 } });
+  ).toEqual({ today: { columns: 2, height: 1600 }, calendar: { columns: 12, height: 600 } });
   expect(normalizePanelSizes([])).toEqual({});
   localStorage.setItem(
     PANEL_SIZES_KEY,
@@ -198,6 +226,6 @@ test("saved dimensions are bounded, unknown panels are ignored, and hidden tiles
   const view = render(<DashboardBoard panels={{ ...panels, medications: null }} />);
   view.rerender(<DashboardBoard panels={panels} />);
   expect(screen.getByRole("region", { name: "Medication tracker", exact: true })).toHaveStyle({
-    "--panel-height": "460px",
+    "--panel-height": "464px",
   });
 });

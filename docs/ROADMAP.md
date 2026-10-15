@@ -2,7 +2,7 @@
 
 ## Current foundation
 
-The workspace has movable, resizable calendar, date, notes and medication tiles. Tile order and sizes are browser preferences, separate from the notes and medication data. Resizing does not remount tile content or change note dates. Small screens keep an adaptive column layout and preserve desktop width preferences.
+The workspace has movable, resizable calendar, date, notes and medication tiles on a collision-aware grid. Tiles can move into open space, push neighbours aside and resize using an edge or corner. Positions, order and sizes are browser preferences, separate from the notes and medication data. Resizing does not remount tile content or change note dates. Small screens keep an adaptive arrangement and preserve desktop positions and widths.
 
 ## Planned direction: a Kanban view
 

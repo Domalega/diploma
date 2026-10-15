@@ -148,6 +148,11 @@ export const ru = {
   "Default panel layout restored.": "Исходное расположение и размеры панелей восстановлены.",
   "Reset layout": "Сбросить раскладку",
   "Resize {panel} panel": "Изменить размер панели «{panel}»",
+  "Resize width of {panel}": "Изменить ширину панели «{panel}»",
+  "Resize height of {panel}": "Изменить высоту панели «{panel}»",
+  "{panel} position saved.": "Положение панели «{panel}» сохранено.",
+  "Drag into an open space. Arrow keys move across the grid. Escape cancels; neighbouring tiles make room automatically.":
+    "Перетащите в свободное место. Стрелки перемещают по сетке. Escape отменяет перенос; соседние плитки автоматически освобождают место.",
   "Drag this corner to resize. Arrow keys change width and height. Escape cancels. On small screens only height changes.":
     "Перетащите угол для изменения размера. Стрелки меняют ширину и высоту. Escape отменяет изменение. На небольших экранах меняется только высота.",
   "{panel} resized to {columns}/12 width and {height}px height.":
