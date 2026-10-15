@@ -1,9 +1,8 @@
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
-import { FiArrowUpRight } from "react-icons/fi";
 import { parseDate } from "../utils/calendarDates";
 
-export default function CurrentDateTile({ today, onToday }) {
-  const { t, locale } = useLanguage();
+export default function CurrentDateTile({ today }) {
+  const { locale } = useLanguage();
 
   const day = parseDate(today);
   return (
@@ -17,10 +16,6 @@ export default function CurrentDateTile({ today, onToday }) {
           {day.toLocaleDateString(locale, { month: "long", year: "numeric" })}
         </span>
       </time>
-      <button type="button" className="current-date-link" onClick={onToday}>
-        {t("Go to today") + " "}
-        <FiArrowUpRight aria-hidden="true" />
-      </button>
     </div>
   );
 }

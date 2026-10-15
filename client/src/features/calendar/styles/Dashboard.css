@@ -60,6 +60,7 @@
   position: relative;
 }
 .dashboard-tile {
+  container-type: inline-size;
   min-width: 0;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -84,6 +85,34 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+}
+.dashboard-tile-label > div {
+  min-width: 0;
+}
+@container (max-width: 500px) {
+  .dashboard-tile-actions .experimental-badge {
+    display: none;
+  }
+  .dashboard-tile-label h2,
+  .dashboard-tile-label p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+@container (max-width: 260px) {
+  .planner .has-custom-height.tile-today .current-date-tile {
+    padding: 12px;
+  }
+  .current-date-tile time {
+    column-gap: 10px;
+  }
+  .current-date-tile .current-date-weekday {
+    font-size: 12px;
+  }
+  .current-date-tile .current-date-month {
+    font-size: 10px;
+  }
 }
 .dashboard-tile-icon {
   color: var(--accent);
@@ -139,7 +168,7 @@
   padding: 16px 20px;
 }
 .has-custom-height .current-date-number {
-  font-size: clamp(48px, calc((var(--panel-height) - 150px) * 0.7), 100px);
+  font-size: clamp(48px, calc((var(--panel-height) - 90px) * 0.7), 72px);
 }
 .planner .has-custom-height.tile-notes .day-details,
 .has-custom-height .medication-table-scroll {
@@ -299,8 +328,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  min-height: 220px;
+  justify-content: center;
+  min-height: 80px;
 }
 .current-date-tile time {
   display: grid;
@@ -327,20 +356,6 @@
   font-size: 12px;
   padding-top: 6px;
   align-self: start;
-}
-.current-date-link {
-  border: 0;
-  background: transparent;
-  color: var(--accent);
-  padding: 8px 0;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px !important;
-}
-.current-date-link:hover {
-  text-decoration: underline;
 }
 .notes-panel-content {
   outline: 0;
@@ -373,6 +388,26 @@
 }
 .planner .tile-medications .dashboard-tile-body {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.tile-medications .medication-tracker.is-standalone {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tile-medications .medication-table-frame {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  margin-bottom: 6px;
+}
+.planner .tile-medications .medication-table-scroll {
+  min-height: 0;
+  max-height: none;
+  width: 100%;
 }
 .is-arranging .dashboard-tile {
   outline: 1px dashed var(--border-strong);
@@ -412,7 +447,7 @@
 }
 @media (max-width: 1000px) {
   .current-date-tile {
-    min-height: 160px;
+    min-height: 80px;
   }
 }
 @media (max-width: 600px) {

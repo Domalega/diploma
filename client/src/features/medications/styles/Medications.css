@@ -207,6 +207,41 @@
   font-weight: 400;
   line-height: 1.6;
 }
+.medication-table.is-transposed .medication-time-column {
+  position: sticky;
+  left: 0;
+  width: 100px;
+  min-width: 100px;
+  max-width: 120px;
+  background: var(--surface);
+  z-index: 1;
+}
+.medication-table.is-transposed thead .medication-time-column {
+  background: var(--surface-alt);
+  z-index: 3;
+  font-size: 11px;
+}
+.medication-table.is-transposed .medication-transposed-name {
+  min-width: 110px;
+  max-width: 160px;
+  padding: 12px;
+  overflow-wrap: anywhere;
+}
+.medication-transposed-name > span,
+.medication-transposed-name small {
+  display: block;
+}
+.medication-transposed-name small {
+  margin-top: 5px;
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--muted);
+}
+.medication-table.is-transposed .medication-column-button {
+  min-height: 88px;
+  gap: 3px;
+  padding: 5px 3px;
+}
 .medication-column-button {
   position: relative;
   display: flex;

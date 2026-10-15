@@ -16,6 +16,7 @@ export {
 export const PANEL_LAYOUT_KEY = "daymark.panel-layout.v1";
 export const PANEL_SIZES_KEY = "daymark.panel-sizes.v1";
 export const PANEL_POSITIONS_KEY = "daymark.panel-positions.v1";
+export const COMPACT_DATE_KEY = "daymark.compact-date.v1";
 function readLayout() {
   try {
     return normalizePanelOrder(JSON.parse(localStorage.getItem(PANEL_LAYOUT_KEY)));
@@ -27,7 +28,15 @@ export default function usePanelLayout() {
   const [order, setOrder] = useState(readLayout);
   const [sizes, setSizes] = useState(() => {
     try {
-      return normalizePanelSizes(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)));
+      const saved = normalizePanelSizes(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY)));
+      if (!localStorage.getItem(COMPACT_DATE_KEY)) {
+        if (saved.today?.height) {
+          saved.today.height = 164;
+          localStorage.setItem(PANEL_SIZES_KEY, JSON.stringify(saved));
+        }
+        localStorage.setItem(COMPACT_DATE_KEY, "true");
+      }
+      return saved;
     } catch {
       return {};
     }

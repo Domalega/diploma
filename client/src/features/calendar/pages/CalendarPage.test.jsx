@@ -279,5 +279,8 @@ test("medications, notes and today's date are independent tiles that share the s
   expect(screen.getByRole("region", { name: "Today", exact: true })).toHaveTextContent(
     new Date(today + "T12:00:00").getDate().toString(),
   );
+  const dateTile = screen.getByRole("region", { name: "Today", exact: true });
+  expect(within(dateTile).queryByRole("button")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Today", exact: true })).toBeInTheDocument();
   expect(panel().getByRole("heading", { name: formatDay(tomorrow) })).toBeInTheDocument();
 });

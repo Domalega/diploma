@@ -329,7 +329,9 @@ export const ru = {
     "Все запланированные приёмы на {time} отмечены.",
   "{name} at {time} marked as taken.": "Приём «{name}» в {time} отмечен.",
   "{name} at {time} unchecked.": "Отметка «{name}» в {time} отменена.",
-  "The {time} column was unchecked.": "Отметки в столбце {time} отменены.",
+  "Intakes at {time} were unchecked.": "Отметки приёма на {time} отменены.",
+  "Uncheck all intakes at this time": "Отменить все отметки на это время",
+  "Mark all intakes at this time as taken": "Отметить все приёмы на это время",
   "Medication intakes": "Таблица приёма препаратов",
   "Reload tracker": "Обновить таблицу",
   "Medication tracker loading": "Загрузка таблицы приёма",
@@ -338,8 +340,8 @@ export const ru = {
     "Добавьте время приёма и препараты, чтобы создать таблицу.",
   "Set up tracker": "Настроить таблицу",
   "Scroll medication table": "Прокрутка таблицы приёма",
-  "Medication intake for {date}. Select a cell to mark or undo an intake; select a column heading to mark or undo all scheduled items in that column.":
-    "Приём препаратов за {date}. Нажмите ячейку, чтобы отметить приём или отменить отметку. Заголовок столбца отмечает все запланированные приёмы в нём или отменяет отметки.",
+  "Medication intake for {date}. Select a cell to mark or undo an intake; select a time heading to mark or undo all scheduled items at that time.":
+    "Приём препаратов за {date}. Нажмите ячейку, чтобы отметить приём или отменить отметку. Заголовок времени отмечает все запланированные приёмы на это время или отменяет отметки.",
   Medication: "Препарат",
   "Uncheck scheduled medications at {time}{label}": "Отменить отметки приёма на {time}{label}",
   "Mark all scheduled medications at {time}{label}": "Отметить все приёмы на {time}{label}",

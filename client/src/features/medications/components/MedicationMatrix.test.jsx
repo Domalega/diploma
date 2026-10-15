@@ -51,7 +51,7 @@ test("edge actions open the correct schedule editor without permanent add rows o
   fireEvent.click(screen.getByRole("button", { name: "Add medication" }));
   expect(onConfigure).toHaveBeenLastCalledWith({ section: "medications", create: true });
 });
-function Fixture({ fail = false, initial = [] }) {
+function Fixture({ fail = false, initial = [], standalone = false, onConfigure = () => {} }) {
   const [records, setRecords] = useState(initial);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -87,9 +87,10 @@ function Fixture({ fail = false, initial = [] }) {
   }
   return (
     <MedicationMatrix
+      standalone={standalone}
       date={date}
       tracker={{ plan, records, pending, error, loading: false, mark, reload() {} }}
-      onConfigure={() => {}}
+      onConfigure={onConfigure}
       onExpand={() => {}}
     />
   );
@@ -114,7 +115,7 @@ test("unscheduled cells cannot be marked and a column celebrates only when its l
       "All scheduled items for 08:00",
     ),
   );
-  expect(screen.getByTestId("medication-column-completion")).toBeInTheDocument();
+  expect(await screen.findByTestId("medication-column-completion")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: /Uncheck scheduled medications at 08:00/ }));
   await waitFor(() =>
     expect(screen.getByRole("button", { name: /Example A at 08:00/ })).toHaveAttribute(
@@ -204,4 +205,82 @@ test("a completed request for the previous day does not celebrate on the newly s
   await act(async () => finish([]));
   expect(screen.queryByTestId("medication-column-completion")).not.toBeInTheDocument();
   expect(screen.getByRole("status", { name: "Medication update" })).toBeEmptyDOMElement();
+});
+
+test("a tall narrow tile transposes time headings, preserves marks, and remaps add edges", async () => {
+  const originalObserver = global.ResizeObserver;
+  let notify;
+  let allocated = { width: 360, height: 650 };
+  const observe = jest.fn();
+  const disconnect = jest.fn();
+  global.ResizeObserver = class {
+    constructor(callback) {
+      notify = callback;
+    }
+    observe = observe;
+    disconnect = disconnect;
+  };
+  const geometry = jest
+    .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+    .mockImplementation(function () {
+      // Content is deliberately wide: only the tile's allocated space must drive orientation.
+      return this.classList.contains("dashboard-tile-body")
+        ? allocated
+        : { width: 1000, height: 200 };
+    });
+  const onConfigure = jest.fn();
+  try {
+    const view = render(
+      <div className="dashboard-tile-body" data-testid="allocated-tile">
+        <Fixture standalone onConfigure={onConfigure} />
+      </div>,
+    );
+    expect(observe).toHaveBeenCalledWith(screen.getByTestId("allocated-tile"));
+    expect(screen.getByRole("table")).toHaveClass("is-transposed");
+    expect(screen.getByRole("columnheader", { name: "Example A" })).toBeInTheDocument();
+    expect(screen.getByRole("rowheader", { name: /08:00/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add medication" })).toHaveClass("matrix-add-column");
+    expect(screen.getByRole("button", { name: "Add intake time" })).toHaveClass("matrix-add-row");
+    fireEvent.click(screen.getByRole("button", { name: "Add medication" }));
+    expect(onConfigure).toHaveBeenLastCalledWith({ section: "medications", create: true });
+    fireEvent.click(screen.getByRole("button", { name: "Add intake time" }));
+    expect(onConfigure).toHaveBeenLastCalledWith({ section: "times", create: true });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Mark all scheduled medications at 08:00/ }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Example B at 08:00/ })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+    expect(await screen.findByTestId("medication-column-completion")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Example B at 22:00/ })).not.toBeInTheDocument();
+    allocated = { width: 640, height: 650 };
+    act(() => notify());
+    expect(screen.getByRole("table")).toHaveClass("is-transposed");
+    allocated = { width: 900, height: 400 };
+    act(() => notify());
+    expect(screen.getByRole("table")).not.toHaveClass("is-transposed");
+    expect(screen.getByRole("columnheader", { name: /08:00/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Example B at 08:00/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Add medication" })).toHaveClass("matrix-add-row");
+    allocated = { width: 360, height: 650 };
+    act(() => notify());
+    fireEvent.click(screen.getByRole("button", { name: /Uncheck scheduled medications at 08:00/ }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Example A at 08:00/ })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      ),
+    );
+    view.unmount();
+    expect(disconnect).toHaveBeenCalled();
+  } finally {
+    geometry.mockRestore();
+    global.ResizeObserver = originalObserver;
+  }
 });

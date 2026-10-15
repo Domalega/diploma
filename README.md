@@ -10,7 +10,7 @@ The interface supports English and Russian. The language follows your browser by
 
 The calendar, current date, notes and medication tracker use independent tiles. Choose **Arrange panels** to drag tiles into open space or resize them using a side, bottom edge or corner. Neighbouring tiles automatically make room. Focused handles support arrow keys; Escape cancels a drag. Positions and sizes are saved in your browser; **Reset layout** restores the defaults. Smaller screens use a separate adaptive arrangement and preserve desktop widths.
 
-Enable **Settings → Experimental options → Medication tracker** to create a personal intake table. Add medications, intake times and repeating weekdays, with optional course dates. Mark individual cells or a whole time column; completing a column plays a short animation. Previous marks remain when a schedule is changed or disabled. Optional reminders use your device's local clock and work while the calendar is open.
+Enable **Settings → Experimental options → Medication tracker** to create a personal intake table. Add medications, intake times and repeating weekdays, with optional course dates. The table automatically places times in rows when its tile is narrow and tall. Mark individual cells or all medications at a time using its heading; completing a time slot plays a short animation. Previous marks remain when a schedule is changed or disabled. Optional reminders use your device's local clock and work while the calendar is open.
 
 [Live demo](https://domalega.github.io/diploma/) · [API health](https://diploma-api-zozr.onrender.com/api/health)
 

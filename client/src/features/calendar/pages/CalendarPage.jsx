@@ -279,17 +279,7 @@ export default function CalendarPage() {
             today: {
               title: t("Today"),
               icon: <FiClock />,
-              content: (
-                <CurrentDateTile
-                  today={today}
-                  onToday={() => {
-                    setMonth(monthStart(today));
-                    setSelectedDate(today);
-                    setSelectedNoteId(null);
-                    setQuery("");
-                  }}
-                />
-              ),
+              content: <CurrentDateTile today={today} />,
             },
             notes: {
               title: t("Notes"),
