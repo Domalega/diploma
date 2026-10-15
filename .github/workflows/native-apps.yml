@@ -26,6 +26,14 @@ jobs:
           gradle-version: "8.11.1"
       - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - run: gradle -p apps/android testDebugUnitTest assembleDebug --no-daemon
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          disable-animations: true
+          script: gradle -p apps/android connectedDebugAndroidTest --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: Daymark-Android-preview

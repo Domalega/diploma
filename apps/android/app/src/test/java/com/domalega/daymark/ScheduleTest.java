@@ -41,4 +41,11 @@ public class ScheduleTest {
         assertEquals(8, next.getHour());
         assertEquals(ZoneOffset.ofHours(1), next.getOffset());
     }
+    @Test public void skipsSeveralMarkedWeeklyOccurrencesWithoutStoppingTheSchedule() throws Exception {
+        JSONObject p = plan();
+        p.getJSONArray("rules").getJSONObject(0).put("weekdays", new JSONArray("[1]"));
+        p.getJSONObject("marks").put("2026-10-19", new JSONArray().put("med:1:am"));
+        p.getJSONObject("marks").put("2026-10-26", new JSONArray().put("med:1:am"));
+        assertEquals(date("2026-11-02T08:00"), Schedule.next(p, date("2026-10-15T12:00")));
+    }
 }

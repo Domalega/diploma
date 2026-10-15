@@ -49,7 +49,7 @@ public final class Schedule {
             LocalDate start = LocalDate.parse(r.getString("startDate"));
             LocalDate first = start.isAfter(after.toLocalDate()) ? start : after.toLocalDate();
             // Marks can skip dates; scan past all retained marks, not just one week.
-            int horizon = 8 + (plan.optJSONObject("marks") == null ? 0 : plan.getJSONObject("marks").length());
+            int horizon = 8 + 7 * (plan.optJSONObject("marks") == null ? 0 : plan.getJSONObject("marks").length());
             for (int d = 0; d < horizon; d++) {
                 LocalDate day = first.plusDays(d);
                 ZonedDateTime at = day.atTime(LocalTime.parse(r.getString("time"))).atZone(after.getZone());
