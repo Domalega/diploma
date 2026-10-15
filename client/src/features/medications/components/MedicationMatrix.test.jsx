@@ -51,7 +51,13 @@ test("edge actions open the correct schedule editor without permanent add rows o
   fireEvent.click(screen.getByRole("button", { name: "Add medication" }));
   expect(onConfigure).toHaveBeenLastCalledWith({ section: "medications", create: true });
 });
-function Fixture({ fail = false, initial = [], standalone = false, onConfigure = () => {} }) {
+function Fixture({
+  fail = false,
+  initial = [],
+  standalone = false,
+  onConfigure = () => {},
+  schedule = plan,
+}) {
   const [records, setRecords] = useState(initial);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -63,7 +69,7 @@ function Fixture({ fail = false, initial = [], standalone = false, onConfigure =
         throw new Error("Could not save intake");
       }
       const ids = whole
-        ? plan.rows.filter((row) => row.slotIds.includes(values.slotId)).map((row) => row.id)
+        ? schedule.rows.filter((row) => row.slotIds.includes(values.slotId)).map((row) => row.id)
         : [values.medicationId];
       setRecords((previous) => {
         const remaining = previous.filter(
@@ -89,7 +95,7 @@ function Fixture({ fail = false, initial = [], standalone = false, onConfigure =
     <MedicationMatrix
       standalone={standalone}
       date={date}
-      tracker={{ plan, records, pending, error, loading: false, mark, reload() {} }}
+      tracker={{ plan: schedule, records, pending, error, loading: false, mark, reload() {} }}
       onConfigure={onConfigure}
       onExpand={() => {}}
     />
@@ -207,7 +213,7 @@ test("a completed request for the previous day does not celebrate on the newly s
   expect(screen.getByRole("status", { name: "Medication update" })).toBeEmptyDOMElement();
 });
 
-test("a tall narrow tile transposes time headings, preserves marks, and remaps add edges", async () => {
+test("portrait intake buttons preserve marks and bulk actions when switching to the table", async () => {
   const originalObserver = global.ResizeObserver;
   let notify;
   let allocated = { width: 460, height: 586 };
@@ -236,9 +242,8 @@ test("a tall narrow tile transposes time headings, preserves marks, and remaps a
       </div>,
     );
     expect(observe).toHaveBeenCalledWith(screen.getByTestId("allocated-tile"));
-    expect(screen.getByRole("table")).toHaveClass("is-transposed");
-    expect(screen.getByRole("columnheader", { name: "Example A" })).toBeInTheDocument();
-    expect(screen.getByRole("rowheader", { name: /08:00/ })).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Intake times" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add medication" })).toHaveClass("matrix-add-column");
     expect(screen.getByRole("button", { name: "Add intake time" })).toHaveClass("matrix-add-row");
     fireEvent.click(screen.getByRole("button", { name: "Add medication" }));
@@ -255,13 +260,13 @@ test("a tall narrow tile transposes time headings, preserves marks, and remaps a
       ),
     );
     expect(await screen.findByTestId("medication-column-completion")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Example B at 22:00/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Example B at 22:00/ })).toBeDisabled();
     allocated = { width: 640, height: 650 };
     act(() => notify());
-    expect(screen.getByRole("table")).toHaveClass("is-transposed");
+    expect(screen.getByRole("list", { name: "Intake times" })).toBeInTheDocument();
     allocated = { width: 900, height: 400 };
     act(() => notify());
-    expect(screen.getByRole("table")).not.toHaveClass("is-transposed");
+    expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /08:00/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Example B at 08:00/ })).toHaveAttribute(
       "aria-pressed",
@@ -276,6 +281,25 @@ test("a tall narrow tile transposes time headings, preserves marks, and remaps a
         "aria-pressed",
         "false",
       ),
+    );
+    view.rerender(
+      <div className="dashboard-tile" data-testid="allocated-tile">
+        <div className="dashboard-tile-body">
+          <Fixture
+            standalone
+            schedule={{ ...plan, rows: [{ ...plan.rows[0], slotIds: ["morning"] }] }}
+          />
+        </div>
+      </div>,
+    );
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: /Mark all scheduled/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Example A at 22:00/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Example A at 08:00/ }));
+    expect(await screen.findByTestId("medication-column-completion")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Example A at 08:00/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
     view.unmount();
     expect(disconnect).toHaveBeenCalled();

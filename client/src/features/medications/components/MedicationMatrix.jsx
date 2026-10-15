@@ -1,6 +1,6 @@
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useEffect, useId, useRef, useState } from "react";
-import { FiCheck, FiCheckCircle, FiGrid, FiMaximize2, FiSettings } from "react-icons/fi";
+import { FiCheck, FiCheckCircle, FiGrid, FiMaximize2, FiMinus, FiSettings } from "react-icons/fi";
 import { formatDay } from "../../calendar/utils/calendarDates";
 import { intakeKey, matrixForDay } from "../utils/schedule";
 import useMatrixOrientation from "../hooks/useMatrixOrientation";
@@ -87,77 +87,81 @@ export default function MedicationMatrix({
       /* No optimistic marks are shown for a failed request. */
     }
   }
-  function timeHeading(slot) {
+  function timeButton(slot) {
     const due = rows.filter((row) => scheduled(row, slot));
     const done = due.filter((row) => marks.has(intakeKey(row.id, slot.id))).length;
     const complete = due.length > 0 && done === due.length;
-    const active = celebration?.id === slot.id;
     return (
-      <th
-        scope={vertical ? "row" : "col"}
-        key={slot.id}
-        className={
-          (vertical ? "medication-time-column " : "") +
-          (active ? "medication-column-celebrating" : "")
+      <button
+        type="button"
+        className={"medication-column-button" + (complete ? " is-complete" : "")}
+        disabled={busy || !due.length}
+        aria-pressed={complete}
+        aria-label={t(
+          complete
+            ? "Uncheck scheduled medications at {time}{label}"
+            : "Mark all scheduled medications at {time}{label}",
+          { time: slot.time, label: slot.label ? " — " + slot.label : "" },
+        )}
+        onClick={() => toggleColumn(slot, complete)}
+        title={
+          complete
+            ? t("Uncheck all intakes at this time")
+            : t("Mark all intakes at this time as taken")
         }
       >
-        <button
-          type="button"
-          className={"medication-column-button" + (complete ? " is-complete" : "")}
-          disabled={busy || !due.length}
-          aria-pressed={complete}
-          aria-label={t(
-            complete
-              ? "Uncheck scheduled medications at {time}{label}"
-              : "Mark all scheduled medications at {time}{label}",
-            { time: slot.time, label: slot.label ? " — " + slot.label : "" },
-          )}
-          onClick={() => toggleColumn(slot, complete)}
-          title={
-            complete
-              ? t("Uncheck all intakes at this time")
-              : t("Mark all intakes at this time as taken")
-          }
-        >
-          <span className="medication-time-symbol">
-            <TimeSymbol time={slot.time} />
-            {active && (
-              <span
-                key={celebration.key}
-                className="medication-completion-burst"
-                data-testid="medication-column-completion"
-                aria-hidden="true"
-              >
-                <i />
-                <i />
-                <i />
-                <i />
-                <i />
-                <i />
-              </span>
-            )}
+        <span className="medication-time-symbol">
+          <TimeSymbol time={slot.time} />
+          {completionBurst(slot)}
+        </span>
+        <time dateTime={date + "T" + slot.time}>{slot.time}</time>
+        {slot.label && (
+          <span className="medication-slot-label" title={slot.label}>
+            {slot.label}
           </span>
-          <time dateTime={date + "T" + slot.time}>{slot.time}</time>
-          {slot.label && (
-            <span className="medication-slot-label" title={slot.label}>
-              {slot.label}
-            </span>
+        )}
+        <span className="medication-column-progress">
+          {slot.historical ? (
+            t("Archived")
+          ) : complete ? (
+            <>
+              <FiCheckCircle aria-hidden="true" />
+              <span className="medication-progress-label">{t("Taken")}</span>
+            </>
+          ) : (
+            done + "/" + due.length
           )}
-          <span className="medication-column-progress">
-            {slot.historical ? (
-              t("Archived")
-            ) : complete ? (
-              <>
-                <FiCheckCircle aria-hidden="true" />
-                <span className="medication-progress-label">{t("Taken")}</span>
-              </>
-            ) : (
-              done + "/" + due.length
-            )}
-          </span>
-        </button>
+        </span>
+      </button>
+    );
+  }
+  function timeHeading(slot) {
+    return (
+      <th
+        scope="col"
+        key={slot.id}
+        className={celebration?.id === slot.id ? "medication-column-celebrating" : ""}
+      >
+        {timeButton(slot)}
       </th>
     );
+  }
+  function completionBurst(slot) {
+    return celebration?.id === slot.id ? (
+      <span
+        key={celebration.key}
+        className="medication-completion-burst"
+        data-testid="medication-column-completion"
+        aria-hidden="true"
+      >
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
+    ) : null;
   }
   function medicationLabel(row) {
     return (
@@ -168,54 +172,73 @@ export default function MedicationMatrix({
       </>
     );
   }
-  function doseCell(row, slot, index) {
+  function doseButton(row, slot, card = false, showTime = false) {
     const record = marks.get(intakeKey(row.id, slot.id));
-    const allowed = scheduled(row, slot);
-    const active = celebration?.id === slot.id;
+    const allowed = scheduled(row, slot) || !!record;
+    if (!allowed && !card)
+      return (
+        <span className="medication-unscheduled" aria-label={t("Not scheduled")}>
+          —
+        </span>
+      );
     return (
-      <td
-        key={row.id + ":" + slot.id}
-        className={active ? "medication-column-celebrating" : ""}
-        style={{ "--dose-delay": Math.min(index * 60, 600) + "ms" }}
+      <button
+        type="button"
+        className={
+          (card ? "medication-intake-button" + (showTime ? " has-time" : "") : "medication-dose") +
+          (record ? " is-taken" : "") +
+          (!allowed ? " is-unscheduled" : "")
+        }
+        disabled={busy || !allowed}
+        aria-pressed={!!record}
+        aria-label={t(
+          !allowed
+            ? "{name} at {time}{label}, not scheduled"
+            : record
+              ? "{name} at {time}{label}, taken — undo"
+              : "{name} at {time}{label}, mark as taken",
+          { name: row.name, time: slot.time, label: slot.label ? " — " + slot.label : "" },
+        )}
+        title={
+          !allowed
+            ? t("Not scheduled")
+            : record
+              ? t("Marked {date}", { date: new Date(record.takenAt).toLocaleString(locale) })
+              : t("Mark as taken")
+        }
+        onClick={() => toggle(row, slot)}
       >
-        {allowed || record ? (
-          <button
-            type="button"
-            className={"medication-dose" + (record ? " is-taken" : "")}
-            disabled={busy}
-            aria-pressed={!!record}
-            aria-label={t(
-              record
-                ? "{name} at {time}{label}, taken — undo"
-                : "{name} at {time}{label}, mark as taken",
-              {
-                name: row.name,
-                time: slot.time,
-                label: slot.label ? " — " + slot.label : "",
-              },
-            )}
-            title={
-              record
-                ? t("Marked {date}", {
-                    date: new Date(record.takenAt).toLocaleString(locale),
-                  })
-                : t("Mark as taken")
-            }
-            onClick={() => toggle(row, slot)}
-          >
-            <span>
-              {record ? (
-                <FiCheck aria-hidden="true" />
-              ) : (
-                <span className="medication-dose-dot" aria-hidden="true" />
-              )}
-            </span>
-          </button>
-        ) : (
-          <span className="medication-unscheduled" aria-label={t("Not scheduled")}>
-            —
+        {showTime && (
+          <span className="medication-intake-symbol">
+            <TimeSymbol time={slot.time} />
+            {completionBurst(slot)}
           </span>
         )}
+        {card && (
+          <span className="medication-intake-copy">
+            {showTime && (
+              <span className="medication-intake-time">
+                <time dateTime={date + "T" + slot.time}>{slot.time}</time>
+                {slot.label && <span title={slot.label}>{slot.label}</span>}
+              </span>
+            )}
+            <span className="medication-intake-name">{medicationLabel(row)}</span>
+          </span>
+        )}
+        <span className={card ? "medication-intake-check" : ""} aria-hidden="true">
+          {record ? <FiCheck /> : !allowed ? <FiMinus /> : <span className="medication-dose-dot" />}
+        </span>
+      </button>
+    );
+  }
+  function doseCell(row, slot, index) {
+    return (
+      <td
+        key={slot.id}
+        className={celebration?.id === slot.id ? "medication-column-celebrating" : ""}
+        style={{ "--dose-delay": Math.min(index * 60, 600) + "ms" }}
+      >
+        {doseButton(row, slot)}
       </td>
     );
   }
@@ -292,66 +315,77 @@ export default function MedicationMatrix({
           </button>
         </div>
       ) : (
-        <div className={"medication-table-frame" + (vertical ? " is-transposed" : "")} key={date}>
+        <div className={"medication-table-frame" + (vertical ? " is-portrait" : "")} key={date}>
           <div
             className="medication-table-scroll"
             tabIndex={0}
             role="region"
             aria-label={t("Scroll medication table")}
           >
-            <table
-              className={"medication-table" + (vertical ? " is-transposed" : "")}
-              style={{ "--matrix-columns": vertical ? rows.length : slots.length }}
-              aria-describedby={helpId}
-            >
-              <caption className="visually-hidden">
-                {t(
-                  "Medication intake for {date}. Select a cell to mark or undo an intake; select a time heading to mark or undo all scheduled items at that time.",
-                  { date: formatDay(date, locale) },
-                )}
-              </caption>
-              <thead>
-                <tr>
-                  <th
-                    scope="col"
-                    className={vertical ? "medication-time-column" : "medication-name-column"}
+            {vertical ? (
+              <div
+                className="medication-intake-list"
+                role="list"
+                aria-label={t("Intake times")}
+                aria-describedby={helpId}
+              >
+                {slots.map((slot) => (
+                  <div
+                    key={slot.id}
+                    role="listitem"
+                    className={
+                      "medication-intake-group" +
+                      (celebration?.id === slot.id ? " medication-column-celebrating" : "")
+                    }
                   >
-                    {t(vertical ? "Intake time" : "Medication")}
-                  </th>
-                  {vertical
-                    ? rows.map((row) => (
-                        <th scope="col" key={row.id} className="medication-transposed-name">
-                          {medicationLabel(row)}
-                        </th>
-                      ))
-                    : slots.map(timeHeading)}
-                </tr>
-              </thead>
-              <tbody>
-                {!rows.length && (
-                  <tr>
-                    <td colSpan={slots.length + 1} className="medication-empty-day">
-                      {t("No medications are scheduled for this day.")}
-                    </td>
-                  </tr>
-                )}
-                {vertical
-                  ? slots.map((slot) => (
-                      <tr key={slot.id}>
-                        {timeHeading(slot)}
-                        {rows.map((row, index) => doseCell(row, slot, index))}
-                      </tr>
-                    ))
-                  : rows.map((row, index) => (
-                      <tr key={row.id}>
-                        <th scope="row" className="medication-name-column">
-                          {medicationLabel(row)}
-                        </th>
-                        {slots.map((slot) => doseCell(row, slot, index))}
-                      </tr>
+                    {rows.length > 1 && timeButton(slot)}
+                    {rows.map((row, index) => (
+                      <div
+                        key={row.id}
+                        className="medication-intake-item"
+                        style={{ "--dose-delay": Math.min(index * 60, 600) + "ms" }}
+                      >
+                        {doseButton(row, slot, true, rows.length === 1)}
+                      </div>
                     ))}
-              </tbody>
-            </table>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <table className="medication-table" aria-describedby={helpId}>
+                <caption className="visually-hidden">
+                  {t(
+                    "Medication intake for {date}. Select a cell to mark or undo an intake; select a time heading to mark or undo all scheduled items at that time.",
+                    { date: formatDay(date, locale) },
+                  )}
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col" className="medication-name-column">
+                      {t("Medication")}
+                    </th>
+                    {slots.map(timeHeading)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {!rows.length && (
+                    <tr>
+                      <td colSpan={slots.length + 1} className="medication-empty-day">
+                        {t("No medications are scheduled for this day.")}
+                      </td>
+                    </tr>
+                  )}
+                  {rows.map((row, index) => (
+                    <tr key={row.id}>
+                      <th scope="row" className="medication-name-column">
+                        {medicationLabel(row)}
+                      </th>
+                      {slots.map((slot) => doseCell(row, slot, index))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
           <MatrixAddControl
             axis={vertical ? "row" : "column"}
@@ -368,7 +402,11 @@ export default function MedicationMatrix({
             }
           />
           <p id={helpId} className="visually-hidden">
-            {t("Times follow your device's local clock. Unscheduled cells stay empty.")}
+            {t(
+              vertical
+                ? "Times follow your device's local clock. Unscheduled intakes are disabled."
+                : "Times follow your device's local clock. Unscheduled cells stay empty.",
+            )}
           </p>
         </div>
       )}

@@ -208,65 +208,11 @@
   line-height: 1.4;
 }
 .medication-name-column > span,
-.medication-name-column small,
-.medication-transposed-name > span,
-.medication-transposed-name small {
+.medication-name-column small {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-}
-.medication-table.is-transposed {
-  width: 100%;
-  height: 100%;
-  min-width: calc(112px + var(--matrix-columns) * 112px);
-  table-layout: fixed;
-}
-.medication-table.is-transposed thead {
-  height: 64px;
-}
-.medication-table.is-transposed tbody tr {
-  height: 88px;
-}
-.medication-table.is-transposed .medication-time-column {
-  position: sticky;
-  left: 0;
-  width: 112px;
-  min-width: 112px;
-  background: var(--surface);
-  z-index: 1;
-}
-.medication-table.is-transposed thead .medication-time-column {
-  background: var(--surface-alt);
-  z-index: 3;
-  font-size: 11px;
-}
-.medication-table.is-transposed .medication-transposed-name {
-  min-width: 112px;
-  padding: 12px;
-  overflow-wrap: anywhere;
-}
-.medication-transposed-name small {
-  margin-top: 5px;
-  font-weight: 400;
-  font-size: 10px;
-  color: var(--muted);
-}
-.medication-table.is-transposed .medication-column-button {
-  min-width: 0;
-  min-height: 72px;
-  grid-template-columns: 1fr;
-  justify-items: center;
-  gap: 4px;
-  padding: 10px 4px;
-  text-align: center;
-}
-.medication-table.is-transposed .medication-time-symbol,
-.medication-table.is-transposed .medication-column-button time,
-.medication-table.is-transposed .medication-slot-label,
-.medication-table.is-transposed .medication-column-progress {
-  grid-column: 1;
-  grid-row: auto;
 }
 .medication-column-button {
   position: relative;
@@ -481,23 +427,12 @@
 .is-standalone .medication-table td {
   min-width: 128px;
 }
-.is-standalone .medication-table.is-transposed th,
-.is-standalone .medication-table.is-transposed td {
-  min-width: 112px;
-}
 .is-standalone .medication-dose {
   width: 48px;
   height: 48px;
   border-radius: 6px;
 }
-.medication-table.is-transposed .medication-dose {
-  width: min(100%, 144px);
-  height: 72px;
-  border-radius: 10px;
-}
-.medication-table.is-transposed tbody td {
-  background: var(--surface-subtle);
-}
+
 .is-standalone .medication-column-button {
   min-width: 86px;
   border-radius: 6px;
@@ -828,5 +763,160 @@
   .medication-weekdays button[aria-pressed="true"] {
     border-color: Highlight;
     outline: 2px solid Highlight;
+  }
+}
+
+.medication-table-frame.is-portrait .medication-table-scroll {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.medication-intake-list {
+  display: grid;
+  gap: 12px;
+  padding: 4px;
+  align-content: start;
+}
+.medication-intake-group > .medication-column-button {
+  max-width: none;
+  margin: 0 0 8px;
+  padding: 10px 14px;
+  border-color: var(--border);
+  border-radius: 10px;
+  background: var(--surface-alt);
+}
+.medication-intake-group > .medication-column-button.is-complete {
+  background: var(--accent-soft);
+}
+.medication-intake-item + .medication-intake-item {
+  margin-top: 8px;
+}
+.medication-intake-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface-alt);
+  color: var(--text);
+  text-align: left;
+  overflow: hidden;
+  transition:
+    background-color 160ms,
+    border-color 160ms;
+}
+.medication-intake-button.has-time {
+  grid-template-columns: 36px minmax(0, 1fr) 32px;
+  min-height: 94px;
+}
+.medication-intake-button:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--preview);
+}
+.medication-intake-button.is-taken {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.medication-intake-button:disabled {
+  opacity: 0.65;
+}
+.medication-intake-button.is-unscheduled {
+  border-style: dashed;
+  background: transparent;
+  opacity: 0.5;
+  cursor: default;
+}
+.medication-intake-symbol {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.medication-intake-symbol > svg {
+  width: 22px;
+  height: 22px;
+}
+.medication-intake-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.medication-intake-time {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 650;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.medication-intake-time > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.medication-intake-name > span,
+.medication-intake-name small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.medication-intake-name > span {
+  font-size: 12px;
+  font-weight: 550;
+}
+.medication-intake-name small {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.medication-intake-check {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+}
+.medication-intake-check > svg {
+  width: 18px;
+  height: 18px;
+}
+.is-taken > .medication-intake-check {
+  border-color: var(--primary-bg);
+  background: var(--primary-bg);
+  color: var(--primary-text);
+}
+.medication-column-celebrating .medication-intake-button:not(.is-unscheduled) {
+  animation: medication-intake-confirm 800ms var(--dose-delay) ease-out;
+}
+@keyframes medication-intake-confirm {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+  45% {
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .medication-intake-button {
+    transition: none;
+    animation: none !important;
   }
 }

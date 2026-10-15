@@ -355,6 +355,9 @@ export const ru = {
   "Mark as taken": "Отметить приём",
   "{name} at {time}{label}, taken — undo": "{name} в {time}{label}, принято — отменить отметку",
   "{name} at {time}{label}, mark as taken": "{name} в {time}{label}, отметить приём",
+  "{name} at {time}{label}, not scheduled": "{name} в {time}{label}, приём не запланирован",
+  "Times follow your device's local clock. Unscheduled intakes are disabled.":
+    "Время соответствует часам устройства. Незапланированные приёмы недоступны.",
   "Not scheduled": "Не запланировано",
   "Times follow your device's local clock. Unscheduled cells stay empty.":
     "Время соответствует часам устройства. Незапланированные приёмы остаются пустыми.",
