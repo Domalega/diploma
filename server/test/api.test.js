@@ -97,7 +97,9 @@ test("login accepts existing bcrypt hashes and rejects wrong passwords", async (
     body: { email: "user@example.com", password: "legacy-password" },
   });
   assert.equal(success.status, 200);
-  assert.equal(jwt.verify(success.data.token, process.env.SECRET_KEY).id, 7);
+  const session = jwt.verify(success.data.token, process.env.SECRET_KEY);
+  assert.equal(session.id, 7);
+  assert.equal(session.exp - session.iat, 30 * 24 * 60 * 60);
   const failure = await request("/user/login", {
     method: "POST",
     body: { email: "user@example.com", password: "wrong" },
@@ -122,10 +124,18 @@ test("protected routes reject missing, malformed and expired tokens", async () =
   );
 });
 
-test("auth check returns a valid token for the authenticated user", async () => {
-  const result = await request("/user/auth", { authorization: `Bearer ${token}` });
+test("auth check renews a legacy session for another 30 days", async () => {
+  const legacyToken = jwt.sign(
+    { id: 7, email: "user@example.com", iat: Math.floor(Date.now() / 1000) - 3600 },
+    process.env.SECRET_KEY,
+    { expiresIn: "24h" },
+  );
+  const result = await request("/user/auth", { authorization: `Bearer ${legacyToken}` });
   assert.equal(result.status, 200);
-  assert.equal(jwt.verify(result.data.token, process.env.SECRET_KEY).id, 7);
+  const session = jwt.verify(result.data.token, process.env.SECRET_KEY);
+  assert.equal(session.id, 7);
+  assert.equal(session.exp - session.iat, 30 * 24 * 60 * 60);
+  assert.ok(session.exp > jwt.decode(legacyToken).exp);
 });
 
 test("reading and deleting notes use the token's user id, not supplied ids", async (t) => {

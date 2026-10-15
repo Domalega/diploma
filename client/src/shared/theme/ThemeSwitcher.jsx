@@ -35,6 +35,7 @@ export default function ThemeSwitcher() {
           >
             <input
               type="radio"
+              aria-label={label}
               name={name}
               value={value}
               checked={preference === value}
@@ -42,7 +43,6 @@ export default function ThemeSwitcher() {
             />
             <span className="theme-option-content">
               <Icon aria-hidden="true" />
-              <span className="theme-option-label">{label}</span>
             </span>
           </label>
         ))}

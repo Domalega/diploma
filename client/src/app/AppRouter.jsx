@@ -25,7 +25,7 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to={LOGIN_ROUTE} replace />} />
+      <Route path="*" element={<Navigate to={CALENDAR_ROUTE} replace />} />
     </Routes>
   );
 }

@@ -3,8 +3,16 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthForm from "../components/AuthForm";
 import AuthLayout from "../components/AuthLayout";
-import { login, register, forgotPassword, resetPassword, recoveryStatus } from "../api/authApi";
-import { setToken, clearToken } from "../../../shared/api/tokenStorage";
+import {
+  login,
+  register,
+  forgotPassword,
+  resetPassword,
+  recoveryStatus,
+  check,
+} from "../api/authApi";
+import { getToken, setToken, clearToken } from "../../../shared/api/tokenStorage";
+import CalendarLoading from "../../../shared/components/CalendarLoading";
 import {
   LOGIN_ROUTE,
   REGISTRATION_ROUTE,
@@ -37,6 +45,40 @@ export default function AuthPage() {
           ? "forgot"
           : "reset";
   const [resetToken] = useState(() => new URLSearchParams(location.search).get("token") || "");
+  const [restoring, setRestoring] = useState(
+    () => ["login", "registration"].includes(mode) && !!getToken(),
+  );
+  const [restoreError, setRestoreError] = useState(false);
+  const [restoreAttempt, setRestoreAttempt] = useState(0);
+  useEffect(() => {
+    if (!["login", "registration"].includes(mode)) return;
+    const token = getToken();
+    if (!token) {
+      setRestoring(false);
+      return;
+    }
+    const controller = new AbortController();
+    setRestoring(true);
+    setRestoreError(false);
+    check(token, controller.signal)
+      .then(({ token: refreshedToken }) => {
+        if (controller.signal.aborted) return;
+        if (getToken() !== token) {
+          setRestoring(false);
+          return;
+        }
+        setToken(refreshedToken);
+        navigate(CALENDAR_ROUTE, { replace: true });
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        if (error.status === 401) {
+          if (getToken() === token) clearToken();
+        } else setRestoreError(true);
+        setRestoring(false);
+      });
+    return () => controller.abort();
+  }, [mode, navigate, restoreAttempt]);
   // Keep the recovery token in memory; remove it from the address and history.
   useEffect(() => {
     if (mode === "reset" && location.search) navigate(location.pathname, { replace: true });
@@ -84,6 +126,14 @@ export default function AuthPage() {
       if (active.current) setPending(false);
     }
   }
+  if (restoring) return <CalendarLoading fullPage />;
+  if (restoreError)
+    return (
+      <div className="p-4">
+        <p role="alert">{t("Unable to connect to the server.")}</p>
+        <button onClick={() => setRestoreAttempt((value) => value + 1)}>{t("Retry")}</button>
+      </div>
+    );
   return (
     <AuthLayout>
       <AuthForm

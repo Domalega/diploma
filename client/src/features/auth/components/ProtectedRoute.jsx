@@ -2,7 +2,7 @@ import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { check } from "../api/authApi";
-import { getToken, setToken } from "../../../shared/api/tokenStorage";
+import { clearToken, getToken, setToken } from "../../../shared/api/tokenStorage";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import CalendarLoading from "../../../shared/components/CalendarLoading";
 
@@ -22,11 +22,18 @@ export default function ProtectedRoute({ children }) {
     check(token, controller.signal)
       .then(({ token: refreshedToken }) => {
         if (controller.signal.aborted) return;
+        if (getToken() !== token) {
+          setStatus("unauthorized");
+          return;
+        }
         setToken(refreshedToken);
         setStatus("authorized");
       })
       .catch((error) => {
-        if (!controller.signal.aborted) setStatus(error.status === 401 ? "unauthorized" : "error");
+        if (!controller.signal.aborted) {
+          if (error.status === 401 && getToken() === token) clearToken();
+          setStatus(error.status === 401 ? "unauthorized" : "error");
+        }
       });
     return () => controller.abort();
   }, [attempt]);

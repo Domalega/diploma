@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AuthPage from "./AuthPage";
 import { useLocation } from "react-router-dom";
@@ -11,7 +11,7 @@ beforeEach(() => {
   jest.resetAllMocks();
 });
 
-function renderPage(path) {
+function renderPage(path, fillForm = true) {
   render(
     <ThemeProvider>
       <MemoryRouter initialEntries={[path]}>
@@ -23,6 +23,7 @@ function renderPage(path) {
       </MemoryRouter>
     </ThemeProvider>,
   );
+  if (!fillForm) return;
   fireEvent.change(screen.getByLabelText("Email address"), {
     target: { value: "user@example.com" },
   });
@@ -32,6 +33,54 @@ function renderPage(path) {
       target: { value: "secure-password" },
     });
 }
+
+test.each(["/login", "/registration"])(
+  "%s resumes a saved session without showing the form",
+  async (path) => {
+    localStorage.setItem("token", "saved-session");
+    authApi.check.mockResolvedValue({ token: "renewed-session" });
+    renderPage(path, false);
+    expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
+    expect(await screen.findByText("Calendar opened")).toBeInTheDocument();
+    expect(authApi.check).toHaveBeenCalledWith("saved-session", expect.any(AbortSignal));
+    expect(localStorage.getItem("token")).toBe("renewed-session");
+  },
+);
+
+test("a temporary outage preserves the saved login and offers retry", async () => {
+  localStorage.setItem("token", "saved-session");
+  authApi.check
+    .mockRejectedValueOnce(new Error("Offline"))
+    .mockResolvedValueOnce({ token: "renewed-session" });
+  renderPage("/login", false);
+  expect(await screen.findByRole("alert")).toHaveTextContent("Unable to connect");
+  expect(localStorage.getItem("token")).toBe("saved-session");
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(await screen.findByText("Calendar opened")).toBeInTheDocument();
+});
+
+test("an expired session is removed and shows the sign-in form", async () => {
+  localStorage.setItem("token", "expired-session");
+  authApi.check.mockRejectedValue({ status: 401 });
+  renderPage("/login", false);
+  expect(await screen.findByLabelText("Email address")).toBeInTheDocument();
+  expect(localStorage.getItem("token")).toBeNull();
+});
+
+test("a late session check cannot restore a signed-out session", async () => {
+  localStorage.setItem("token", "saved-session");
+  let finish;
+  authApi.check.mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  renderPage("/login", false);
+  localStorage.removeItem("token");
+  await act(async () => finish({ token: "renewed-session" }));
+  expect(screen.getByLabelText("Email address")).toBeInTheDocument();
+  expect(localStorage.getItem("token")).toBeNull();
+});
 
 test("registration stores the returned token and opens the calendar", async () => {
   authApi.register.mockResolvedValue({ token: "registered-token" });

@@ -17,22 +17,29 @@ export default function LanguageSwitcher() {
         <FiGlobe aria-hidden="true" /> {t("Language")}
       </legend>
       <div
-        className="language-slider"
+        className="theme-slider language-slider"
         style={{
-          "--language-position": options.findIndex((option) => option.value === preference),
+          "--theme-position": options.findIndex((option) => option.value === preference),
         }}
       >
-        <span className="language-slider-thumb" aria-hidden="true" />
+        <span className="theme-slider-thumb" aria-hidden="true" />
         {options.map(({ value, label }) => (
-          <label key={value}>
+          <label className="theme-slider-option" key={value} title={label}>
             <input
               type="radio"
+              aria-label={label}
               name={name}
               value={value}
               checked={preference === value}
               onChange={() => setLanguage(value)}
             />
-            <span>{label}</span>
+            <span className="theme-option-content" aria-hidden="true">
+              {value === "system" ? (
+                <FiGlobe />
+              ) : (
+                <span className="language-symbol">{value === "ru" ? "РУ" : "EN"}</span>
+              )}
+            </span>
           </label>
         ))}
       </div>

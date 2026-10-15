@@ -739,16 +739,8 @@
   width: 100%;
 }
 .settings-appearance .theme-slider {
-  width: 240px;
+  width: 154px;
   max-width: 100%;
-}
-.settings-appearance .theme-option-label {
-  position: static;
-  width: auto;
-  height: auto;
-  margin: 0;
-  overflow: visible;
-  clip: auto;
 }
 .account-section p {
   font-size: 13px;

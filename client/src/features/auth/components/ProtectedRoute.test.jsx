@@ -61,3 +61,26 @@ test("a server outage offers retry and preserves the existing session", async ()
   expect(await screen.findByText("Protected calendar")).toBeInTheDocument();
   expect(localStorage.getItem("token")).toBe("refreshed-token");
 });
+
+test("a late session check cannot undo sign-out", async () => {
+  localStorage.setItem("token", "existing-token");
+  let finish;
+  check.mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    }),
+  );
+  renderRoute();
+  localStorage.removeItem("token");
+  await act(async () => finish({ token: "refreshed-token" }));
+  expect(screen.getByText("Login page")).toBeInTheDocument();
+  expect(localStorage.getItem("token")).toBeNull();
+});
+
+test("an expired session returns to sign-in", async () => {
+  localStorage.setItem("token", "expired-token");
+  check.mockRejectedValue({ status: 401 });
+  renderRoute();
+  expect(await screen.findByText("Login page")).toBeInTheDocument();
+  expect(localStorage.getItem("token")).toBeNull();
+});

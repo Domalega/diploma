@@ -1,4 +1,4 @@
-import { clearToken } from "./tokenStorage";
+import { clearToken, getToken } from "./tokenStorage";
 
 const BASE_URL = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
 
@@ -27,7 +27,7 @@ export async function request(path, { method = "GET", body, token, signal } = {}
     if (response.ok) throw new ApiError("Invalid response from the server", response.status);
   }
   if (!response.ok) {
-    if (response.status === 401 && token) clearToken();
+    if (response.status === 401 && token && getToken() === token) clearToken();
     throw new ApiError(data?.message || "Request failed", response.status);
   }
   return data;

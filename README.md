@@ -2,6 +2,8 @@
 
 A personal calendar with user accounts, password recovery, multiple notes per day, optional local times, search, a month view and a notes list. Each note can be edited, moved to another day or deleted individually. Browser reminders respect note times while the calendar is open.
 
+Sign-in is remembered in the browser for 30 days and renewed when the calendar opens. Signing out clears the saved session; resetting a password invalidates previous sessions.
+
 The theme follows your device by default. Choose System, Light, or Dark on the sign-in page or in calendar Settings; your preference is saved in your browser.
 
 The interface supports English and Russian. The language follows your browser by default; choose System, Russian, or English on the sign-in page or in Settings. Your choice is saved in the browser.

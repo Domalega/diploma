@@ -32,3 +32,16 @@ test("a non-JSON server error is still reported with its HTTP status", async () 
     message: "Request failed",
   });
 });
+
+test("an old request returning 401 does not clear a newer login", async () => {
+  localStorage.setItem("token", "new-session");
+  fetch.mockResolvedValue({
+    ok: false,
+    status: 401,
+    json: async () => ({ message: "Unauthorized" }),
+  });
+  await expect(request("/user/auth", { token: "old-session" })).rejects.toMatchObject({
+    status: 401,
+  });
+  expect(localStorage.getItem("token")).toBe("new-session");
+});

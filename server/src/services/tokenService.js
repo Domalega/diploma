@@ -3,7 +3,7 @@ const { jwtSecret } = require("../config/env");
 
 function generateToken({ id, email, sessionVersion = 0 }) {
   return jwt.sign({ id, email, sessionVersion }, jwtSecret, {
-    expiresIn: "24h",
+    expiresIn: "30d",
     algorithm: "HS256",
   });
 }
