@@ -42,7 +42,7 @@ function mount() {
     </ThemeProvider>,
   );
 }
-const panel = () => within(screen.getByRole("complementary", { name: "Selected day" }));
+const panel = () => within(screen.getByRole("region", { name: "Notes", exact: true }));
 const calendarReady = () => screen.findByRole("table", { name: "Monthly calendar" });
 
 test("creating, editing and confirmed deletion keep the calendar and selected day in sync", async () => {
@@ -208,7 +208,7 @@ test("loading errors offer retry and keep note creation disabled until data is k
   expect(screen.getByRole("button", { name: "New note" })).toBeEnabled();
 });
 
-test("on compact screens a selected day opens a labelled drawer and the editor restores visible focus", async () => {
+test("on compact screens a selected day focuses the independent notes tile and the editor restores visible focus", async () => {
   const original = window.matchMedia;
   window.matchMedia = (query) => ({ ...original(query), matches: query === "(max-width: 1000px)" });
   try {
@@ -216,8 +216,9 @@ test("on compact screens a selected day opens a labelled drawer and the editor r
     await calendarReady();
     const tomorrow = moveDays(today, 1);
     fireEvent.click(screen.getByRole("button", { name: formatDay(tomorrow), exact: true }));
-    const drawer = await screen.findByRole("dialog", { name: "Your selected day" });
-    fireEvent.click(within(drawer).getByRole("button", { name: "Add a note" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Selected day notes")).toHaveFocus();
+    fireEvent.click(panel().getByRole("button", { name: "Add a note" }));
     const editor = await screen.findByRole("dialog", { name: "A note for your day" });
     expect(within(editor).getByLabelText("Date")).toHaveValue(tomorrow);
     expect(within(editor).getByLabelText("Your note")).toHaveFocus();
@@ -226,4 +227,29 @@ test("on compact screens a selected day opens a labelled drawer and the editor r
   } finally {
     window.matchMedia = original;
   }
+});
+
+test("medications, notes and today's date are independent tiles that share the selected calendar day", async () => {
+  const tracker = useMedicationTracker.mock.results[0]?.value || {
+    plan: emptyPlan,
+    records: [],
+    todayRecords: [],
+    loading: false,
+    pending: false,
+  };
+  useMedicationTracker.mockReturnValue({ ...tracker, plan: { ...emptyPlan, enabled: true } });
+  mount();
+  await calendarReady();
+  const medications = screen.getByRole("region", { name: "Medication tracker", exact: true });
+  expect(
+    within(medications).getByRole("region", { name: "Medication intakes" }),
+  ).toBeInTheDocument();
+  expect(panel().queryByRole("region", { name: "Medication intakes" })).not.toBeInTheDocument();
+  const tomorrow = moveDays(today, 1);
+  fireEvent.click(screen.getByRole("button", { name: formatDay(tomorrow), exact: true }));
+  expect(medications).toHaveTextContent(formatDay(tomorrow));
+  expect(screen.getByRole("region", { name: "Today", exact: true })).toHaveTextContent(
+    new Date(today + "T12:00:00").getDate().toString(),
+  );
+  expect(panel().getByRole("heading", { name: formatDay(tomorrow) })).toBeInTheDocument();
 });

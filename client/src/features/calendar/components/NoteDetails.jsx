@@ -1,8 +1,8 @@
 import { Button } from "react-bootstrap";
+import { useEffect, useRef } from "react";
 import { FiEdit3, FiPlus, FiTrash2, FiFeather, FiClock } from "react-icons/fi";
-import { formatDay, parseDate, todayKey } from "../utils/calendarDates";
+import { formatDay } from "../utils/calendarDates";
 import { noteTime } from "../utils/noteTimes";
-import MedicationMatrix from "../../medications/components/MedicationMatrix";
 export default function NoteDetails({
   date,
   notes,
@@ -11,23 +11,18 @@ export default function NoteDetails({
   onEdit,
   onDelete,
   ready,
-  medications,
-  onMedicationConfigure,
-  onMedicationExpand,
 }) {
-  const day = parseDate(date);
+  const content = useRef(null);
+  useEffect(() => {
+    if (!content.current) return;
+    content.current.scrollTop = 0;
+    if (selectedNoteId != null)
+      content.current
+        .querySelector('[data-note-id="' + selectedNoteId + '"]')
+        ?.scrollIntoView?.({ block: "nearest" });
+  }, [date, selectedNoteId]);
   return (
-    <div className="day-details">
-      <span className="planner-eyebrow">{date === todayKey() ? "TODAY" : "SELECTED DAY"}</span>
-      <div className="detail-date">
-        <span>{day.getDate()}</span>
-        <div>
-          <strong>{day.toLocaleDateString("en", { weekday: "long" })}</strong>
-          <time dateTime={date}>
-            {day.toLocaleDateString("en", { month: "long", year: "numeric" })}
-          </time>
-        </div>
-      </div>
+    <div className="day-details" ref={content}>
       <h2 className="visually-hidden">{formatDay(date)}</h2>
       {!ready ? (
         <p className="detail-muted">Your notes will appear here once loaded.</p>
@@ -47,6 +42,7 @@ export default function NoteDetails({
               <li key={note.id}>
                 <article
                   className={"note-paper" + (note.id === selectedNoteId ? " is-highlighted" : "")}
+                  data-note-id={note.id}
                   aria-label={noteTime(note) + " — " + (note.comment || "Untitled note")}
                 >
                   <div className="note-paper-time">
@@ -91,12 +87,6 @@ export default function NoteDetails({
           </Button>
         </div>
       )}
-      <MedicationMatrix
-        tracker={medications}
-        date={date}
-        onConfigure={onMedicationConfigure}
-        onExpand={onMedicationExpand}
-      />
     </div>
   );
 }

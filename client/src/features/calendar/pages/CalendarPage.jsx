@@ -1,6 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Button, Offcanvas, Modal } from "react-bootstrap";
-import { FiArrowLeft, FiArrowRight, FiPlus, FiCalendar, FiList, FiCheck } from "react-icons/fi";
+import { Alert, Button, Modal } from "react-bootstrap";
+import {
+  FiArrowLeft,
+  FiArrowRight,
+  FiPlus,
+  FiCalendar,
+  FiList,
+  FiCheck,
+  FiClock,
+  FiFileText,
+  FiGrid,
+  FiMaximize2,
+  FiSettings,
+} from "react-icons/fi";
+import DashboardBoard from "../components/DashboardBoard";
+import CurrentDateTile from "../components/CurrentDateTile";
 import NavBar from "../components/NavBar";
 import MainCalendar from "../components/MainCalendar";
 import NoteDetails from "../components/NoteDetails";
@@ -27,7 +41,7 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(() => monthStart(todayKey()));
   const [view, setView] = useState("month");
   const [query, setQuery] = useState("");
-  const [mobileDay, setMobileDay] = useState(false);
+  const notesPanel = useRef(null);
   const [editor, setEditor] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [message, setMessage] = useState("");
@@ -70,38 +84,126 @@ export default function CalendarPage() {
     setSelectedNoteId(noteId);
     setMonth(monthStart(date));
     setMessage("");
-    if (window.matchMedia("(max-width: 1000px)").matches) setMobileDay(true);
+    if (window.matchMedia("(max-width: 1000px)").matches) {
+      notesPanel.current?.focus({ preventScroll: true });
+      notesPanel.current?.scrollIntoView?.({
+        block: "start",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    }
   }
   function addNote() {
-    openDialog(() => setEditor({ date: selectedDate }));
-  }
-  function openDialog(action) {
-    if (mobileDay) {
-      queuedDialog.current = action;
-      setMobileDay(false);
-    } else action();
+    setEditor({ date: selectedDate });
   }
   function configureMedications(intent) {
     if (medicationExpanded) {
       queuedDialog.current = () => setMedicationManager(intent);
       setMedicationExpanded(false);
-    } else openDialog(() => setMedicationManager(intent));
+    } else setMedicationManager(intent);
   }
   const detailsProps = {
     date: selectedDate,
     notes: selectedNotes,
     selectedNoteId,
     ready,
-    medications,
-    onMedicationConfigure: configureMedications,
-    onMedicationExpand: () => openDialog(() => setMedicationExpanded(true)),
     onAdd: addNote,
-    onEdit: (note) => openDialog(() => setEditor({ date: note.date, note })),
-    onDelete: (note) => {
-      openDialog(() => setDeleting(note));
-    },
+    onEdit: (note) => setEditor({ date: note.date, note }),
+    onDelete: setDeleting,
   };
   const searching = !!search;
+  const calendarPanel = (
+    <div className="calendar-card" aria-busy={loading}>
+      <div className="calendar-toolbar">
+        <div className="month-navigation">
+          <h2 aria-live="polite" aria-atomic="true">
+            {searching ? "Find your notes" : formatMonth(month)}
+          </h2>
+          {!searching && (
+            <div className="month-buttons">
+              <button
+                className="icon-button"
+                type="button"
+                aria-label="Previous month"
+                onClick={() => setMonth(moveMonths(month, -1))}
+              >
+                <FiArrowLeft aria-hidden="true" />
+              </button>
+              <button
+                className="icon-button"
+                type="button"
+                aria-label="Next month"
+                onClick={() => setMonth(moveMonths(month, 1))}
+              >
+                <FiArrowRight aria-hidden="true" />
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="calendar-view-actions">
+          <Button
+            variant="outline-secondary"
+            className="theme-button-outline today-button"
+            onClick={() => {
+              setMonth(monthStart(todayKey()));
+              setSelectedDate(todayKey());
+              setSelectedNoteId(null);
+              setQuery("");
+            }}
+          >
+            Today
+          </Button>
+          <div className="view-switch" role="group" aria-label="Calendar view">
+            <button
+              type="button"
+              aria-pressed={!searching && view === "month"}
+              onClick={() => {
+                setView("month");
+                setQuery("");
+              }}
+            >
+              <FiCalendar aria-hidden="true" />
+              Month
+            </button>
+            <button
+              type="button"
+              aria-pressed={searching || view === "list"}
+              onClick={() => setView("list")}
+            >
+              <FiList aria-hidden="true" />
+              List
+            </button>
+          </div>
+        </div>
+      </div>
+      {loading && !dates.length ? (
+        <CalendarLoading label="Bringing your notes together…" />
+      ) : searching || view === "list" ? (
+        <NotesList
+          notes={filtered}
+          selectedDate={selectedDate}
+          selectedNoteId={selectedNoteId}
+          onSelect={selectDay}
+          query={searching ? query.trim() : ""}
+          month={month}
+          today={today}
+        />
+      ) : (
+        <MainCalendar
+          today={today}
+          month={month}
+          selectedDate={selectedDate}
+          dates={dates}
+          onSelect={selectDay}
+          onMonthChange={(date) => setMonth(monthStart(date))}
+        />
+      )}
+      {!loading && !error && !dates.length && !searching && view === "month" && (
+        <p className="calendar-empty-hint">
+          Your calendar is a fresh page. Choose a day to leave your first note.
+        </p>
+      )}
+    </div>
+  );
   return (
     <div className="planner">
       <NavBar
@@ -112,22 +214,6 @@ export default function CalendarPage() {
         onMedicationConfigure={configureMedications}
       />
       <main id="planner-main" tabIndex={-1} className="planner-main">
-        <div className="planner-intro">
-          <div>
-            <h1>
-              Your <em>calendar.</em>
-            </h1>
-          </div>
-          <Button
-            ref={newNoteButton}
-            className="theme-button new-note-button"
-            disabled={!ready}
-            onClick={addNote}
-          >
-            <FiPlus aria-hidden="true" />
-            New note
-          </Button>
-        </div>
         <div className="planner-feedback" role="status" aria-live="polite">
           {message && (
             <>
@@ -148,102 +234,93 @@ export default function CalendarPage() {
             </Button>
           </Alert>
         )}
-        <div className="planner-layout">
-          <section className="calendar-card" aria-label="Your calendar" aria-busy={loading}>
-            <div className="calendar-toolbar">
-              <div className="month-navigation">
-                <h2 aria-live="polite" aria-atomic="true">
-                  {searching ? "Find your notes" : formatMonth(month)}
-                </h2>
-                {!searching && (
-                  <div className="month-buttons">
-                    <button
-                      className="icon-button"
-                      type="button"
-                      aria-label="Previous month"
-                      onClick={() => setMonth(moveMonths(month, -1))}
-                    >
-                      <FiArrowLeft aria-hidden="true" />
-                    </button>
-                    <button
-                      className="icon-button"
-                      type="button"
-                      aria-label="Next month"
-                      onClick={() => setMonth(moveMonths(month, 1))}
-                    >
-                      <FiArrowRight aria-hidden="true" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="calendar-view-actions">
-                <Button
-                  variant="outline-secondary"
-                  className="theme-button-outline today-button"
-                  onClick={() => {
-                    setMonth(monthStart(todayKey()));
-                    setSelectedDate(todayKey());
+        <DashboardBoard
+          heading={
+            <h1>
+              Your <em>calendar.</em>
+            </h1>
+          }
+          primaryAction={
+            <Button
+              ref={newNoteButton}
+              className="theme-button new-note-button"
+              disabled={!ready}
+              onClick={addNote}
+            >
+              <FiPlus aria-hidden="true" />
+              New note
+            </Button>
+          }
+          panels={{
+            calendar: { title: "Calendar", icon: <FiCalendar />, content: calendarPanel },
+            today: {
+              title: "Today",
+              icon: <FiClock />,
+              content: (
+                <CurrentDateTile
+                  today={today}
+                  onToday={() => {
+                    setMonth(monthStart(today));
+                    setSelectedDate(today);
                     setSelectedNoteId(null);
                     setQuery("");
                   }}
+                />
+              ),
+            },
+            notes: {
+              title: "Notes",
+              icon: <FiFileText />,
+              subtitle: formatDay(selectedDate),
+              content: (
+                <div
+                  ref={notesPanel}
+                  className="notes-panel-content"
+                  tabIndex={-1}
+                  aria-label="Selected day notes"
                 >
-                  Today
-                </Button>
-                <div className="view-switch" role="group" aria-label="Calendar view">
-                  <button
-                    type="button"
-                    aria-pressed={!searching && view === "month"}
-                    onClick={() => {
-                      setView("month");
-                      setQuery("");
-                    }}
-                  >
-                    <FiCalendar aria-hidden="true" />
-                    Month
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={searching || view === "list"}
-                    onClick={() => setView("list")}
-                  >
-                    <FiList aria-hidden="true" />
-                    List
-                  </button>
+                  <NoteDetails {...detailsProps} />
                 </div>
-              </div>
-            </div>
-            {loading && !dates.length ? (
-              <CalendarLoading label="Bringing your notes together…" />
-            ) : searching || view === "list" ? (
-              <NotesList
-                notes={filtered}
-                selectedDate={selectedDate}
-                selectedNoteId={selectedNoteId}
-                onSelect={selectDay}
-                query={searching ? query.trim() : ""}
-                month={month}
-                today={today}
-              />
-            ) : (
-              <MainCalendar
-                today={today}
-                month={month}
-                selectedDate={selectedDate}
-                dates={dates}
-                onSelect={selectDay}
-                onMonthChange={(date) => setMonth(monthStart(date))}
-              />
-            )}
-            {!loading && !error && !dates.length && !searching && view === "month" && (
-              <p className="calendar-empty-hint">
-                Your calendar is a fresh page. Choose a day to leave your first note.
-              </p>
-            )}
-          </section>
-          <aside className="desktop-day-panel" aria-label="Selected day">
-            <NoteDetails {...detailsProps} />
-          </aside>
-        </div>
+              ),
+            },
+            medications: medications.plan.enabled
+              ? {
+                  title: "Medication tracker",
+                  icon: <FiGrid />,
+                  subtitle: formatDay(selectedDate),
+                  actions: (
+                    <>
+                      <span className="experimental-badge">Experimental</span>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        aria-label="Expand medication tracker"
+                        onClick={() => setMedicationExpanded(true)}
+                      >
+                        <FiMaximize2 aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        aria-label="Manage medication schedule"
+                        onClick={() => configureMedications({ section: "medications" })}
+                      >
+                        <FiSettings aria-hidden="true" />
+                      </button>
+                    </>
+                  ),
+                  content: (
+                    <MedicationMatrix
+                      tracker={medications}
+                      date={selectedDate}
+                      onConfigure={configureMedications}
+                      standalone
+                    />
+                  ),
+                }
+              : null,
+          }}
+        />
         <footer className="planner-footer">
           <InteractivePhrase />
           <a
@@ -256,25 +333,6 @@ export default function CalendarPage() {
           </a>
         </footer>
       </main>
-      <Offcanvas
-        show={mobileDay}
-        onHide={() => setMobileDay(false)}
-        onExited={() => {
-          const action = queuedDialog.current;
-          queuedDialog.current = null;
-          action?.();
-        }}
-        placement="end"
-        aria-labelledby="mobile-day-title"
-        className="planner-drawer mobile-day-drawer"
-      >
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title id="mobile-day-title">Your selected day</Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-          <NoteDetails {...detailsProps} />
-        </Offcanvas.Body>
-      </Offcanvas>
       {editor && (
         <NoteEditor
           {...editor}

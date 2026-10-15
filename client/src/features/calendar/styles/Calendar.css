@@ -126,37 +126,6 @@
   margin: auto;
   outline: none;
 }
-.planner-intro {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 4px;
-}
-.planner-eyebrow {
-  font-size: 10px;
-  letter-spacing: 1.8px;
-  font-weight: 700;
-  color: var(--accent);
-  margin: 0 0 12px;
-}
-.planner-intro h1 {
-  font-size: clamp(30px, 3vw, 42px);
-  font-weight: 550;
-  letter-spacing: -1.4px;
-  margin: 0 0 12px;
-}
-.planner-intro h1 em {
-  font-family: Georgia, serif;
-  color: var(--accent-em);
-  font-weight: 400;
-}
-.planner-intro > div > p:last-child {
-  color: var(--muted);
-  font-size: 13px;
-  margin: 0;
-  line-height: 1.6;
-}
 .planner .new-note-button {
   min-width: 124px;
 }
@@ -172,12 +141,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-.planner-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 304px;
-  gap: 26px;
-  align-items: start;
 }
 .calendar-card {
   min-width: 0;
@@ -437,41 +400,8 @@
 .calendar-empty-hint {
   font-size: 12px;
 }
-.desktop-day-panel {
-  background: var(--surface-alt);
-  border-radius: 18px;
-  border: 1px solid var(--border);
-}
 .day-details {
   padding: 24px;
-}
-.day-details .planner-eyebrow {
-  font-size: 9px;
-  letter-spacing: 1.4px;
-  display: block;
-}
-.detail-date {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 12px 0 24px;
-  border-bottom: 1px solid var(--border-strong);
-}
-.detail-date > span {
-  font-size: 58px;
-  letter-spacing: -3px;
-  font-weight: 400;
-  line-height: 1;
-}
-.detail-date strong {
-  font-size: 14px;
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-.detail-date time {
-  color: var(--muted);
-  font-size: 12px;
 }
 .note-paper {
   background: var(--preview);
@@ -828,13 +758,6 @@
 .planner-drawer .form-error {
   color: var(--danger-text);
 }
-.mobile-day-drawer .offcanvas-body {
-  padding: 0;
-}
-.mobile-day-drawer .day-details {
-  max-width: 500px;
-  margin: auto;
-}
 .planner-modal .danger-button {
   --bs-btn-bg: var(--danger-bg);
   --bs-btn-border-color: var(--danger-text);
@@ -847,10 +770,6 @@
   --bs-btn-disabled-border-color: var(--danger-text);
 }
 @media (max-width: 1200px) {
-  .planner-layout {
-    grid-template-columns: minmax(0, 1fr) 270px;
-    gap: 20px;
-  }
   .calendar-toolbar {
     padding: 18px;
     flex-wrap: wrap;
@@ -876,17 +795,8 @@
   .planner-main {
     padding: 32px 28px 16px;
   }
-  .planner-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .desktop-day-panel {
-    display: none;
-  }
   .day-cell {
     min-height: 94px;
-  }
-  .mobile-day-drawer {
-    --bs-offcanvas-width: min(100%, 440px);
   }
 }
 @media (max-width: 600px) {
@@ -919,18 +829,6 @@
   }
   .planner-main {
     padding: 26px 16px 12px;
-  }
-  .planner-intro {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 20px;
-  }
-  .planner-intro h1 {
-    font-size: 30px;
-  }
-  .planner-intro > div > p:last-child {
-    font-size: 12px;
-    max-width: 300px;
   }
   .planner .new-note-button {
     align-self: flex-end;

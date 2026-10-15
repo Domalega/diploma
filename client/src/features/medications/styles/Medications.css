@@ -215,29 +215,33 @@
   min-width: 46px;
   width: 46px;
 }
-.medication-tracker:not(.is-expanded) .medication-table th,
-.medication-tracker:not(.is-expanded) .medication-table td {
+.medication-tracker:not(.is-expanded):not(.is-standalone) .medication-table th,
+.medication-tracker:not(.is-expanded):not(.is-standalone) .medication-table td {
   min-width: 64px;
   padding: 4px;
 }
-.medication-tracker:not(.is-expanded) .medication-table .medication-name-column {
+.medication-tracker:not(.is-expanded):not(.is-standalone)
+  .medication-table
+  .medication-name-column {
   min-width: 80px;
   width: 80px;
   max-width: 110px;
   padding: 8px;
 }
-.medication-tracker:not(.is-expanded) .medication-column-button {
+.medication-tracker:not(.is-expanded):not(.is-standalone) .medication-column-button {
   min-width: 54px;
 }
-.medication-tracker:not(.is-expanded) .medication-column-progress {
+.medication-tracker:not(.is-expanded):not(.is-standalone) .medication-column-progress {
   flex-wrap: wrap;
 }
-.medication-tracker:not(.is-expanded) .medication-add-column,
-.medication-tracker:not(.is-expanded) .medication-table td:last-child:not(:first-child) {
+.medication-tracker:not(.is-expanded):not(.is-standalone) .medication-add-column,
+.medication-tracker:not(.is-expanded):not(.is-standalone)
+  .medication-table
+  td:last-child:not(:first-child) {
   min-width: 40px;
   width: 40px;
 }
-.medication-tracker:not(.is-expanded) .medication-table tfoot td {
+.medication-tracker:not(.is-expanded):not(.is-standalone) .medication-table tfoot td {
   padding: 0;
 }
 .medication-add-row {
@@ -305,6 +309,38 @@
   margin: 0;
   padding: 0;
   border: 0;
+}
+.medication-tracker.is-standalone {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.is-standalone .medication-table-scroll {
+  max-height: 520px;
+  border-radius: 6px;
+}
+.is-standalone .medication-table .medication-name-column {
+  min-width: 160px;
+  width: 180px;
+  max-width: 220px;
+  padding: 16px;
+}
+.is-standalone .medication-table th,
+.is-standalone .medication-table td {
+  min-width: 100px;
+}
+.is-standalone .medication-table .medication-add-column,
+.is-standalone .medication-table td:last-child:not(:first-child) {
+  min-width: 46px;
+}
+.is-standalone .medication-dose {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+}
+.is-standalone .medication-column-button {
+  min-width: 86px;
+  border-radius: 6px;
 }
 .is-expanded .medication-table-scroll {
   max-height: 68svh;
@@ -584,6 +620,12 @@
   }
 }
 @media (max-width: 600px) {
+  .is-standalone .medication-table .medication-name-column {
+    min-width: 120px;
+    width: 120px;
+    max-width: 150px;
+    padding: 10px;
+  }
   .is-expanded .medication-table .medication-name-column {
     width: 110px;
   }

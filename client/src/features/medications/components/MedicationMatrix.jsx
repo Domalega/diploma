@@ -11,6 +11,7 @@ export default function MedicationMatrix({
   onConfigure,
   onExpand,
   expanded = false,
+  standalone = false,
 }) {
   const [celebration, setCelebration] = useState(null);
   const [announcement, setAnnouncement] = useState("");
@@ -73,39 +74,45 @@ export default function MedicationMatrix({
   }
   return (
     <section
-      className={"medication-tracker" + (expanded ? " is-expanded" : "")}
-      aria-label="Medication tracker"
+      className={
+        "medication-tracker" +
+        (expanded ? " is-expanded" : "") +
+        (standalone ? " is-standalone" : "")
+      }
+      aria-label={standalone ? "Medication intakes" : "Medication tracker"}
       aria-busy={busy}
     >
-      <div className="medication-heading">
-        <div>
-          <h3>
-            <FiGrid aria-hidden="true" />
-            Medication tracker
-          </h3>
-          <span className="experimental-badge">Experimental</span>
-        </div>
-        <div className="medication-heading-actions">
-          {!expanded && (
+      {!standalone && (
+        <div className="medication-heading">
+          <div>
+            <h3>
+              <FiGrid aria-hidden="true" />
+              Medication tracker
+            </h3>
+            <span className="experimental-badge">Experimental</span>
+          </div>
+          <div className="medication-heading-actions">
+            {!expanded && (
+              <button
+                className="icon-button"
+                type="button"
+                aria-label="Expand medication tracker"
+                onClick={onExpand}
+              >
+                <FiMaximize2 aria-hidden="true" />
+              </button>
+            )}
             <button
               className="icon-button"
               type="button"
-              aria-label="Expand medication tracker"
-              onClick={onExpand}
+              aria-label="Manage medication schedule"
+              onClick={() => onConfigure({ section: "medications" })}
             >
-              <FiMaximize2 aria-hidden="true" />
+              <FiSettings aria-hidden="true" />
             </button>
-          )}
-          <button
-            className="icon-button"
-            type="button"
-            aria-label="Manage medication schedule"
-            onClick={() => onConfigure({ section: "medications" })}
-          >
-            <FiSettings aria-hidden="true" />
-          </button>
+          </div>
         </div>
-      </div>
+      )}
       {error && (
         <div className="medication-error" role="alert">
           <p>{error}</p>
