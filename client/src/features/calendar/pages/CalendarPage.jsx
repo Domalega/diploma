@@ -35,6 +35,7 @@ import useMedicationReminders from "../../medications/hooks/useMedicationReminde
 import MedicationManager from "../../medications/components/MedicationManager";
 import MedicationMatrix from "../../medications/components/MedicationMatrix";
 import "../styles/Calendar.css";
+import useDeviceReminders from "../../../shared/reminders/useDeviceReminders";
 
 export default function CalendarPage() {
   const { t, locale } = useLanguage();
@@ -72,6 +73,21 @@ export default function CalendarPage() {
   );
   const selectedNotes = dates.filter((note) => note.date === selectedDate).sort(compareNotes);
   const ready = !loading && !error;
+  const deviceReminders = useDeviceReminders(
+    {
+      dates,
+      notesEnabled: notifications.enabled,
+      plan: medications.plan,
+      recordsByDate: { [today]: medications.todayRecords, [selectedDate]: medications.records },
+      locale,
+      t,
+    },
+    ready &&
+      !medications.loading &&
+      !medications.pending &&
+      !medications.error &&
+      notifications.permission === "granted",
+  );
   const search = query.trim().toLocaleLowerCase();
   const filtered = dates
     .filter((note) =>
@@ -215,7 +231,7 @@ export default function CalendarPage() {
       <NavBar
         query={query}
         onQueryChange={setQuery}
-        notifications={notifications}
+        notifications={{ ...notifications, device: deviceReminders }}
         medications={medications}
         onMedicationConfigure={configureMedications}
       />

@@ -9,6 +9,25 @@ export const en = {
   },
 };
 export const ru = {
+  "Allow Daymark notifications in your device settings, then reopen the app.":
+    "Разрешите уведомления Daymark в настройках устройства, затем снова откройте приложение.",
+  "Test notification scheduled in five seconds. You can close the app.":
+    "Тестовое уведомление запланировано через пять секунд. Можно закрыть приложение.",
+  "Timed reminders are saved on this device and work with the app closed. All-day notes remind you when you open the calendar. Open the app online to receive changes from other devices.":
+    "Напоминания со временем сохраняются на устройстве и работают при закрытом приложении. Заметки на весь день напоминают о себе при открытии календаря. Для получения изменений с других устройств открывайте приложение с интернетом.",
+  "Device schedule saved: {time}": "Расписание на устройстве сохранено: {time}",
+  "Device reminders could not be saved. Reopen the app and try again.":
+    "Не удалось сохранить напоминания на устройстве. Откройте приложение и попробуйте ещё раз.",
+  "Allow alarms and reminders in Android settings for precise timing.":
+    "Для точного времени разрешите будильники и напоминания в настройках Android.",
+  "Alarms and reminders": "Будильники и напоминания",
+  "Test notification": "Проверить уведомление",
+  "Disable device reminders": "Отключить напоминания на устройстве",
+  "To receive reminders with the browser closed, use the Android or Windows app.":
+    "Для напоминаний при закрытом браузере используйте приложение Android или Windows.",
+  "Download Daymark": "Скачать Daymark",
+  "Reminds you about unchecked items using the schedule saved on this device.":
+    "Напоминает о неотмеченных приёмах по расписанию, сохранённому на этом устройстве.",
   Close: "Закрыть",
   "Unauthorized user": "Войдите в аккаунт",
   "Enter valid tracker settings": "Проверьте настройки таблицы приёма",

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { todayKey } from "../../calendar/utils/calendarDates";
 import { intakeKey, isDue } from "../utils/schedule";
+import { isNativeApp } from "../../../shared/reminders/nativeBridge";
 
 export default function useMedicationReminders(
   plan,
@@ -17,6 +18,7 @@ export default function useMedicationReminders(
   }, [plan.userId]);
   useEffect(() => {
     if (
+      isNativeApp() ||
       !ready ||
       !plan.enabled ||
       !plan.reminders ||

@@ -24,3 +24,11 @@ Desktop.ini
 *.db
 *.db-*
 /server/data/
+.gradle/
+/apps/windows/**/bin/
+/apps/windows/**/obj/
+local.properties
+*.apk
+*.aab
+*.jks
+*.keystore

@@ -12,7 +12,7 @@ export default function ProfileSidebar({
   medications,
   onMedicationConfigure,
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
 
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
@@ -63,9 +63,13 @@ export default function ProfileSidebar({
               {" " + t("Notifications")}
             </h2>
             <p>
-              {t(
-                "Timed notes remind you when their time arrives. All-day notes remind you when you open the calendar. Keep the calendar open to receive reminders.",
-              )}
+              {notifications.native
+                ? t(
+                    "Timed reminders are saved on this device and work with the app closed. All-day notes remind you when you open the calendar. Open the app online to receive changes from other devices.",
+                  )
+                : t(
+                    "Timed notes remind you when their time arrives. All-day notes remind you when you open the calendar. Keep the calendar open to receive reminders.",
+                  )}
             </p>
             {!supported ? (
               <p>{t("Notifications are unavailable in this browser.")}</p>
@@ -81,7 +85,9 @@ export default function ProfileSidebar({
             ) : permission === "denied" ? (
               <p>
                 {t(
-                  "Blocked by your browser. You can allow notifications in this site's browser settings.",
+                  notifications.native
+                    ? "Allow Daymark notifications in your device settings, then reopen the app."
+                    : "Blocked by your browser. You can allow notifications in this site's browser settings.",
                 )}
               </p>
             ) : (
@@ -92,6 +98,63 @@ export default function ProfileSidebar({
             {error && (
               <p className="form-error" role="alert">
                 {t(error)}
+              </p>
+            )}
+            {notifications.message && <p role="status">{t(notifications.message)}</p>}
+            {notifications.native && permission === "granted" && (
+              <>
+                <p>
+                  {t("Device schedule saved: {time}", {
+                    time: notifications.device?.savedAt
+                      ? new Date(notifications.device.savedAt).toLocaleString(locale)
+                      : t("Saving…"),
+                  })}
+                </p>
+                {notifications.device?.error && (
+                  <p role="alert" className="form-error">
+                    {t(notifications.device.error)}
+                  </p>
+                )}
+                {notifications.device?.exact === false && (
+                  <>
+                    <p>{t("Allow alarms and reminders in Android settings for precise timing.")}</p>
+                    <Button
+                      className="theme-button-outline mb-3"
+                      variant="outline-secondary"
+                      onClick={() => notifications.configureExact().catch(() => {})}
+                    >
+                      {t("Alarms and reminders")}
+                    </Button>
+                  </>
+                )}
+                <div className="detail-actions">
+                  <Button
+                    className="theme-button-outline"
+                    variant="outline-secondary"
+                    onClick={() => notifications.testDevice().catch(() => {})}
+                  >
+                    {t("Test notification")}
+                  </Button>
+                  <Button
+                    className="theme-button-outline"
+                    variant="outline-secondary"
+                    onClick={() => notifications.disableDevice().catch(() => {})}
+                  >
+                    {t("Disable device reminders")}
+                  </Button>
+                </div>
+              </>
+            )}
+            {!notifications.native && (
+              <p>
+                {t("To receive reminders with the browser closed, use the Android or Windows app.")}{" "}
+                <a
+                  href="https://github.com/Domalega/diploma/releases"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t("Download Daymark")}
+                </a>
               </p>
             )}
           </section>
@@ -140,7 +203,9 @@ export default function ProfileSidebar({
                 </label>
                 <p>
                   {t(
-                    "Reminds you about unchecked items once their time arrives. Keep the calendar open to receive reminders.",
+                    notifications.native
+                      ? "Reminds you about unchecked items using the schedule saved on this device."
+                      : "Reminds you about unchecked items once their time arrives. Keep the calendar open to receive reminders.",
                   )}
                 </p>
                 {medications.plan.reminders && permission === "default" && (
@@ -156,7 +221,9 @@ export default function ProfileSidebar({
                 {medications.plan.reminders && permission === "denied" && (
                   <p>
                     {t(
-                      "Allow notifications for this site in your browser settings to receive reminders.",
+                      notifications.native
+                        ? "Allow Daymark notifications in your device settings, then reopen the app."
+                        : "Allow notifications for this site in your browser settings to receive reminders.",
                     )}
                   </p>
                 )}

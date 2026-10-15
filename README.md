@@ -12,6 +12,8 @@ Enable **Settings → Experimental options → Medication tracker** to create a 
 
 [Live demo](https://domalega.github.io/diploma/) · [API health](https://diploma-api-zozr.onrender.com/api/health)
 
+Optional [Android and Windows clients](apps/README.md) save reminders on the device. Scheduled alerts do not require an open browser, notification server, or paid hosting. The calendar UI and synchronization still use the hosted website and API. Preview builds are available in [Releases](https://github.com/Domalega/diploma/releases).
+
 ## Background
 
 Originally created as a graduation thesis project. It is now being revisited to improve the code structure and make it easier to maintain.
@@ -22,6 +24,7 @@ Originally created as a graduation thesis project. It is now being revisited to 
 - **Backend:** Node.js, Express, Sequelize, JWT, bcrypt.
 - **Database:** SQLite for local use; PostgreSQL is also supported.
 - **Email:** Google Apps Script for password recovery.
+- **Device clients:** Android Java/WebView with AlarmManager; Windows .NET 8/WPF/WebView2 with scheduled system notifications and a local refill task.
 
 ## Run locally
 

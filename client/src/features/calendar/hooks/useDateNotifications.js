@@ -1,12 +1,14 @@
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useEffect, useRef } from "react";
 import { todayKey } from "../utils/calendarDates";
+import { isNativeApp } from "../../../shared/reminders/nativeBridge";
 export default function useDateNotifications(dates, enabled, permission) {
   const { t } = useLanguage();
 
   const notified = useRef(new Set());
   useEffect(() => {
-    if (!enabled || !("Notification" in window) || permission !== "granted") return;
+    if (isNativeApp() || !enabled || !("Notification" in window) || permission !== "granted")
+      return;
     function remind() {
       if (Notification.permission !== "granted") return;
       const today = todayKey();

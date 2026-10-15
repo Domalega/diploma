@@ -13,3 +13,7 @@ local/
 server/data/
 *.sqlite*
 *.db*
+apps/windows/**/bin/
+apps/windows/**/obj/
+apps/android/.gradle/
+dist/
