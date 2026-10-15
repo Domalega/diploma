@@ -33,14 +33,14 @@ export default function useNotificationSettings() {
       /* Storage may be restricted. */
     }
   }
-  async function requestPermission() {
+  async function requestPermission(enableNotes = true) {
     if (!("Notification" in window) || pending) return;
     setPending(true);
     setError("");
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
-      if (result === "granted") setEnabled(true);
+      if (result === "granted" && enableNotes !== false) setEnabled(true);
     } catch {
       setError("Notifications are unavailable in this browser.");
     } finally {

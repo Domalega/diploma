@@ -3,7 +3,13 @@ import { FiSearch, FiX } from "react-icons/fi";
 import ProfileSidebar from "./ProfileSidebar";
 import BrandMark from "../../../shared/components/BrandMark";
 import { CALENDAR_ROUTE } from "../../../shared/config/routes";
-export default function NavBar({ query = "", onQueryChange = () => {}, notifications }) {
+export default function NavBar({
+  query = "",
+  onQueryChange = () => {},
+  notifications,
+  medications,
+  onMedicationConfigure,
+}) {
   return (
     <header className="planner-header">
       <a className="skip-link" href="#planner-main">
@@ -40,7 +46,11 @@ export default function NavBar({ query = "", onQueryChange = () => {}, notificat
           )}
         </div>
         <nav className="planner-account" aria-label="Account controls">
-          <ProfileSidebar notifications={notifications} />
+          <ProfileSidebar
+            notifications={notifications}
+            medications={medications}
+            onMedicationConfigure={onMedicationConfigure}
+          />
         </nav>
       </div>
     </header>

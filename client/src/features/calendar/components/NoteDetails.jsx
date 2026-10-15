@@ -2,6 +2,7 @@ import { Button } from "react-bootstrap";
 import { FiEdit3, FiPlus, FiTrash2, FiFeather, FiClock } from "react-icons/fi";
 import { formatDay, parseDate, todayKey } from "../utils/calendarDates";
 import { noteTime } from "../utils/noteTimes";
+import MedicationMatrix from "../../medications/components/MedicationMatrix";
 export default function NoteDetails({
   date,
   notes,
@@ -10,6 +11,9 @@ export default function NoteDetails({
   onEdit,
   onDelete,
   ready,
+  medications,
+  onMedicationConfigure,
+  onMedicationExpand,
 }) {
   const day = parseDate(date);
   return (
@@ -87,6 +91,12 @@ export default function NoteDetails({
           </Button>
         </div>
       )}
+      <MedicationMatrix
+        tracker={medications}
+        date={date}
+        onConfigure={onMedicationConfigure}
+        onExpand={onMedicationExpand}
+      />
     </div>
   );
 }

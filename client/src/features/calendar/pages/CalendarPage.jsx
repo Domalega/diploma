@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Button, Offcanvas } from "react-bootstrap";
+import { Alert, Button, Offcanvas, Modal } from "react-bootstrap";
 import { FiArrowLeft, FiArrowRight, FiPlus, FiCalendar, FiList, FiCheck } from "react-icons/fi";
 import NavBar from "../components/NavBar";
 import MainCalendar from "../components/MainCalendar";
@@ -15,6 +15,10 @@ import InteractivePhrase from "../../../shared/components/InteractivePhrase";
 import CalendarLoading from "../../../shared/components/CalendarLoading";
 import { formatDay, formatMonth, monthStart, moveMonths, todayKey } from "../utils/calendarDates";
 import { compareNotes } from "../utils/noteTimes";
+import useMedicationTracker from "../../medications/hooks/useMedicationTracker";
+import useMedicationReminders from "../../medications/hooks/useMedicationReminders";
+import MedicationManager from "../../medications/components/MedicationManager";
+import MedicationMatrix from "../../medications/components/MedicationMatrix";
 import "../styles/Calendar.css";
 
 export default function CalendarPage() {
@@ -27,18 +31,27 @@ export default function CalendarPage() {
   const [editor, setEditor] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [message, setMessage] = useState("");
+  const [medicationManager, setMedicationManager] = useState(null);
+  const [medicationExpanded, setMedicationExpanded] = useState(false);
   const newNoteButton = useRef(null);
   const queuedDialog = useRef(null);
   const dialogWasOpen = useRef(false);
   const today = useToday();
   useEffect(() => {
-    const open = !!editor || !!deleting;
+    const open = !!editor || !!deleting || !!medicationManager || medicationExpanded;
     if (!open && dialogWasOpen.current) newNoteButton.current?.focus();
     dialogWasOpen.current = open;
-  }, [editor, deleting]);
+  }, [editor, deleting, medicationManager, medicationExpanded]);
   const { dates, loading, error, reload, create, update, remove } = useDates();
   const notifications = useNotificationSettings();
   useDateNotifications(dates, notifications.enabled, notifications.permission);
+  const medications = useMedicationTracker(selectedDate, today);
+  useMedicationReminders(
+    medications.plan,
+    medications.todayRecords,
+    notifications.permission,
+    !medications.loading && !medications.pending && !medications.error,
+  );
   const selectedNotes = dates.filter((note) => note.date === selectedDate).sort(compareNotes);
   const ready = !loading && !error;
   const search = query.trim().toLocaleLowerCase();
@@ -67,11 +80,20 @@ export default function CalendarPage() {
       setMobileDay(false);
     } else action();
   }
+  function configureMedications(intent) {
+    if (medicationExpanded) {
+      queuedDialog.current = () => setMedicationManager(intent);
+      setMedicationExpanded(false);
+    } else openDialog(() => setMedicationManager(intent));
+  }
   const detailsProps = {
     date: selectedDate,
     notes: selectedNotes,
     selectedNoteId,
     ready,
+    medications,
+    onMedicationConfigure: configureMedications,
+    onMedicationExpand: () => openDialog(() => setMedicationExpanded(true)),
     onAdd: addNote,
     onEdit: (note) => openDialog(() => setEditor({ date: note.date, note })),
     onDelete: (note) => {
@@ -81,7 +103,13 @@ export default function CalendarPage() {
   const searching = !!search;
   return (
     <div className="planner">
-      <NavBar query={query} onQueryChange={setQuery} notifications={notifications} />
+      <NavBar
+        query={query}
+        onQueryChange={setQuery}
+        notifications={notifications}
+        medications={medications}
+        onMedicationConfigure={configureMedications}
+      />
       <main id="planner-main" tabIndex={-1} className="planner-main">
         <div className="planner-intro">
           <div>
@@ -273,6 +301,41 @@ export default function CalendarPage() {
           }}
         />
       )}
+      {medicationManager && (
+        <MedicationManager
+          tracker={medications}
+          intent={medicationManager}
+          onClose={() => setMedicationManager(null)}
+        />
+      )}
+      <Modal
+        show={medicationExpanded}
+        onHide={() => setMedicationExpanded(false)}
+        onExited={() => {
+          const action = queuedDialog.current;
+          queuedDialog.current = null;
+          action?.();
+        }}
+        fullscreen="sm-down"
+        centered
+        restoreFocus={false}
+        aria-labelledby="medication-expanded-title"
+        className="planner-modal medication-expanded-modal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title id="medication-expanded-title">
+            Medication tracker · {formatDay(selectedDate)}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <MedicationMatrix
+            tracker={medications}
+            date={selectedDate}
+            onConfigure={configureMedications}
+            expanded
+          />
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

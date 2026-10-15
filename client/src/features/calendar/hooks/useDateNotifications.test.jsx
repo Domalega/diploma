@@ -85,3 +85,19 @@ test("several timed notes wait for their local time and each reminds once", () =
   });
   expect(Notification).toHaveBeenCalledTimes(4);
 });
+
+test("allowing medication reminders does not re-enable note reminders", async () => {
+  let settings;
+  function Probe() {
+    settings = useNotificationSettings();
+    return null;
+  }
+  localStorage.setItem(NOTIFICATION_KEY, "off");
+  Notification.permission = "default";
+  Notification.requestPermission = jest.fn(async () => "granted");
+  render(<Probe />);
+  await act(async () => settings.requestPermission(false));
+  expect(settings.permission).toBe("granted");
+  expect(settings.enabled).toBe(false);
+  expect(localStorage.getItem(NOTIFICATION_KEY)).toBe("off");
+});

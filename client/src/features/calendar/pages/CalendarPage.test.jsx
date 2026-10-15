@@ -3,6 +3,8 @@ import { MemoryRouter } from "react-router-dom";
 import CalendarPage from "./CalendarPage";
 import { ThemeProvider } from "../../../shared/theme/ThemeProvider";
 import * as datesApi from "../api/datesApi";
+import useMedicationTracker from "../../medications/hooks/useMedicationTracker";
+import { emptyPlan } from "../../medications/utils/schedule";
 import {
   todayKey,
   moveDays,
@@ -12,12 +14,24 @@ import {
   formatMonth,
 } from "../utils/calendarDates";
 jest.mock("../api/datesApi");
+jest.mock("../../medications/hooks/useMedicationTracker");
 const today = todayKey();
 const note = { id: 1, date: today, comment: "Read a little" };
 beforeEach(() => {
   jest.resetAllMocks();
   localStorage.clear();
   datesApi.getAllDates.mockResolvedValue([]);
+  useMedicationTracker.mockReturnValue({
+    plan: emptyPlan,
+    records: [],
+    todayRecords: [],
+    loading: false,
+    pending: false,
+    error: "",
+    reload: jest.fn(),
+    savePlan: jest.fn(),
+    mark: jest.fn(),
+  });
 });
 function mount() {
   return render(
