@@ -11,6 +11,7 @@ export default function ProfileSidebar({
   notifications = { supported: false },
   medications,
   onMedicationConfigure,
+  kanban,
 }) {
   const { t, locale } = useLanguage();
 
@@ -163,6 +164,31 @@ export default function ProfileSidebar({
               <FiZap aria-hidden="true" />
               {t("Experimental options")}
             </h2>
+            <label className="notification-toggle">
+              <input
+                type="checkbox"
+                checked={!!kanban?.board.enabled}
+                disabled={!kanban || kanban.loading || kanban.pending || kanban.conflict}
+                onChange={(event) =>
+                  kanban.send({ type: "enabled", enabled: event.target.checked }).catch(() => {})
+                }
+              />
+              <span>{t("Kanban board")}</span>
+            </label>
+            <p>{t("Custom workflow columns, calendar dates and completed task history.")}</p>
+            {kanban?.error && (
+              <div role="alert" className="form-error">
+                <p>{t(kanban.error)}</p>
+                <Button
+                  className="theme-button-outline"
+                  variant="outline-secondary"
+                  disabled={kanban.pending}
+                  onClick={kanban.reload}
+                >
+                  {t("Reload board")}
+                </Button>
+              </div>
+            )}
             <label className="notification-toggle">
               <input
                 type="checkbox"

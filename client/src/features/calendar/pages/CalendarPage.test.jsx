@@ -14,6 +14,11 @@ import {
   formatDay,
   formatMonth,
 } from "../utils/calendarDates";
+import useKanbanBoard, { emptyBoard } from "../../kanban/hooks/useKanbanBoard";
+jest.mock("../../kanban/hooks/useKanbanBoard", () => {
+  const actual = jest.requireActual("../../kanban/hooks/useKanbanBoard");
+  return { ...actual, __esModule: true, default: jest.fn() };
+});
 jest.mock("../api/datesApi");
 jest.mock("../../medications/hooks/useMedicationTracker");
 const today = todayKey();
@@ -21,6 +26,15 @@ const note = { id: 1, date: today, comment: "Read a little" };
 beforeEach(() => {
   jest.resetAllMocks();
   localStorage.clear();
+  useKanbanBoard.mockReturnValue({
+    board: emptyBoard,
+    loading: false,
+    pending: false,
+    error: "",
+    conflict: false,
+    reload: jest.fn(),
+    send: jest.fn(),
+  });
   datesApi.getAllDates.mockResolvedValue([]);
   useMedicationTracker.mockReturnValue({
     plan: emptyPlan,
@@ -45,6 +59,51 @@ function mount() {
 }
 const panel = () => within(screen.getByRole("region", { name: "Notes", exact: true }));
 const calendarReady = () => screen.findByRole("table", { name: "Monthly calendar" });
+
+test("experimental board dates appear in the calendar and selecting a task date opens that day", async () => {
+  const taskDate = moveMonths(today, 1);
+  const send = jest.fn().mockResolvedValue({});
+  useKanbanBoard.mockReturnValue({
+    board: {
+      ...emptyBoard,
+      enabled: true,
+      columns: [{ id: "todo", name: "", kind: "todo", hidden: false, wipLimit: null }],
+      tasks: [
+        {
+          id: "task-one",
+          title: "Prepare a demo",
+          description: "",
+          date: taskDate,
+          columnId: "todo",
+          position: 0,
+          completedAt: null,
+        },
+      ],
+    },
+    loading: false,
+    pending: false,
+    error: "",
+    conflict: false,
+    reload: jest.fn(),
+    send,
+  });
+  mount();
+  await calendarReady();
+  const board = within(screen.getByRole("region", { name: "Task board", exact: true }));
+  fireEvent.click(board.getByRole("button", { name: formatDay(taskDate) }));
+  expect(screen.getByRole("heading", { name: formatMonth(taskDate) })).toBeInTheDocument();
+  const day = screen.getByRole("button", { name: /Tasks: Prepare a demo/ });
+  expect(day).toHaveAttribute("aria-pressed", "true");
+  expect(within(day).getByText("Prepare a demo")).toBeInTheDocument();
+  expect(
+    screen.queryByText("Your calendar is a fresh page. Choose a day to leave your first note."),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Settings", exact: true }));
+  const settings = await screen.findByRole("dialog", { name: "Settings" });
+  expect(within(settings).getByRole("checkbox", { name: "Kanban board" })).toBeChecked();
+  fireEvent.click(within(settings).getByRole("checkbox", { name: "Kanban board" }));
+  await waitFor(() => expect(send).toHaveBeenCalledWith({ type: "enabled", enabled: false }));
+});
 
 test("Russian settings translate calendar dates and labels while preserving user notes and loaded data", async () => {
   localStorage.setItem(LANGUAGE_KEY, "ru");

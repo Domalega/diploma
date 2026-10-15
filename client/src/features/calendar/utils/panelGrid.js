@@ -4,7 +4,13 @@ import { clampPanelSize, PANEL_COLUMNS } from "./panelLayoutConfig";
 export const GRID_COLUMNS = 24;
 export const GRID_GAP = 16;
 export const GRID_ROW_HEIGHT = 4;
-export const DEFAULT_HEIGHT = { calendar: 884, today: 164, notes: 424, medications: 524 };
+export const DEFAULT_HEIGHT = {
+  calendar: 884,
+  today: 164,
+  notes: 424,
+  medications: 524,
+  kanban: 644,
+};
 export const gridRows = (height) => Math.ceil((height + GRID_GAP) / (GRID_ROW_HEIGHT + GRID_GAP));
 export const gridHeight = (rows) => rows * (GRID_ROW_HEIGHT + GRID_GAP) - GRID_GAP;
 const copy = (items) => items.map((item) => ({ ...item }));
@@ -31,7 +37,7 @@ export function panelGrid(ids, sizes = {}, positions = {}, columns = GRID_COLUMN
     const w =
       columns === GRID_COLUMNS
         ? Math.round((size.columns || PANEL_COLUMNS[id]) * 2)
-        : columns === 1 || ["calendar", "medications"].includes(id)
+        : columns === 1 || ["calendar", "medications", "kanban"].includes(id)
           ? columns
           : columns / 2;
     const item = { i: id, x: 0, y: 0, w, h: gridRows(size.height || DEFAULT_HEIGHT[id]) };

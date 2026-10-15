@@ -36,6 +36,8 @@ import MedicationManager from "../../medications/components/MedicationManager";
 import MedicationMatrix from "../../medications/components/MedicationMatrix";
 import MedicationViewControl from "../../medications/components/MedicationViewControl";
 import useMedicationView from "../../medications/hooks/useMedicationView";
+import useKanbanBoard from "../../kanban/hooks/useKanbanBoard";
+import KanbanTile from "../../kanban/components/KanbanTile";
 import "../styles/Calendar.css";
 import useDeviceReminders from "../../../shared/reminders/useDeviceReminders";
 
@@ -67,6 +69,7 @@ export default function CalendarPage() {
   const notifications = useNotificationSettings();
   useDateNotifications(dates, notifications.enabled, notifications.permission);
   const medications = useMedicationTracker(selectedDate, today);
+  const kanban = useKanbanBoard();
   useMedicationReminders(
     medications.plan,
     medications.todayRecords,
@@ -218,15 +221,21 @@ export default function CalendarPage() {
           month={month}
           selectedDate={selectedDate}
           dates={dates}
+          tasks={kanban.board.enabled ? kanban.board.tasks : []}
           onSelect={selectDay}
           onMonthChange={(date) => setMonth(monthStart(date))}
         />
       )}
-      {!loading && !error && !dates.length && !searching && view === "month" && (
-        <p className="calendar-empty-hint">
-          {t("Your calendar is a fresh page. Choose a day to leave your first note.")}
-        </p>
-      )}
+      {!loading &&
+        !error &&
+        !dates.length &&
+        !(kanban.board.enabled && kanban.board.tasks.length) &&
+        !searching &&
+        view === "month" && (
+          <p className="calendar-empty-hint">
+            {t("Your calendar is a fresh page. Choose a day to leave your first note.")}
+          </p>
+        )}
     </div>
   );
   return (
@@ -237,6 +246,7 @@ export default function CalendarPage() {
         notifications={{ ...notifications, device: deviceReminders }}
         medications={medications}
         onMedicationConfigure={configureMedications}
+        kanban={kanban}
       />
       <main id="planner-main" tabIndex={-1} className="planner-main">
         <div className="planner-feedback" role="status" aria-live="polite">
@@ -299,6 +309,19 @@ export default function CalendarPage() {
                 </div>
               ),
             },
+            kanban: kanban.board.enabled
+              ? {
+                  title: t("Kanban board"),
+                  icon: <FiGrid />,
+                  content: (
+                    <KanbanTile
+                      tracker={kanban}
+                      selectedDate={selectedDate}
+                      onSelectDate={selectDay}
+                    />
+                  ),
+                }
+              : null,
             medications: medications.plan.enabled
               ? {
                   title: t("Medication tracker"),

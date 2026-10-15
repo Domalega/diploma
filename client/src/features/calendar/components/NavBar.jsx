@@ -10,6 +10,7 @@ export default function NavBar({
   notifications,
   medications,
   onMedicationConfigure,
+  kanban,
 }) {
   const { t } = useLanguage();
 
@@ -53,6 +54,7 @@ export default function NavBar({
             notifications={notifications}
             medications={medications}
             onMedicationConfigure={onMedicationConfigure}
+            kanban={kanban}
           />
         </nav>
       </div>

@@ -1,32 +1,28 @@
 # Daymark roadmap
 
-## Current foundation
+## Current workspace
 
-The workspace has movable, resizable calendar, date, notes and medication tiles on a collision-aware grid. Tiles can move into open space, push neighbours aside and resize using an edge or corner. Positions, order and sizes are browser preferences, separate from the notes and medication data. Resizing does not remount tile content or change note dates. Small screens keep an adaptive arrangement and preserve desktop positions and widths.
+Calendar, current date, notes, medication tracker and the optional Kanban board are independent, movable and resizable tiles on a collision-aware grid. Workspace positions and sizes are browser preferences; notes, medication data and board data belong to the signed-in account.
 
-## Planned direction: a Kanban view
+## Experimental Kanban board
 
-Add a board alongside Month and List. Calendar and Kanban must show the same notes, with the same IDs, dates and reminder settings. Moving a card between columns changes its workflow status; changing a date remains a separate action. Medication schedules and intake marks stay a separate feature.
+Enable the board in Settings → Experimental options. The first version includes:
 
-### 1. Shared card model and safe migration
+- To do, In progress and Done stages, plus custom stages. Every column can be renamed, reordered or hidden without removing tasks.
+- Configurable work-in-progress limits on active stages, enforced by the API. In progress starts with a limit of three.
+- Task titles, descriptions and optional calendar dates. Dated tasks appear in the month grid; a card's date opens the corresponding calendar day.
+- Pointer/touch dragging, a stage selector, and keyboard-accessible reorder buttons.
+- Completion, reopening, a completed-task history and a per-task activity log. Completion never deletes a task.
+- Account-scoped database persistence, atomic moves and revision checks that reject stale edits. Failed saves keep the editor draft.
 
-- Extend notes into cards with a title, description, optional date/time, column ID and stable position. Keep existing note IDs and ownership.
-- Introduce personal boards and editable columns. Start with Inbox, In progress and Done; allow renaming, reordering and additional columns.
-- Migrate existing notes to Inbox without changing their text, dates, times or reminders. Undated cards appear on the board, dated cards also appear in the calendar.
-- Version and migrate the data schema. Define completion/reminder behavior before adding status transitions; a column name alone must not silently suppress reminders.
+The [Kanban Guide](https://kanbanguides.org/the-kanban-guide) calls for an explicit workflow and control of work in progress; it does not prescribe column names. The initial stages are convenient defaults. This experimental board does not yet implement the guide's full set of flow metrics or service-level expectations.
 
-### 2. Board interactions
+## Next steps
 
-- Add card creation, editing, search and movement within/between columns.
-- Support pointer and touch dragging, keyboard movement and an explicit Move action as an alternative.
-- Save a move atomically, verify ownership on the server, and handle concurrent edits without silently overwriting a newer order. Roll back failed optimistic moves.
-- Share the editor and selection state across Month, List and Board. Keep tile arrangement separate from moving cards inside the board.
+1. Evaluate the experimental board with real workflows, including narrow screens, hidden stages, concurrent sessions and long task histories.
+2. Design a shared note/task model and a versioned migration. Preserve existing note IDs, text, dates, times, ownership and reminders. Current board tasks remain separate from calendar notes and have no reminders.
+3. Share editing and selection across Month, List and Board. Keep workflow changes separate from date changes; define completion and reminder behavior before migrating existing notes.
+4. Add pagination and history filters as account data grows. Consider cycle time, throughput, work-item age and service-level expectations.
+5. Consider account-synced workspace layouts separately from task data. Medication schedules remain independent.
 
-### 3. Persistence and rollout
-
-- Store board/column/card order in the database; browser tile preferences remain independent. Consider account-synced workspace layouts separately.
-- Release Board behind an experimental option first. Keep Month and List available throughout the transition.
-- Verify migration of existing notes, API authorization, ordering conflicts, keyboard/touch operation, narrow layouts and reminder consistency across views.
-- Enable by default only after existing accounts can switch views without losing or duplicating data.
-
-This is a development plan, not an implemented feature or a scheduled release. Start with the shared card model and migration before replacing the workspace layout or introducing collaboration.
+These are development directions, not scheduled release commitments. Keep the board opt-in until the shared model and migration can preserve existing accounts without losing or duplicating data.

@@ -19,6 +19,7 @@ const panels = {
   },
   medications: { title: "Medication tracker", content: <p>Intake table</p> },
 };
+const visiblePanelOrder = PANEL_ORDER.filter((id) => id !== "kanban");
 const visibleOrder = () =>
   within(screen.getByRole("group", { name: "Calendar panels" }))
     .getAllByRole("region")
@@ -42,14 +43,16 @@ test("moving with the controls or keyboard preserves panel content and persists 
   const savedOrder = visibleOrder();
   expect(JSON.parse(localStorage.getItem(PANEL_POSITIONS_KEY))).toHaveProperty("medications");
   expect(screen.getByLabelText("Unsaved test draft")).toHaveValue("Still editing");
-  expect(JSON.parse(localStorage.getItem(PANEL_LAYOUT_KEY))).toEqual(visibleOrder());
+  expect(JSON.parse(localStorage.getItem(PANEL_LAYOUT_KEY)).filter((id) => panels[id])).toEqual(
+    visibleOrder(),
+  );
   expect(screen.getByRole("button", { name: "Drag Medication tracker panel" })).toHaveFocus();
   view.unmount();
   view = render(<DashboardBoard panels={panels} />);
   expect(visibleOrder()).toEqual(savedOrder);
   fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
   fireEvent.click(screen.getByRole("button", { name: "Reset layout" }));
-  expect(visibleOrder()).toEqual(PANEL_ORDER);
+  expect(visibleOrder()).toEqual(visiblePanelOrder);
 });
 
 test("the disabled medication tile keeps its saved place and invalid stored values cannot hide panels", () => {
@@ -85,7 +88,7 @@ test("dragging moves only on release and Escape cancels without changing the sto
   try {
     pointerEvent(handle, "pointerDown");
     pointerEvent(handle, "pointerMove", { clientX: 130 });
-    expect(visibleOrder()).toEqual(PANEL_ORDER);
+    expect(visibleOrder()).toEqual(visiblePanelOrder);
     fireEvent.keyDown(window, { key: "Escape" });
     pointerEvent(handle, "pointerUp", { clientX: 130 });
     expect(localStorage.getItem(PANEL_LAYOUT_KEY)).toBeNull();
@@ -131,7 +134,7 @@ test("keyboard resizing persists sizes, preserves drafts, and reset restores ord
   });
   fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
   fireEvent.click(screen.getByRole("button", { name: "Reset layout" }));
-  expect(visibleOrder()).toEqual(PANEL_ORDER);
+  expect(visibleOrder()).toEqual(visiblePanelOrder);
   expect(JSON.parse(localStorage.getItem(PANEL_SIZES_KEY))).toEqual({});
   expect(screen.getByRole("region", { name: "Notes", exact: true })).toHaveStyle({
     height: "424px",

@@ -10,11 +10,13 @@ import {
   todayKey,
 } from "../utils/calendarDates";
 import { compareNotes } from "../utils/noteTimes";
+import { FiColumns } from "react-icons/fi";
 const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 export default function MainCalendar({
   month,
   selectedDate,
   dates,
+  tasks = [],
   onSelect,
   onMonthChange,
   today = todayKey(),
@@ -83,6 +85,7 @@ export default function MainCalendar({
             <tr key={row}>
               {days.slice(row * 7, row * 7 + 7).map((value) => {
                 const dayNotes = notes.get(value) || [],
+                  dayTasks = tasks.filter((task) => task.date === value),
                   selected = value === selectedDate,
                   isToday = value === today;
                 return (
@@ -111,6 +114,17 @@ export default function MainCalendar({
                                   (note.comment || t("Untitled note")),
                               )
                               .join("; ")
+                          : "") +
+                        (dayTasks.length
+                          ? ", " +
+                            t("Tasks") +
+                            ": " +
+                            dayTasks
+                              .map(
+                                (task) =>
+                                  task.title + (task.completedAt ? " · " + t("Completed") : ""),
+                              )
+                              .join("; ")
                           : "")
                       }
                       aria-pressed={selected}
@@ -120,6 +134,16 @@ export default function MainCalendar({
                       onClick={() => onSelect(value)}
                     >
                       <span className="day-number">{parseDate(value).getDate()}</span>
+                      {!!dayTasks.length && (
+                        <span
+                          className="day-task-count"
+                          aria-hidden="true"
+                          title={t("Tasks") + ": " + dayTasks.length}
+                        >
+                          <FiColumns aria-hidden="true" />
+                          {dayTasks.length}
+                        </span>
+                      )}
                       {isToday && <span className="today-label">{t("Today")}</span>}
                       {dayNotes.slice(0, 2).map((note) => (
                         <span className="day-note" key={note.id}>
@@ -135,6 +159,17 @@ export default function MainCalendar({
                           {t("notes.more", { count: dayNotes.length - 2 })}
                         </span>
                       )}
+                      {dayTasks.slice(0, Math.max(0, 2 - dayNotes.length)).map((task) => (
+                        <span
+                          key={task.id}
+                          className={
+                            "day-note day-task" + (task.completedAt ? " is-completed" : "")
+                          }
+                        >
+                          <span className="note-dot" aria-hidden="true" />
+                          <span>{task.title}</span>
+                        </span>
+                      ))}
                       {!!dayNotes.length && (
                         <span className="day-note-count" aria-hidden="true">
                           {t("notes.count", { count: dayNotes.length })}

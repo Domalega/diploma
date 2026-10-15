@@ -1,7 +1,7 @@
-export const PANEL_ORDER = ["calendar", "today", "notes", "medications"];
-export const PANEL_COLUMNS = { calendar: 8, today: 4, notes: 4, medications: 12 };
-const MIN_COLUMNS = { calendar: 4, today: 2, notes: 3, medications: 4 };
-const MIN_HEIGHT = { calendar: 600, today: 144, notes: 240, medications: 260 };
+export const PANEL_ORDER = ["calendar", "today", "notes", "medications", "kanban"];
+export const PANEL_COLUMNS = { calendar: 8, today: 4, notes: 4, medications: 12, kanban: 12 };
+const MIN_COLUMNS = { calendar: 4, today: 2, notes: 3, medications: 4, kanban: 4 };
+const MIN_HEIGHT = { calendar: 600, today: 144, notes: 240, medications: 260, kanban: 360 };
 
 export function clampPanelSize(id, size) {
   if (!PANEL_ORDER.includes(id) || !size || typeof size !== "object") return {};

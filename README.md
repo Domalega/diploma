@@ -12,6 +12,8 @@ The calendar, current date, notes and medication tracker use independent tiles. 
 
 Enable **Settings → Experimental options → Medication tracker** to create a personal intake table. Add medications, intake times and repeating weekdays, with optional course dates. By default, tall tiles show compact intake buttons and wide tiles show the medication table. In **Arrange panels**, choose **Auto**, **Table**, or **Buttons**; your choice is saved in the browser. Mark individual cells or all medications at a time using its heading; completing a time slot plays a short animation. Previous marks remain when a schedule is changed or disabled. Optional reminders use your device's local clock and work while the calendar is open.
 
+Enable **Settings → Experimental options → Kanban board** for a separate task tile. Start with To do, In progress and Done; add, rename, reorder or hide any column and set work-in-progress limits. Drag cards between stages or use the stage selector and reorder buttons. Optional task dates appear in the calendar. Completed tasks remain in Done and History, can be reopened, and retain an activity log. Board data is saved to your account; hiding columns or disabling the tile preserves it. Tasks are currently separate from notes and do not send reminders.
+
 [Live demo](https://domalega.github.io/diploma/) · [API health](https://diploma-api-zozr.onrender.com/api/health)
 
 Optional [Android and Windows clients](apps/README.md) save reminders on the device. Scheduled alerts do not require an open browser, notification server, or paid hosting. The calendar UI and synchronization still use the hosted website and API. Preview builds are available in [Releases](https://github.com/Domalega/diploma/releases).
@@ -20,7 +22,7 @@ Optional [Android and Windows clients](apps/README.md) save reminders on the dev
 
 Originally created as a graduation thesis project. It is now being revisited to improve the code structure and make it easier to maintain.
 
-The [roadmap](docs/ROADMAP.md) describes the planned Kanban view.
+The [roadmap](docs/ROADMAP.md) describes the experimental board and future integration.
 
 ## Tech stack
 
