@@ -1,4 +1,5 @@
 import { parseDate } from "../../calendar/utils/calendarDates";
+import { translate } from "../../../shared/i18n/messages";
 export const WEEKDAYS = [
   { value: 1, short: "M", name: "Monday" },
   { value: 2, short: "T", name: "Tuesday" },
@@ -55,9 +56,15 @@ export function matrixForDay(plan, records, date) {
     !row.historical && !slot.historical && isDue(row, date) && row.slotIds.includes(slot.id);
   return { rows, slots, marks, scheduled };
 }
-export const repeatLabel = (row) =>
+export const repeatLabel = (row, locale = "en") =>
   row.weekdays.length === 7
-    ? "Every day"
+    ? translate("Every day", locale)
     : WEEKDAYS.filter((day) => row.weekdays.includes(day.value))
-        .map((day) => day.name.slice(0, 3))
+        .map((day) =>
+          locale === "ru"
+            ? new Intl.DateTimeFormat("ru", { weekday: "short" }).format(
+                new Date(2024, 0, day.value === 0 ? 7 : day.value),
+              )
+            : day.name.slice(0, 3),
+        )
         .join(", ");

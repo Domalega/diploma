@@ -1,3 +1,4 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useEffect, useRef, useState } from "react";
 import { FiCheck, FiCheckCircle, FiGrid, FiMaximize2, FiPlus, FiSettings } from "react-icons/fi";
 import { formatDay } from "../../calendar/utils/calendarDates";
@@ -13,6 +14,8 @@ export default function MedicationMatrix({
   expanded = false,
   standalone = false,
 }) {
+  const { t, locale } = useLanguage();
+
   const [celebration, setCelebration] = useState(null);
   const [announcement, setAnnouncement] = useState("");
   const timer = useRef(null);
@@ -32,7 +35,7 @@ export default function MedicationMatrix({
   function celebrate(slot) {
     window.clearTimeout(timer.current);
     setCelebration({ id: slot.id, key: Date.now() });
-    setAnnouncement("All scheduled items for " + slot.time + " are marked as taken.");
+    setAnnouncement(t("All scheduled items for {time} are marked as taken.", { time: slot.time }));
     timer.current = window.setTimeout(() => setCelebration(null), 2400);
   }
   async function toggle(row, slot) {
@@ -51,7 +54,10 @@ export default function MedicationMatrix({
       if (completes && column.length) celebrate(slot);
       else
         setAnnouncement(
-          row.name + " at " + slot.time + (taken ? " marked as taken." : " unchecked."),
+          t(taken ? "{name} at {time} marked as taken." : "{name} at {time} unchecked.", {
+            name: row.name,
+            time: slot.time,
+          }),
         );
     } catch {
       /* The tracker displays the error and preserves the previous marks. */
@@ -66,7 +72,7 @@ export default function MedicationMatrix({
       else {
         window.clearTimeout(timer.current);
         setCelebration(null);
-        setAnnouncement("The " + slot.time + " column was unchecked.");
+        setAnnouncement(t("The {time} column was unchecked.", { time: slot.time }));
       }
     } catch {
       /* No optimistic marks are shown for a failed request. */
@@ -79,7 +85,7 @@ export default function MedicationMatrix({
         (expanded ? " is-expanded" : "") +
         (standalone ? " is-standalone" : "")
       }
-      aria-label={standalone ? "Medication intakes" : "Medication tracker"}
+      aria-label={standalone ? t("Medication intakes") : t("Medication tracker")}
       aria-busy={busy}
     >
       {!standalone && (
@@ -87,16 +93,16 @@ export default function MedicationMatrix({
           <div>
             <h3>
               <FiGrid aria-hidden="true" />
-              Medication tracker
+              {t("Medication tracker")}
             </h3>
-            <span className="experimental-badge">Experimental</span>
+            <span className="experimental-badge">{t("Experimental")}</span>
           </div>
           <div className="medication-heading-actions">
             {!expanded && (
               <button
                 className="icon-button"
                 type="button"
-                aria-label="Expand medication tracker"
+                aria-label={t("Expand medication tracker")}
                 onClick={onExpand}
               >
                 <FiMaximize2 aria-hidden="true" />
@@ -105,7 +111,7 @@ export default function MedicationMatrix({
             <button
               className="icon-button"
               type="button"
-              aria-label="Manage medication schedule"
+              aria-label={t("Manage medication schedule")}
               onClick={() => onConfigure({ section: "medications" })}
             >
               <FiSettings aria-hidden="true" />
@@ -115,24 +121,24 @@ export default function MedicationMatrix({
       )}
       {error && (
         <div className="medication-error" role="alert">
-          <p>{error}</p>
+          <p>{t(error)}</p>
           <button
             className="theme-button-outline"
             type="button"
             disabled={pending}
             onClick={reload}
           >
-            Reload tracker
+            {t("Reload tracker")}
           </button>
         </div>
       )}
       {loading ? (
-        <p role="status" aria-label="Medication tracker loading" className="medication-empty">
-          Loading your medication tracker…
+        <p role="status" aria-label={t("Medication tracker loading")} className="medication-empty">
+          {t("Loading your medication tracker…")}
         </p>
       ) : !plan.rows.length && !rows.length ? (
         <div className="medication-empty">
-          <p>Add intake times and medications to build your table.</p>
+          <p>{t("Add intake times and medications to build your table.")}</p>
           <button
             className="theme-button-outline"
             type="button"
@@ -140,7 +146,7 @@ export default function MedicationMatrix({
               onConfigure({ section: plan.slots.length ? "medications" : "times", create: true })
             }
           >
-            Set up tracker
+            {t("Set up tracker")}
           </button>
         </div>
       ) : (
@@ -149,17 +155,19 @@ export default function MedicationMatrix({
             className="medication-table-scroll"
             tabIndex={0}
             role="region"
-            aria-label="Scroll medication table"
+            aria-label={t("Scroll medication table")}
           >
             <table className="medication-table">
               <caption className="visually-hidden">
-                Medication intake for {formatDay(date)}. Select a cell to mark or undo an intake;
-                select a column heading to mark or undo all scheduled items in that column.
+                {t(
+                  "Medication intake for {date}. Select a cell to mark or undo an intake; select a column heading to mark or undo all scheduled items in that column.",
+                  { date: formatDay(date, locale) },
+                )}
               </caption>
               <thead>
                 <tr>
                   <th scope="col" className="medication-name-column">
-                    Medication
+                    {t("Medication")}
                   </th>
                   {slots.map((slot) => {
                     const due = rows.filter((row) => scheduled(row, slot));
@@ -177,15 +185,17 @@ export default function MedicationMatrix({
                           className={"medication-column-button" + (complete ? " is-complete" : "")}
                           disabled={busy || !due.length}
                           aria-pressed={complete}
-                          aria-label={
-                            (complete ? "Uncheck" : "Mark all") +
-                            " scheduled medications at " +
-                            slot.time +
-                            (slot.label ? " — " + slot.label : "")
-                          }
+                          aria-label={t(
+                            complete
+                              ? "Uncheck scheduled medications at {time}{label}"
+                              : "Mark all scheduled medications at {time}{label}",
+                            { time: slot.time, label: slot.label ? " — " + slot.label : "" },
+                          )}
                           onClick={() => toggleColumn(slot, complete)}
                           title={
-                            complete ? "Uncheck the whole column" : "Mark the whole column as taken"
+                            complete
+                              ? t("Uncheck the whole column")
+                              : t("Mark the whole column as taken")
                           }
                         >
                           <span className="medication-time-symbol">
@@ -212,11 +222,11 @@ export default function MedicationMatrix({
                           )}
                           <span className="medication-column-progress">
                             {slot.historical ? (
-                              "Archived"
+                              t("Archived")
                             ) : complete ? (
                               <>
                                 <FiCheckCircle aria-hidden="true" />
-                                Taken
+                                {t("Taken")}
                               </>
                             ) : (
                               done + "/" + due.length
@@ -230,7 +240,7 @@ export default function MedicationMatrix({
                     <button
                       type="button"
                       className="icon-button"
-                      aria-label="Add intake time"
+                      aria-label={t("Add intake time")}
                       disabled={busy}
                       onClick={() => onConfigure({ section: "times", create: true })}
                     >
@@ -243,7 +253,7 @@ export default function MedicationMatrix({
                 {!rows.length && (
                   <tr>
                     <td colSpan={slots.length + 2} className="medication-empty-day">
-                      No medications are scheduled for this day.
+                      {t("No medications are scheduled for this day.")}
                     </td>
                   </tr>
                 )}
@@ -252,7 +262,7 @@ export default function MedicationMatrix({
                     <th scope="row" className="medication-name-column">
                       <span>{row.name}</span>
                       {row.detail && <small>{row.detail}</small>}
-                      {row.historical && <small>Archived schedule</small>}
+                      {row.historical && <small>{t("Archived schedule")}</small>}
                     </th>
                     {slots.map((slot) => {
                       const record = marks.get(intakeKey(row.id, slot.id));
@@ -270,17 +280,22 @@ export default function MedicationMatrix({
                               className={"medication-dose" + (record ? " is-taken" : "")}
                               disabled={busy}
                               aria-pressed={!!record}
-                              aria-label={
-                                row.name +
-                                " at " +
-                                slot.time +
-                                (slot.label ? " — " + slot.label : "") +
-                                (record ? ", taken — undo" : ", mark as taken")
-                              }
+                              aria-label={t(
+                                record
+                                  ? "{name} at {time}{label}, taken — undo"
+                                  : "{name} at {time}{label}, mark as taken",
+                                {
+                                  name: row.name,
+                                  time: slot.time,
+                                  label: slot.label ? " — " + slot.label : "",
+                                },
+                              )}
                               title={
                                 record
-                                  ? "Marked " + new Date(record.takenAt).toLocaleString()
-                                  : "Mark as taken"
+                                  ? t("Marked {date}", {
+                                      date: new Date(record.takenAt).toLocaleString(locale),
+                                    })
+                                  : t("Mark as taken")
                               }
                               onClick={() => toggle(row, slot)}
                             >
@@ -293,7 +308,10 @@ export default function MedicationMatrix({
                               </span>
                             </button>
                           ) : (
-                            <span className="medication-unscheduled" aria-label="Not scheduled">
+                            <span
+                              className="medication-unscheduled"
+                              aria-label={t("Not scheduled")}
+                            >
                               —
                             </span>
                           )}
@@ -319,7 +337,7 @@ export default function MedicationMatrix({
                       }
                     >
                       <FiPlus aria-hidden="true" />
-                      Add medication
+                      {t("Add medication")}
                     </button>
                   </td>
                 </tr>
@@ -327,11 +345,11 @@ export default function MedicationMatrix({
             </table>
           </div>
           <p className="medication-table-help">
-            Times follow your device's local clock. Unscheduled cells stay empty.
+            {t("Times follow your device's local clock. Unscheduled cells stay empty.")}
           </p>
         </>
       )}
-      <span role="status" aria-label="Medication update" className="visually-hidden">
+      <span role="status" aria-label={t("Medication update")} className="visually-hidden">
         {announcement}
       </span>
     </section>

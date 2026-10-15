@@ -4,6 +4,8 @@ A personal calendar with user accounts, password recovery, multiple notes per da
 
 The theme follows your device by default. Choose System, Light, or Dark on the sign-in page or in calendar Settings; your preference is saved in your browser.
 
+The interface supports English and Russian. The language follows your browser by default; choose System, Russian, or English on the sign-in page or in Settings. Your choice is saved in the browser.
+
 The calendar, current date, notes and medication tracker use independent tiles. Choose **Arrange panels** to drag tiles or move them with the arrow controls. The order is saved in your browser; **Reset layout** restores the default. The medication table spans the full workspace width.
 
 Enable **Settings → Experimental options → Medication tracker** to create a personal intake table. Add medications, intake times and repeating weekdays, with optional course dates. Mark individual cells or a whole time column; completing a column plays a short animation. Previous marks remain when a schedule is changed or disabled. Optional reminders use your device's local clock and work while the calendar is open.

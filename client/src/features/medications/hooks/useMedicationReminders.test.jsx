@@ -1,6 +1,9 @@
 import { act, render } from "@testing-library/react";
 import useMedicationReminders from "./useMedicationReminders";
 import { EVERY_DAY } from "../utils/schedule";
+import { fireEvent, screen } from "@testing-library/react";
+import { LanguageProvider, LANGUAGE_KEY } from "../../../shared/i18n/LanguageProvider";
+import LanguageSwitcher from "../../../shared/i18n/LanguageSwitcher";
 const plan = {
   userId: 7,
   enabled: true,
@@ -51,6 +54,26 @@ function Fixture({
   useMedicationReminders(schedule, records, permission, ready, recordsDate);
   return null;
 }
+
+test("reminders use the selected language without replaying delivered notifications on a language change", () => {
+  jest.setSystemTime(new Date(2026, 9, 14, 8, 0));
+  localStorage.setItem(LANGUAGE_KEY, "ru");
+  render(
+    <LanguageProvider>
+      <LanguageSwitcher />
+      <Fixture />
+    </LanguageProvider>,
+  );
+  expect(Notification.mock.calls[0][0]).toBe("08:00 — Напоминание о приёме");
+  expect(Notification.mock.calls[0][1].body).toContain("Не отмечены 2 запланированных приёма");
+  fireEvent.click(screen.getByRole("radio", { name: "English" }));
+  expect(Notification).toHaveBeenCalledTimes(1);
+  act(() => {
+    jest.setSystemTime(new Date(2026, 9, 14, 22, 0));
+    window.dispatchEvent(new Event("focus"));
+  });
+  expect(Notification.mock.calls[1][0]).toBe("22:00 — Medication reminder");
+});
 test("reminders wait for the slot time, omit medication names and skip previously taken cells", () => {
   render(<Fixture records={[{ date: "2026-10-14", medicationId: "a", slotId: "morning" }]} />);
   expect(Notification).not.toHaveBeenCalled();

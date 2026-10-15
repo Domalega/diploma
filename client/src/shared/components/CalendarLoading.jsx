@@ -1,7 +1,10 @@
+import { useLanguage } from "../i18n/LanguageProvider";
 import { useEffect, useState } from "react";
 import "../styles/CalendarLoading.css";
 
 export default function CalendarLoading({ fullPage = false, label = "Opening your calendar…" }) {
+  const { t } = useLanguage();
+
   const [slow, setSlow] = useState(false);
 
   useEffect(() => {
@@ -28,9 +31,11 @@ export default function CalendarLoading({ fullPage = false, label = "Opening you
         <span className="calendar-loading-spark" />
       </div>
       <div className="calendar-loading-copy" role="status" aria-live="polite" aria-atomic="true">
-        <p>{label}</p>
+        <p>{t(label)}</p>
         <span>
-          {slow ? "The server is taking a little longer. Still connecting…" : "Just a moment."}
+          {slow
+            ? t("The server is taking a little longer. Still connecting…")
+            : t("Just a moment.")}
         </span>
       </div>
     </div>

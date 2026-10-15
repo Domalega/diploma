@@ -1,6 +1,9 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useEffect, useRef } from "react";
 import { todayKey } from "../utils/calendarDates";
 export default function useDateNotifications(dates, enabled, permission) {
+  const { t } = useLanguage();
+
   const notified = useRef(new Set());
   useEffect(() => {
     if (!enabled || !("Notification" in window) || permission !== "granted") return;
@@ -20,9 +23,9 @@ export default function useDateNotifications(dates, enabled, permission) {
           if (notified.current.has(key)) return;
           try {
             const notification = new Notification(
-              item.time ? item.time + " — A note for today" : "A note for today",
+              item.time ? item.time + " — " + t("A note for today") : t("A note for today"),
               {
-                body: item.comment || "Open your calendar to see today's note.",
+                body: item.comment || t("Open your calendar to see today's note."),
                 icon:
                   process.env.PUBLIC_URL +
                   "/daymark-" +
@@ -49,5 +52,5 @@ export default function useDateNotifications(dates, enabled, permission) {
       window.removeEventListener("focus", remind);
       document.removeEventListener("visibilitychange", remind);
     };
-  }, [dates, enabled, permission]);
+  }, [dates, enabled, permission, t]);
 }

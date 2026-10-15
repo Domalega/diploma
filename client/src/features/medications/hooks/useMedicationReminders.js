@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { todayKey } from "../../calendar/utils/calendarDates";
 import { intakeKey, isDue } from "../utils/schedule";
 
@@ -9,6 +10,7 @@ export default function useMedicationReminders(
   ready,
   recordsDate = todayKey(),
 ) {
+  const { t } = useLanguage();
   const sent = useRef(new Set());
   useEffect(() => {
     sent.current.clear();
@@ -58,11 +60,8 @@ export default function useMedicationReminders(
           ).length;
           if (!remaining) return;
           try {
-            const notification = new Notification(slot.time + " — Medication reminder", {
-              body:
-                remaining +
-                (remaining === 1 ? " scheduled item is" : " scheduled items are") +
-                " still unchecked. Open Daymark to review.",
+            const notification = new Notification(slot.time + " — " + t("Medication reminder"), {
+              body: t("reminders.remaining", { count: remaining }),
               tag: key,
               icon:
                 process.env.PUBLIC_URL +
@@ -95,5 +94,5 @@ export default function useMedicationReminders(
       window.removeEventListener("focus", remind);
       document.removeEventListener("visibilitychange", remind);
     };
-  }, [plan, records, permission, ready, recordsDate]);
+  }, [plan, records, permission, ready, recordsDate, t]);
 }

@@ -1,8 +1,10 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Offcanvas } from "react-bootstrap";
 import { FiSettings, FiLogOut, FiBell, FiSun, FiZap } from "react-icons/fi";
 import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
+import LanguageSwitcher from "../../../shared/i18n/LanguageSwitcher";
 import { clearToken } from "../../../shared/api/tokenStorage";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 export default function ProfileSidebar({
@@ -10,6 +12,8 @@ export default function ProfileSidebar({
   medications,
   onMedicationConfigure,
 }) {
+  const { t } = useLanguage();
+
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
   const queued = useRef(null);
@@ -19,13 +23,13 @@ export default function ProfileSidebar({
   return (
     <>
       <Button
-        aria-label="Settings"
+        aria-label={t("Settings")}
         variant="outline-secondary"
         className="theme-button-outline account-button"
         onClick={() => setShow(true)}
       >
         <FiSettings aria-hidden="true" />
-        <span>Settings</span>
+        <span>{t("Settings")}</span>
       </Button>
       <Offcanvas
         show={show}
@@ -39,26 +43,32 @@ export default function ProfileSidebar({
           action?.();
         }}
       >
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title id="account-title">Settings</Offcanvas.Title>
+        <Offcanvas.Header closeButton closeLabel={t("Close")}>
+          <Offcanvas.Title id="account-title">{t("Settings")}</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
           <section className="account-section settings-appearance">
             <h2>
-              <FiSun aria-hidden="true" /> Appearance
+              <FiSun aria-hidden="true" />
+              {" " + t("Appearance")}
             </h2>
             <ThemeSwitcher />
           </section>
           <section className="account-section">
+            <LanguageSwitcher />
+          </section>
+          <section className="account-section">
             <h2>
-              <FiBell aria-hidden="true" /> Notifications
+              <FiBell aria-hidden="true" />
+              {" " + t("Notifications")}
             </h2>
             <p>
-              Timed notes remind you when their time arrives. All-day notes remind you when you open
-              the calendar. Keep the calendar open to receive reminders.
+              {t(
+                "Timed notes remind you when their time arrives. All-day notes remind you when you open the calendar. Keep the calendar open to receive reminders.",
+              )}
             </p>
             {!supported ? (
-              <p>Notifications are unavailable in this browser.</p>
+              <p>{t("Notifications are unavailable in this browser.")}</p>
             ) : permission === "granted" ? (
               <label className="notification-toggle">
                 <input
@@ -66,28 +76,29 @@ export default function ProfileSidebar({
                   checked={enabled}
                   onChange={(event) => setEnabled(event.target.checked)}
                 />
-                Remind me about today's notes
+                {t("Remind me about today's notes")}
               </label>
             ) : permission === "denied" ? (
               <p>
-                Blocked by your browser. You can allow notifications in this site's browser
-                settings.
+                {t(
+                  "Blocked by your browser. You can allow notifications in this site's browser settings.",
+                )}
               </p>
             ) : (
               <Button className="theme-button" disabled={pending} onClick={requestPermission}>
-                {pending ? "Waiting for permission…" : "Enable notifications"}
+                {pending ? t("Waiting for permission…") : t("Enable notifications")}
               </Button>
             )}
             {error && (
               <p className="form-error" role="alert">
-                {error}
+                {t(error)}
               </p>
             )}
           </section>
           <section className="account-section experimental-options">
             <h2>
               <FiZap aria-hidden="true" />
-              Experimental options
+              {t("Experimental options")}
             </h2>
             <label className="notification-toggle">
               <input
@@ -98,19 +109,19 @@ export default function ProfileSidebar({
                   medications.savePlan({ enabled: event.target.checked }).catch(() => {})
                 }
               />
-              <span>Medication tracker</span>
+              <span>{t("Medication tracker")}</span>
             </label>
-            <p>A personal intake table with repeating weekdays and time-based columns.</p>
+            <p>{t("A personal intake table with repeating weekdays and time-based columns.")}</p>
             {medications?.error && (
               <div className="form-error" role="alert">
-                <p>{medications.error}</p>
+                <p>{t(medications.error)}</p>
                 <Button
                   variant="outline-secondary"
                   className="theme-button-outline"
                   disabled={medications.pending}
                   onClick={medications.reload}
                 >
-                  Reload tracker
+                  {t("Reload tracker")}
                 </Button>
               </div>
             )}
@@ -125,11 +136,12 @@ export default function ProfileSidebar({
                       medications.savePlan({ reminders: event.target.checked }).catch(() => {})
                     }
                   />
-                  <span>Medication reminders</span>
+                  <span>{t("Medication reminders")}</span>
                 </label>
                 <p>
-                  Reminds you about unchecked items once their time arrives. Keep the calendar open
-                  to receive reminders.
+                  {t(
+                    "Reminds you about unchecked items once their time arrives. Keep the calendar open to receive reminders.",
+                  )}
                 </p>
                 {medications.plan.reminders && permission === "default" && (
                   <Button
@@ -138,12 +150,14 @@ export default function ProfileSidebar({
                     disabled={pending}
                     onClick={() => requestPermission(false)}
                   >
-                    {pending ? "Waiting for permission…" : "Allow browser reminders"}
+                    {pending ? t("Waiting for permission…") : t("Allow browser reminders")}
                   </Button>
                 )}
                 {medications.plan.reminders && permission === "denied" && (
                   <p>
-                    Allow notifications for this site in your browser settings to receive reminders.
+                    {t(
+                      "Allow notifications for this site in your browser settings to receive reminders.",
+                    )}
                   </p>
                 )}
                 <Button
@@ -155,7 +169,7 @@ export default function ProfileSidebar({
                     setShow(false);
                   }}
                 >
-                  Configure medication tracker
+                  {t("Configure medication tracker")}
                 </Button>
               </>
             )}
@@ -169,7 +183,7 @@ export default function ProfileSidebar({
             }}
           >
             <FiLogOut aria-hidden="true" />
-            Sign out
+            {t("Sign out")}
           </Button>
         </Offcanvas.Body>
       </Offcanvas>

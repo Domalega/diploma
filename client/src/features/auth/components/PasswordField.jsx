@@ -1,3 +1,4 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useState } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
@@ -9,10 +10,12 @@ export default function PasswordField({
   newPassword = false,
   hint,
 }) {
+  const { t } = useLanguage();
+
   const [visible, setVisible] = useState(false);
   return (
     <div className="auth-field">
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>{t(label)}</label>
       <div className="auth-password-wrap">
         <input
           id={id}
@@ -22,14 +25,16 @@ export default function PasswordField({
           autoComplete={newPassword ? "new-password" : "current-password"}
           required
           minLength={newPassword ? 12 : undefined}
-          placeholder={newPassword ? "Create a strong password" : "Enter your password"}
+          placeholder={newPassword ? t("Create a strong password") : t("Enter your password")}
           aria-describedby={hint ? `${id}-hint` : undefined}
         />
         <button
           className="auth-password-toggle"
           type="button"
           onClick={() => setVisible(!visible)}
-          aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`}
+          aria-label={t(visible ? "Hide {label}" : "Show {label}", {
+            label: t(label).toLocaleLowerCase(),
+          })}
           aria-pressed={visible}
           aria-controls={id}
         >
@@ -38,7 +43,7 @@ export default function PasswordField({
       </div>
       {hint && (
         <p className="auth-hint" id={`${id}-hint`}>
-          {hint}
+          {t(hint)}
         </p>
       )}
     </div>

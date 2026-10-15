@@ -1,3 +1,4 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { check } from "../api/authApi";
@@ -6,6 +7,8 @@ import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import CalendarLoading from "../../../shared/components/CalendarLoading";
 
 export default function ProtectedRoute({ children }) {
+  const { t } = useLanguage();
+
   const [status, setStatus] = useState("loading");
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -32,8 +35,8 @@ export default function ProtectedRoute({ children }) {
   if (status === "error")
     return (
       <div className="p-4">
-        <p role="alert">Unable to connect to the server.</p>
-        <button onClick={() => setAttempt((value) => value + 1)}>Retry</button>
+        <p role="alert">{t("Unable to connect to the server.")}</p>
+        <button onClick={() => setAttempt((value) => value + 1)}>{t("Retry")}</button>
       </div>
     );
   if (status === "unauthorized") return <Navigate to={LOGIN_ROUTE} replace />;

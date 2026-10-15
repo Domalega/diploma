@@ -1,9 +1,12 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useEffect, useRef, useState } from "react";
 import { FiArrowDown, FiArrowUp, FiGrid, FiMove, FiRotateCcw, FiCheck } from "react-icons/fi";
 import usePanelLayout from "../hooks/usePanelLayout";
 import "../styles/Dashboard.css";
 
 export default function DashboardBoard({ panels, heading, primaryAction }) {
+  const { t } = useLanguage();
+
   const layout = usePanelLayout();
   const [arranging, setArranging] = useState(false);
   const [drag, setDrag] = useState(null);
@@ -51,11 +54,12 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
     if (!target || target === id || !visible.includes(target)) return;
     layout.move(id, target);
     setMessage(
-      panels[id].title +
-        " moved " +
-        (visible.indexOf(id) < visible.indexOf(target) ? "after " : "before ") +
-        panels[target].title +
-        ".",
+      t(
+        visible.indexOf(id) < visible.indexOf(target)
+          ? "{panel} moved after {target}."
+          : "{panel} moved before {target}.",
+        { panel: panels[id].title, target: panels[target].title },
+      ),
     );
     handles.current[id]?.focus({ preventScroll: true });
   }
@@ -90,7 +94,7 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
       <div className="dashboard-layout-toolbar">
         <div className="dashboard-layout-heading">
           {heading}
-          {arranging && <p>Drag a handle or use the arrows.</p>}
+          {arranging && <p>{t("Drag a handle or use the arrows.")}</p>}
         </div>
         <div className="dashboard-layout-controls">
           {arranging && (
@@ -102,7 +106,8 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
                 setMessage("Default panel layout restored.");
               }}
             >
-              <FiRotateCcw aria-hidden="true" /> Reset layout
+              <FiRotateCcw aria-hidden="true" />
+              {" " + t("Reset layout")}
             </button>
           )}
           <button
@@ -115,7 +120,7 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
             }}
           >
             {arranging ? <FiCheck aria-hidden="true" /> : <FiGrid aria-hidden="true" />}
-            {arranging ? "Done arranging" : "Arrange panels"}
+            {arranging ? t("Done arranging") : t("Arrange panels")}
           </button>
           {primaryAction}
         </div>
@@ -127,7 +132,7 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
           (compactGroup ? " has-stacked-calendar" : "")
         }
         role="group"
-        aria-label="Calendar panels"
+        aria-label={t("Calendar panels")}
       >
         {visible.map((id, index) => {
           const panel = panels[id];
@@ -162,7 +167,7 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
                       <button
                         type="button"
                         className="icon-button"
-                        aria-label={"Move " + panel.title + " earlier"}
+                        aria-label={t("Move {panel} earlier", { panel: panel.title })}
                         disabled={index === 0}
                         onClick={() => step(id, -1)}
                       >
@@ -171,7 +176,7 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
                       <button
                         type="button"
                         className="icon-button"
-                        aria-label={"Move " + panel.title + " later"}
+                        aria-label={t("Move {panel} later", { panel: panel.title })}
                         disabled={index === visible.length - 1}
                         onClick={() => step(id, 1)}
                       >
@@ -180,7 +185,7 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
                       <button
                         type="button"
                         className="icon-button panel-drag-handle"
-                        aria-label={"Drag " + panel.title + " panel"}
+                        aria-label={t("Drag {panel} panel", { panel: panel.title })}
                         aria-describedby="panel-reorder-help"
                         ref={(element) => {
                           handles.current[id] = element;
@@ -211,11 +216,12 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
         })}
       </div>
       <span id="panel-reorder-help" className="visually-hidden">
-        Drag to another panel to move it. Use arrow keys to move earlier or later. Escape cancels a
-        drag.
+        {t(
+          "Drag to another panel to move it. Use arrow keys to move earlier or later. Escape cancels a drag.",
+        )}
       </span>
-      <span className="visually-hidden" role="status" aria-label="Panel layout update">
-        {message}
+      <span className="visually-hidden" role="status" aria-label={t("Panel layout update")}>
+        {t(message)}
       </span>
       {drag && (
         <div

@@ -1,3 +1,4 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthForm from "../components/AuthForm";
@@ -12,6 +13,8 @@ import {
 } from "../../../shared/config/routes";
 
 export default function AuthPage() {
+  const { t } = useLanguage();
+
   const active = useRef(true);
   useEffect(() => {
     active.current = true;
@@ -87,8 +90,8 @@ export default function AuthPage() {
         mode={mode}
         onSubmit={handleSubmit}
         pending={pending}
-        error={error}
-        success={success}
+        error={t(error)}
+        success={t(success)}
         onRetry={() => {
           setSuccess("");
           setError("");

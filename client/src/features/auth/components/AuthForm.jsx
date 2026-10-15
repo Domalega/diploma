@@ -1,3 +1,4 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { FiArrowRight, FiArrowLeft, FiCheck, FiMail, FiLock } from "react-icons/fi";
@@ -41,6 +42,8 @@ export default function AuthForm({
   onRetry,
   recoveryAvailable,
 }) {
+  const { t } = useLanguage();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -60,22 +63,29 @@ export default function AuthForm({
   }
   if (success) {
     return (
-      <div className="auth-result" role="status" aria-label="Account status">
+      <div className="auth-result" role="status" aria-label={t("Account status")}>
         <span className="auth-result-icon">
           {mode === "forgot" ? <FiMail aria-hidden="true" /> : <FiCheck aria-hidden="true" />}
         </span>
-        <span className="auth-eyebrow">{mode === "forgot" ? "CHECK YOUR INBOX" : "ALL SET"}</span>
-        <h2>{mode === "forgot" ? "Your next step is in your inbox." : "Password updated."}</h2>
-        <p>{success}</p>
+        <span className="auth-eyebrow">
+          {mode === "forgot" ? t("CHECK YOUR INBOX") : t("ALL SET")}
+        </span>
+        <h2>
+          {mode === "forgot" ? t("Your next step is in your inbox.") : t("Password updated.")}
+        </h2>
+        <p>{t(success)}</p>
         {mode === "forgot" && (
-          <p className="auth-hint">Check your spam folder too. The link expires in 15 minutes.</p>
+          <p className="auth-hint">
+            {t("Check your spam folder too. The link expires in 15 minutes.")}
+          </p>
         )}
         <Link className="auth-primary" to={LOGIN_ROUTE}>
-          Back to log in <FiArrowRight aria-hidden="true" />
+          {t("Back to log in") + " "}
+          <FiArrowRight aria-hidden="true" />
         </Link>
         {mode === "forgot" && (
           <button className="auth-text-link" type="button" onClick={onRetry}>
-            Use another email
+            {t("Use another email")}
           </button>
         )}
       </div>
@@ -84,53 +94,57 @@ export default function AuthForm({
   return (
     <>
       {!isRecovery ? (
-        <nav className="auth-tabs" aria-label="Account options">
+        <nav className="auth-tabs" aria-label={t("Account options")}>
           <NavLink to={LOGIN_ROUTE} onClick={(e) => pending && e.preventDefault()}>
-            Log in
+            {t("Log in")}
           </NavLink>
           <NavLink to={REGISTRATION_ROUTE} onClick={(e) => pending && e.preventDefault()}>
-            Create account
+            {t("Create account")}
           </NavLink>
         </nav>
       ) : (
         <Link className="auth-back" to={LOGIN_ROUTE}>
-          <FiArrowLeft aria-hidden="true" /> Back to log in
+          <FiArrowLeft aria-hidden="true" />
+          {" " + t("Back to log in")}
         </Link>
       )}
       <header className="auth-form-header">
         <span className="auth-eyebrow">
           {mode === "login"
-            ? "GOOD TO SEE YOU AGAIN"
+            ? t("GOOD TO SEE YOU AGAIN")
             : mode === "registration"
-              ? "YOUR NEXT CHAPTER"
-              : "ACCOUNT RECOVERY"}
+              ? t("YOUR NEXT CHAPTER")
+              : t("ACCOUNT RECOVERY")}
         </span>
-        <h2>{text.heading}</h2>
-        <p>{text.description}</p>
+        <h2>{t(text.heading)}</h2>
+        <p>{t(text.description)}</p>
       </header>
       {(validationError || error) && (
         <div className="auth-alert" role="alert">
-          {validationError || error}
+          {t(validationError || error)}
         </div>
       )}
       {mode === "forgot" && recoveryAvailable !== true ? (
         <div className="auth-recovery-status" role="status">
           {recoveryAvailable === null
-            ? "Checking password recovery…"
-            : "Password recovery is currently unavailable. Please try again later."}
+            ? t("Checking password recovery…")
+            : t("Password recovery is currently unavailable. Please try again later.")}
         </div>
       ) : invalidLink ? (
         <div className="auth-result">
-          <p role="alert">This reset link is missing or invalid. Request a new link to continue.</p>
+          <p role="alert">
+            {t("This reset link is missing or invalid. Request a new link to continue.")}
+          </p>
           <Link className="auth-primary" to={FORGOT_PASSWORD_ROUTE}>
-            Request a new link <FiArrowRight aria-hidden="true" />
+            {t("Request a new link") + " "}
+            <FiArrowRight aria-hidden="true" />
           </Link>
         </div>
       ) : (
         <form onSubmit={submit} aria-busy={pending}>
           {mode !== "reset" && (
             <div className="auth-field">
-              <label htmlFor="auth-email">Email address</label>
+              <label htmlFor="auth-email">{t("Email address")}</label>
               <input
                 id="auth-email"
                 type="email"
@@ -151,13 +165,13 @@ export default function AuthForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               newPassword={isNew}
-              hint={isNew ? "At least 12 characters. A memorable phrase works well." : undefined}
+              hint={isNew ? t("At least 12 characters. A memorable phrase works well.") : undefined}
             />
           )}
           {isNew && (
             <PasswordField
               id="auth-confirmation"
-              label="Confirm password"
+              label={t("Confirm password")}
               value={confirmation}
               onChange={(e) => setConfirmation(e.target.value)}
               newPassword
@@ -165,24 +179,28 @@ export default function AuthForm({
           )}
           {mode === "login" && (
             <div className="auth-forgot">
-              <Link to={FORGOT_PASSWORD_ROUTE}>Forgot password?</Link>
+              <Link to={FORGOT_PASSWORD_ROUTE}>{t("Forgot password?")}</Link>
             </div>
           )}
           <button className="auth-primary" type="submit" disabled={pending}>
             {pending ? (
               <>
                 <span className="auth-spinner" />{" "}
-                {mode === "forgot" ? "Sending…" : mode === "reset" ? "Updating…" : "Please wait…"}
+                {mode === "forgot"
+                  ? t("Sending…")
+                  : mode === "reset"
+                    ? t("Updating…")
+                    : t("Please wait…")}
               </>
             ) : (
               <>
-                {text.button} <FiArrowRight aria-hidden="true" />
+                {t(text.button)} <FiArrowRight aria-hidden="true" />
               </>
             )}
           </button>
           {mode === "reset" && error && (
             <Link className="auth-text-link" to={FORGOT_PASSWORD_ROUTE}>
-              Request a new reset link
+              {t("Request a new reset link")}
             </Link>
           )}
         </form>
@@ -190,8 +208,8 @@ export default function AuthForm({
       <p className="auth-footnote">
         <FiLock aria-hidden="true" />{" "}
         {mode === "reset"
-          ? "Your other sessions will be signed out."
-          : "Your calendar is only visible to you."}
+          ? t("Your other sessions will be signed out.")
+          : t("Your calendar is only visible to you.")}
       </p>
     </>
   );

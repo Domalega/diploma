@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/LanguageProvider";
 import { useEffect, useRef, useState } from "react";
 import { FiStar } from "react-icons/fi";
 import "../styles/InteractivePhrase.css";
@@ -21,6 +22,8 @@ const sparks = [
   [-72, 8],
 ];
 export default function InteractivePhrase() {
+  const { t } = useLanguage();
+
   const [index, setIndex] = useState(0);
   const [burst, setBurst] = useState(0);
   const [announcement, setAnnouncement] = useState("");
@@ -48,8 +51,8 @@ export default function InteractivePhrase() {
       <button
         type="button"
         className="phrase-button"
-        title="Click for a new thought"
-        aria-label={phrases[index] + " Show another thought."}
+        title={t("Click for a new thought")}
+        aria-label={t("{phrase} Show another thought.", { phrase: t(phrases[index]) })}
         onClick={surprise}
         onMouseEnter={() => {
           pause.current.hover = true;
@@ -66,7 +69,7 @@ export default function InteractivePhrase() {
       >
         <FiStar aria-hidden="true" />
         <span key={"phrase-" + index} className="phrase-text">
-          {phrases[index]}
+          {t(phrases[index])}
         </span>
         {!!burst && (
           <span key={"burst-" + burst} className="phrase-sparks" aria-hidden="true">
@@ -83,8 +86,8 @@ export default function InteractivePhrase() {
           </span>
         )}
       </button>
-      <span className="visually-hidden" role="status" aria-label="Phrase update">
-        {announcement}
+      <span className="visually-hidden" role="status" aria-label={t("Phrase update")}>
+        {t(announcement)}
       </span>
     </div>
   );

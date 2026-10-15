@@ -167,7 +167,9 @@ test("auth and calendar settings share a theme preference without a control in t
   fireEvent.click(screen.getByRole("button", { name: "Settings" }));
   const dialog = await screen.findByRole("dialog");
   expect(within(dialog).getByRole("radio", { name: "Dark" })).toBeChecked();
-  expect(screen.getAllByRole("radio", { hidden: true })).toHaveLength(3);
+  expect(
+    within(within(dialog).getByRole("group", { name: "Theme" })).getAllByRole("radio"),
+  ).toHaveLength(3);
   select("light");
   expect(document.documentElement.dataset.theme).toBe("light");
   select("dark");

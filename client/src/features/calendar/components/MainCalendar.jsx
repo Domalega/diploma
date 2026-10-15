@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
+import { weekdayLabel } from "../../../shared/i18n/formatters";
 import { useLayoutEffect, useRef, useState } from "react";
 import {
   formatDay,
@@ -17,6 +19,8 @@ export default function MainCalendar({
   onMonthChange,
   today = todayKey(),
 }) {
+  const { t, locale } = useLanguage();
+
   const days = monthDays(month);
   const notes = new Map();
   [...dates].sort(compareNotes).forEach((note) => {
@@ -61,15 +65,15 @@ export default function MainCalendar({
       <table
         className="month-grid"
         ref={grid}
-        aria-label="Monthly calendar"
+        aria-label={t("Monthly calendar")}
         aria-describedby="calendar-keyboard-help"
       >
         <thead>
           <tr>
-            {weekdays.map((day) => (
-              <th key={day} scope="col" abbr={day}>
-                <span aria-hidden="true">{day.slice(0, 3)}</span>
-                <span className="visually-hidden">{day}</span>
+            {weekdays.map((day, index) => (
+              <th key={day} scope="col" abbr={t(day)}>
+                <span aria-hidden="true">{weekdayLabel((index + 1) % 7, locale)}</span>
+                <span className="visually-hidden">{t(day)}</span>
               </th>
             ))}
           </tr>
@@ -94,17 +98,17 @@ export default function MainCalendar({
                         selected ? "is-selected" : "",
                       ].join(" ")}
                       aria-label={
-                        formatDay(value) +
-                        (isToday ? ", Today" : "") +
+                        formatDay(value, locale) +
+                        (isToday ? t(", Today") : "") +
                         (dayNotes.length
                           ? (dayNotes.length === 1
-                              ? ", Note: "
-                              : ", " + dayNotes.length + " notes: ") +
+                              ? t(", Note: ")
+                              : ", " + t("notes.count", { count: dayNotes.length }) + ": ") +
                             dayNotes
                               .map(
                                 (note) =>
                                   (note.time ? note.time + " " : "") +
-                                  (note.comment || "Untitled note"),
+                                  (note.comment || t("Untitled note")),
                               )
                               .join("; ")
                           : "")
@@ -116,22 +120,24 @@ export default function MainCalendar({
                       onClick={() => onSelect(value)}
                     >
                       <span className="day-number">{parseDate(value).getDate()}</span>
-                      {isToday && <span className="today-label">Today</span>}
+                      {isToday && <span className="today-label">{t("Today")}</span>}
                       {dayNotes.slice(0, 2).map((note) => (
                         <span className="day-note" key={note.id}>
                           <span className="note-dot" aria-hidden="true" />
                           {note.time && (
                             <time dateTime={note.date + "T" + note.time}>{note.time}</time>
                           )}
-                          <span>{note.comment || "Untitled note"}</span>
+                          <span>{note.comment || t("Untitled note")}</span>
                         </span>
                       ))}
                       {dayNotes.length > 2 && (
-                        <span className="day-note-more">+{dayNotes.length - 2} more</span>
+                        <span className="day-note-more">
+                          {t("notes.more", { count: dayNotes.length - 2 })}
+                        </span>
                       )}
                       {!!dayNotes.length && (
                         <span className="day-note-count" aria-hidden="true">
-                          {dayNotes.length} {dayNotes.length === 1 ? "note" : "notes"}
+                          {t("notes.count", { count: dayNotes.length })}
                         </span>
                       )}
                     </button>
@@ -143,7 +149,9 @@ export default function MainCalendar({
         </tbody>
       </table>
       <p id="calendar-keyboard-help" className="keyboard-help">
-        Use arrow keys to explore dates, Enter to open a day, and Page Up / Down to change months.
+        {t(
+          "Use arrow keys to explore dates, Enter to open a day, and Page Up / Down to change months.",
+        )}
       </p>
     </>
   );

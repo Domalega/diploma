@@ -33,15 +33,15 @@ export function moveMonths(value, offset) {
   date.setDate(Math.min(day, last));
   return dateKey(date);
 }
-export const formatDay = (value) =>
-  new Intl.DateTimeFormat("en", {
+export const formatDay = (value, locale = "en") =>
+  new Intl.DateTimeFormat(locale, {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
   }).format(parseDate(value));
-export const formatMonth = (value) =>
-  new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(parseDate(value));
+export const formatMonth = (value, locale = "en") =>
+  new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(parseDate(value));
 export function monthDays(value) {
   const first = monthStart(value);
   const start = moveDays(first, -((parseDate(first).getDay() + 6) % 7));

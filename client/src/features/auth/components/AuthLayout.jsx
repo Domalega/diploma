@@ -1,12 +1,17 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { Link } from "react-router-dom";
 import { FiArrowUpRight } from "react-icons/fi";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
+import LanguageSwitcher from "../../../shared/i18n/LanguageSwitcher";
+import { weekdayLabel } from "../../../shared/i18n/formatters";
 import InteractivePhrase from "../../../shared/components/InteractivePhrase";
 import BrandMark from "../../../shared/components/BrandMark";
 import "../styles/Auth.css";
 
 export default function AuthLayout({ children }) {
+  const { t, locale } = useLanguage();
+
   return (
     <main className="auth-shell">
       <section className="auth-story" aria-label="Daymark">
@@ -15,26 +20,28 @@ export default function AuthLayout({ children }) {
             <BrandMark />
           </span>
           <span>
-            Daymark<span className="auth-brand-caption">Your personal calendar</span>
+            Daymark<span className="auth-brand-caption">{t("Your personal calendar")}</span>
           </span>
         </Link>
         <div className="auth-story-content">
           <span className="auth-eyebrow">
-            <span /> ROOM FOR WHAT MATTERS
+            <span />
+            {" " + t("ROOM FOR WHAT MATTERS")}
           </span>
           <h1>
-            A little space
+            {t("A little space")}
             <br />
-            for your <em>plans.</em>
+            {t("for your") + " "}
+            <em>{t("plans.")}</em>
           </h1>
           <p>
-            Keep your dates and notes in one place.
+            {t("Keep your dates and notes in one place.")}
             <br />
-            Start with today. Make it your own.
+            {t("Start with today. Make it your own.")}
           </p>
           <div className="auth-preview" aria-hidden="true">
             <div className="auth-preview-heading">
-              <span>Your week, at a glance</span>
+              <span>{t("Your week, at a glance")}</span>
               <FiArrowUpRight />
             </div>
             <div className="auth-preview-days">
@@ -46,9 +53,9 @@ export default function AuthLayout({ children }) {
                 ["F", 16],
                 ["S", 17],
                 ["S", 18],
-              ].map(([day, date]) => (
+              ].map(([day, date], index) => (
                 <div key={date} className={date === 14 ? "is-today" : ""}>
-                  <span>{day}</span>
+                  <span>{locale === "ru" ? weekdayLabel((index + 1) % 7, locale) : day}</span>
                   <strong>{date}</strong>
                   <i />
                 </div>
@@ -57,10 +64,10 @@ export default function AuthLayout({ children }) {
             <div className="auth-preview-note">
               <span className="auth-note-mark" />
               <div>
-                <strong>Make time for yourself.</strong>
-                <span>A note to keep close.</span>
+                <strong>{t("Make time for yourself.")}</strong>
+                <span>{t("A note to keep close.")}</span>
               </div>
-              <span className="auth-note-date">14 OCT</span>
+              <span className="auth-note-date">{t("14 OCT")}</span>
             </div>
           </div>
         </div>
@@ -71,13 +78,19 @@ export default function AuthLayout({ children }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Made by Domalega <FiArrowUpRight aria-hidden="true" />
+            {t("Made by Domalega") + " "}
+            <FiArrowUpRight aria-hidden="true" />
           </a>
         </div>
       </section>
-      <section className="auth-main" aria-label="Account access">
-        <div className="auth-theme-bar">
-          <ThemeSwitcher />
+      <section className="auth-main" aria-label={t("Account access")}>
+        <div className="auth-preferences">
+          <div className="auth-theme-bar">
+            <ThemeSwitcher />
+          </div>
+          <div className="auth-language-bar">
+            <LanguageSwitcher />
+          </div>
         </div>
         <div className="auth-form-wrap">{children}</div>
         <div className="auth-main-footer">

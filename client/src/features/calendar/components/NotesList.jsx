@@ -1,9 +1,10 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { FiArrowRight, FiSearch, FiCalendar } from "react-icons/fi";
 import { formatDay, formatMonth, moveDays, parseDate } from "../utils/calendarDates";
 import { noteTime } from "../utils/noteTimes";
 
-const shortDate = (date) =>
-  parseDate(date).toLocaleDateString("en", { day: "numeric", month: "short" });
+const shortDate = (date, locale) =>
+  parseDate(date).toLocaleDateString(locale, { day: "numeric", month: "short" });
 export default function NotesList({
   notes,
   selectedDate,
@@ -13,6 +14,8 @@ export default function NotesList({
   month,
   today,
 }) {
+  const { t, locale } = useLanguage();
+
   const groups = new Map();
   notes.forEach((note) => {
     const day = parseDate(note.date);
@@ -22,25 +25,29 @@ export default function NotesList({
     groups.get(key).push(note);
   });
   return (
-    <section className="notes-list agenda" aria-label={query ? "Search results" : "Notes list"}>
+    <section
+      className="notes-list agenda"
+      aria-label={query ? t("Search results") : t("Notes list")}
+    >
       <div className="agenda-summary">
-        <span>{query ? "SEARCH RESULTS" : "MONTHLY AGENDA"}</span>
-        <p role="status">
-          {notes.length} {notes.length === 1 ? "note" : "notes"}
-          {query ? " found" : " this month"}
-        </p>
+        <span>{query ? t("SEARCH RESULTS") : t("MONTHLY AGENDA")}</span>
+        <p role="status">{t(query ? "notes.found" : "notes.month", { count: notes.length })}</p>
       </div>
       {notes.length ? (
         Array.from(groups, ([start, items]) => (
           <section
             className="agenda-week"
             key={start}
-            aria-label={query ? formatMonth(start) : "Week of " + shortDate(start)}
+            aria-label={
+              query
+                ? formatMonth(start, locale)
+                : t("Week of {date}", { date: shortDate(start, locale) })
+            }
           >
             <h3>
               {query
-                ? formatMonth(start)
-                : shortDate(start) + " — " + shortDate(moveDays(start, 6))}
+                ? formatMonth(start, locale)
+                : shortDate(start, locale) + " — " + shortDate(moveDays(start, 6), locale)}
             </h3>
             <ul>
               {items.map((note) => (
@@ -55,18 +62,18 @@ export default function NotesList({
                       (note.date === today ? " is-today" : "")
                     }
                     aria-label={
-                      formatDay(note.date) +
-                      (note.date === today ? ", Today" : "") +
+                      formatDay(note.date, locale) +
+                      (note.date === today ? t(", Today") : "") +
                       ", " +
                       (note.time ? note.time + ", " : "") +
-                      (note.comment || "Untitled note")
+                      (note.comment || t("Untitled note"))
                     }
                     aria-pressed={selectedDate === note.date && selectedNoteId === note.id}
                     onClick={() => onSelect(note.date, note.id)}
                   >
                     <time dateTime={note.date} className="agenda-date">
                       <span>
-                        {parseDate(note.date).toLocaleDateString("en", { weekday: "short" })}
+                        {parseDate(note.date).toLocaleDateString(locale, { weekday: "short" })}
                       </span>
                       <strong>{parseDate(note.date).getDate()}</strong>
                     </time>
@@ -76,10 +83,10 @@ export default function NotesList({
                         className="agenda-time"
                         dateTime={note.date + (note.time ? "T" + note.time : "")}
                       >
-                        {noteTime(note)}
+                        {noteTime(note, locale)}
                       </time>
-                      {note.date === today && <span className="agenda-today">Today</span>}
-                      <span>{note.comment || "Untitled note"}</span>
+                      {note.date === today && <span className="agenda-today">{t("Today")}</span>}
+                      <span>{note.comment || t("Untitled note")}</span>
                     </span>
                     <FiArrowRight className="agenda-open" aria-hidden="true" />
                   </button>
@@ -91,11 +98,15 @@ export default function NotesList({
       ) : (
         <div className="list-empty">
           {query ? <FiSearch aria-hidden="true" /> : <FiCalendar aria-hidden="true" />}
-          <h3>{query ? "No matching notes." : "No notes in " + formatMonth(month) + "."}</h3>
+          <h3>
+            {query
+              ? t("No matching notes.")
+              : t("No notes in {month}.", { month: formatMonth(month, locale) })}
+          </h3>
           <p>
             {query
-              ? "Try another word or date, or clear your search."
-              : "Choose another month, or select a day in the calendar to add a note."}
+              ? t("Try another word or date, or clear your search.")
+              : t("Choose another month, or select a day in the calendar to add a note.")}
           </p>
         </div>
       )}

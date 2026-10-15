@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor, within } from "@testing-library/rea
 import { MemoryRouter } from "react-router-dom";
 import CalendarPage from "./CalendarPage";
 import { ThemeProvider } from "../../../shared/theme/ThemeProvider";
+import { LanguageProvider, LANGUAGE_KEY } from "../../../shared/i18n/LanguageProvider";
 import * as datesApi from "../api/datesApi";
 import useMedicationTracker from "../../medications/hooks/useMedicationTracker";
 import { emptyPlan } from "../../medications/utils/schedule";
@@ -44,6 +45,33 @@ function mount() {
 }
 const panel = () => within(screen.getByRole("region", { name: "Notes", exact: true }));
 const calendarReady = () => screen.findByRole("table", { name: "Monthly calendar" });
+
+test("Russian settings translate calendar dates and labels while preserving user notes and loaded data", async () => {
+  localStorage.setItem(LANGUAGE_KEY, "ru");
+  datesApi.getAllDates.mockResolvedValue([{ ...note, comment: "Settings" }]);
+  render(
+    <LanguageProvider>
+      <ThemeProvider>
+        <MemoryRouter>
+          <CalendarPage />
+        </MemoryRouter>
+      </ThemeProvider>
+    </LanguageProvider>,
+  );
+  await screen.findByRole("table", { name: "Календарь на месяц" });
+  expect(screen.getByRole("heading", { name: formatMonth(today, "ru") })).toBeInTheDocument();
+  expect(
+    within(screen.getByRole("region", { name: "Заметки", exact: true })).getByText("Settings"),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Настройки", exact: true }));
+  const dialog = await screen.findByRole("dialog", { name: "Настройки" });
+  fireEvent.click(within(dialog).getByRole("radio", { name: "English" }));
+  fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(screen.getByRole("table", { name: "Monthly calendar" })).toBeInTheDocument();
+  expect(panel().getByText("Settings")).toBeInTheDocument();
+  expect(datesApi.getAllDates).toHaveBeenCalledTimes(1);
+});
 
 test("creating, editing and confirmed deletion keep the calendar and selected day in sync", async () => {
   datesApi.getAllDates.mockResolvedValueOnce([]).mockResolvedValueOnce([note]);

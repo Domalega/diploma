@@ -1,3 +1,4 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Button, Modal } from "react-bootstrap";
 import {
@@ -36,6 +37,8 @@ import MedicationMatrix from "../../medications/components/MedicationMatrix";
 import "../styles/Calendar.css";
 
 export default function CalendarPage() {
+  const { t, locale } = useLanguage();
+
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [month, setMonth] = useState(() => monthStart(todayKey()));
@@ -73,9 +76,12 @@ export default function CalendarPage() {
   const filtered = dates
     .filter((note) =>
       search
-        ? [note.comment || "", note.date, note.time || "All day", formatDay(note.date)].some(
-            (text) => text.toLocaleLowerCase().includes(search),
-          )
+        ? [
+            note.comment || "",
+            note.date,
+            note.time || t("All day"),
+            formatDay(note.date, locale),
+          ].some((text) => text.toLocaleLowerCase().includes(search))
         : note.date.slice(0, 7) === month.slice(0, 7),
     )
     .sort(compareNotes);
@@ -116,14 +122,14 @@ export default function CalendarPage() {
       <div className="calendar-toolbar">
         <div className="month-navigation">
           <h2 aria-live="polite" aria-atomic="true">
-            {searching ? "Find your notes" : formatMonth(month)}
+            {searching ? t("Find your notes") : formatMonth(month, locale)}
           </h2>
           {!searching && (
             <div className="month-buttons">
               <button
                 className="icon-button"
                 type="button"
-                aria-label="Previous month"
+                aria-label={t("Previous month")}
                 onClick={() => setMonth(moveMonths(month, -1))}
               >
                 <FiArrowLeft aria-hidden="true" />
@@ -131,7 +137,7 @@ export default function CalendarPage() {
               <button
                 className="icon-button"
                 type="button"
-                aria-label="Next month"
+                aria-label={t("Next month")}
                 onClick={() => setMonth(moveMonths(month, 1))}
               >
                 <FiArrowRight aria-hidden="true" />
@@ -150,9 +156,9 @@ export default function CalendarPage() {
               setQuery("");
             }}
           >
-            Today
+            {t("Today")}
           </Button>
-          <div className="view-switch" role="group" aria-label="Calendar view">
+          <div className="view-switch" role="group" aria-label={t("Calendar view")}>
             <button
               type="button"
               aria-pressed={!searching && view === "month"}
@@ -162,7 +168,7 @@ export default function CalendarPage() {
               }}
             >
               <FiCalendar aria-hidden="true" />
-              Month
+              {t("Month")}
             </button>
             <button
               type="button"
@@ -170,13 +176,13 @@ export default function CalendarPage() {
               onClick={() => setView("list")}
             >
               <FiList aria-hidden="true" />
-              List
+              {t("List")}
             </button>
           </div>
         </div>
       </div>
       {loading && !dates.length ? (
-        <CalendarLoading label="Bringing your notes together…" />
+        <CalendarLoading label={t("Bringing your notes together…")} />
       ) : searching || view === "list" ? (
         <NotesList
           notes={filtered}
@@ -199,7 +205,7 @@ export default function CalendarPage() {
       )}
       {!loading && !error && !dates.length && !searching && view === "month" && (
         <p className="calendar-empty-hint">
-          Your calendar is a fresh page. Choose a day to leave your first note.
+          {t("Your calendar is a fresh page. Choose a day to leave your first note.")}
         </p>
       )}
     </div>
@@ -218,26 +224,27 @@ export default function CalendarPage() {
           {message && (
             <>
               <FiCheck aria-hidden="true" />
-              {message}
+              {t(message)}
             </>
           )}
         </div>
         {error && (
           <Alert variant="danger" role="alert" className="planner-error">
-            {error}
+            {t(error)}
             <Button
               className="theme-button-outline ms-3"
               variant="outline-secondary"
               onClick={() => reload()}
             >
-              Try again
+              {t("Try again")}
             </Button>
           </Alert>
         )}
         <DashboardBoard
           heading={
             <h1>
-              Your <em>calendar.</em>
+              {t("Your") + " "}
+              <em>{t("calendar.")}</em>
             </h1>
           }
           primaryAction={
@@ -248,13 +255,13 @@ export default function CalendarPage() {
               onClick={addNote}
             >
               <FiPlus aria-hidden="true" />
-              New note
+              {t("New note")}
             </Button>
           }
           panels={{
-            calendar: { title: "Calendar", icon: <FiCalendar />, content: calendarPanel },
+            calendar: { title: t("Calendar"), icon: <FiCalendar />, content: calendarPanel },
             today: {
-              title: "Today",
+              title: t("Today"),
               icon: <FiClock />,
               content: (
                 <CurrentDateTile
@@ -269,15 +276,15 @@ export default function CalendarPage() {
               ),
             },
             notes: {
-              title: "Notes",
+              title: t("Notes"),
               icon: <FiFileText />,
-              subtitle: formatDay(selectedDate),
+              subtitle: formatDay(selectedDate, locale),
               content: (
                 <div
                   ref={notesPanel}
                   className="notes-panel-content"
                   tabIndex={-1}
-                  aria-label="Selected day notes"
+                  aria-label={t("Selected day notes")}
                 >
                   <NoteDetails {...detailsProps} />
                 </div>
@@ -285,16 +292,16 @@ export default function CalendarPage() {
             },
             medications: medications.plan.enabled
               ? {
-                  title: "Medication tracker",
+                  title: t("Medication tracker"),
                   icon: <FiGrid />,
-                  subtitle: formatDay(selectedDate),
+                  subtitle: formatDay(selectedDate, locale),
                   actions: (
                     <>
-                      <span className="experimental-badge">Experimental</span>
+                      <span className="experimental-badge">{t("Experimental")}</span>
                       <button
                         type="button"
                         className="icon-button"
-                        aria-label="Expand medication tracker"
+                        aria-label={t("Expand medication tracker")}
                         onClick={() => setMedicationExpanded(true)}
                       >
                         <FiMaximize2 aria-hidden="true" />
@@ -302,7 +309,7 @@ export default function CalendarPage() {
                       <button
                         type="button"
                         className="icon-button"
-                        aria-label="Manage medication schedule"
+                        aria-label={t("Manage medication schedule")}
                         onClick={() => configureMedications({ section: "medications" })}
                       >
                         <FiSettings aria-hidden="true" />
@@ -329,7 +336,7 @@ export default function CalendarPage() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Made by Domalega
+            {t("Made by Domalega")}
           </a>
         </footer>
       </main>
@@ -381,9 +388,10 @@ export default function CalendarPage() {
         aria-labelledby="medication-expanded-title"
         className="planner-modal medication-expanded-modal"
       >
-        <Modal.Header closeButton>
+        <Modal.Header closeButton closeLabel={t("Close")}>
           <Modal.Title id="medication-expanded-title">
-            Medication tracker · {formatDay(selectedDate)}
+            {t("Medication tracker ·") + " "}
+            {formatDay(selectedDate, locale)}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>

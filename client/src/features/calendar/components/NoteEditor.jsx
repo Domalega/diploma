@@ -1,3 +1,4 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { useState } from "react";
 import { Alert, Button, Form, Modal } from "react-bootstrap";
 export default function NoteEditor({
@@ -8,6 +9,8 @@ export default function NoteEditor({
   onSaved,
   onClose,
 }) {
+  const { t } = useLanguage();
+
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState(note?.time || "");
   const [comment, setComment] = useState(note?.comment || "");
@@ -37,20 +40,20 @@ export default function NoteEditor({
       aria-labelledby="note-editor-title"
       className="planner-modal"
     >
-      <Modal.Header closeButton={!pending}>
+      <Modal.Header closeButton={!pending} closeLabel={t("Close")}>
         <Modal.Title id="note-editor-title">
-          {note ? "Edit your note" : "A note for your day"}
+          {note ? t("Edit your note") : t("A note for your day")}
         </Modal.Title>
       </Modal.Header>
       <Form onSubmit={submit}>
         <Modal.Body>
           {error && (
             <Alert variant="danger" role="alert">
-              {error}
+              {t(error)}
             </Alert>
           )}
           <Form.Group controlId="note-date" className="mb-4">
-            <Form.Label>Date</Form.Label>
+            <Form.Label>{t("Date")}</Form.Label>
             <Form.Control
               type="date"
               required
@@ -62,7 +65,8 @@ export default function NoteEditor({
           </Form.Group>
           <Form.Group controlId="note-time" className="mb-4">
             <Form.Label>
-              Time <span className="detail-muted">(optional)</span>
+              {t("Time") + " "}
+              <span className="detail-muted">{t("(optional)")}</span>
             </Form.Label>
             <div className="note-time-control">
               <Form.Control
@@ -81,16 +85,16 @@ export default function NoteEditor({
                   disabled={pending}
                   onClick={() => setTime("")}
                 >
-                  Clear time
+                  {t("Clear time")}
                 </Button>
               )}
             </div>
             <Form.Text id="note-time-help">
-              Leave empty for an all-day note. Times use your device's local clock.
+              {t("Leave empty for an all-day note. Times use your device's local clock.")}
             </Form.Text>
           </Form.Group>
           <Form.Group controlId="note-text">
-            <Form.Label>Your note</Form.Label>
+            <Form.Label>{t("Your note")}</Form.Label>
             <Form.Control
               as="textarea"
               rows={5}
@@ -99,11 +103,11 @@ export default function NoteEditor({
               disabled={pending}
               value={comment}
               aria-describedby="note-length"
-              placeholder="What would you like to remember?"
+              placeholder={t("What would you like to remember?")}
               onChange={(event) => setComment(event.target.value)}
             />
             <p className="note-length" id="note-length">
-              {comment.length} / 255 characters
+              {t("{count} / 255 characters", { count: comment.length })}
             </p>
           </Form.Group>
         </Modal.Body>
@@ -114,10 +118,10 @@ export default function NoteEditor({
             disabled={pending}
             onClick={onClose}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" className="theme-button" disabled={pending}>
-            {pending ? "Saving…" : "Save note"}
+            {pending ? t("Saving…") : t("Save note")}
           </Button>
         </Modal.Footer>
       </Form>

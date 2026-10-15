@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../shared/i18n/LanguageProvider";
+import { weekdayLabel } from "../../../shared/i18n/formatters";
 import { useState } from "react";
 import { Alert, Button, Form, Modal } from "react-bootstrap";
 import { FiEdit3, FiPlus, FiTrash2 } from "react-icons/fi";
@@ -18,6 +20,8 @@ const newRow = (slots) => ({
 });
 
 export default function MedicationManager({ tracker, intent = {}, onClose }) {
+  const { t, locale } = useLanguage();
+
   const { plan, pending, loading, savePlan, reload } = tracker;
   const [section, setSection] = useState(intent.section || "medications");
   const [draftSlot, setDraftSlot] = useState(() =>
@@ -53,7 +57,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
           ? plan.slots.map((item) => (item.id === slot.id ? slot : item))
           : [...plan.slots, slot],
       },
-      "Intake time saved.",
+      t("Intake time saved."),
     );
   }
   async function submitRow(event) {
@@ -75,23 +79,24 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
           ? plan.rows.map((item) => (item.id === row.id ? row : item))
           : [...plan.rows, row],
       },
-      "Medication schedule saved.",
+      t("Medication schedule saved."),
     );
   }
   function remove() {
     if (removing.kind === "medication")
       return save(
         { rows: plan.rows.filter((row) => row.id !== removing.id) },
-        "Medication removed from the schedule. Previous marks were kept.",
+        t("Medication removed from the schedule. Previous marks were kept."),
       );
     const affected = plan.rows.filter(
       (row) => row.slotIds.includes(removing.id) && row.slotIds.length === 1,
     );
     if (affected.length) {
       setError(
-        "This is the only intake time for " +
-          affected.map((row) => row.name).join(", ") +
-          ". Edit those medications to choose another time first.",
+        t(
+          "This is the only intake time for {names}. Edit those medications to choose another time first.",
+          { names: affected.map((row) => row.name).join(", ") },
+        ),
       );
       setRemoving(null);
       return;
@@ -104,7 +109,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
           slotIds: row.slotIds.filter((id) => id !== removing.id),
         })),
       },
-      "Intake time removed. Previous marks were kept.",
+      t("Intake time removed. Previous marks were kept."),
     );
   }
   function editSection(value) {
@@ -130,20 +135,21 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
       aria-labelledby="medication-manager-title"
       className="planner-modal medication-manager"
     >
-      <Modal.Header closeButton={!busy}>
+      <Modal.Header closeButton={!busy} closeLabel={t("Close")}>
         <Modal.Title id="medication-manager-title">
-          Medication schedule <span className="experimental-badge">Experimental</span>
+          {t("Medication schedule") + " "}
+          <span className="experimental-badge">{t("Experimental")}</span>
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <div className="medication-manager-tabs" role="group" aria-label="Schedule section">
+        <div className="medication-manager-tabs" role="group" aria-label={t("Schedule section")}>
           <button
             type="button"
             disabled={busy}
             aria-pressed={section === "times"}
             onClick={() => editSection("times")}
           >
-            Intake times
+            {t("Intake times")}
           </button>
           <button
             type="button"
@@ -151,12 +157,12 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
             aria-pressed={section === "medications"}
             onClick={() => editSection("medications")}
           >
-            Medications
+            {t("Medications")}
           </button>
         </div>
         {error && (
           <Alert variant="danger" role="alert">
-            {error}
+            {t(error)}
             <Button
               variant="outline-secondary"
               className="theme-button-outline ms-2"
@@ -166,22 +172,23 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                 reload();
               }}
             >
-              Reload schedule
+              {t("Reload schedule")}
             </Button>
           </Alert>
         )}
         <p
           className="medication-manager-status"
           role="status"
-          aria-label="Medication schedule update"
+          aria-label={t("Medication schedule update")}
         >
-          {message}
+          {t(message)}
         </p>
         {removing && (
           <div className="medication-remove-confirm">
             <p>
-              Remove <strong>{removing.name}</strong> from the schedule? Previous intake marks will
-              remain.
+              {t("Remove") + " "}
+              <strong>{removing.name}</strong>
+              {" " + t("from the schedule? Previous intake marks will remain.")}
             </p>
             <Button
               variant="outline-secondary"
@@ -189,17 +196,17 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
               disabled={busy}
               onClick={() => setRemoving(null)}
             >
-              Keep
+              {t("Keep")}
             </Button>
             <Button className="danger-button ms-2" disabled={busy} onClick={remove}>
-              Remove from schedule
+              {t("Remove from schedule")}
             </Button>
           </div>
         )}
         {section === "times" ? (
           <>
             <p className="medication-manager-help">
-              Each time becomes a column. The symbol follows its time of day.
+              {t("Each time becomes a column. The symbol follows its time of day.")}
             </p>
             <ul className="medication-config-list">
               {[...plan.slots]
@@ -215,7 +222,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                       <button
                         type="button"
                         className="icon-button"
-                        aria-label={"Edit intake time " + slot.time}
+                        aria-label={t("Edit intake time {time}", { time: slot.time })}
                         disabled={busy}
                         onClick={() => {
                           setDraftSlot({ ...slot });
@@ -228,7 +235,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                       <button
                         type="button"
                         className="icon-button"
-                        aria-label={"Remove intake time " + slot.time}
+                        aria-label={t("Remove intake time {time}", { time: slot.time })}
                         disabled={busy}
                         onClick={() => {
                           setRemoving({
@@ -257,15 +264,15 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                 }}
               >
                 <FiPlus aria-hidden="true" />
-                Add intake time
+                {t("Add intake time")}
               </Button>
             )}
             {draftSlot && (
               <Form className="medication-edit-form" onSubmit={submitSlot}>
-                <h3>{slotExists ? "Edit intake time" : "New intake time"}</h3>
+                <h3>{slotExists ? t("Edit intake time") : t("New intake time")}</h3>
                 <div className="medication-form-columns">
                   <Form.Group controlId="medication-slot-time">
-                    <Form.Label>Intake time</Form.Label>
+                    <Form.Label>{t("Intake time")}</Form.Label>
                     <Form.Control
                       type="time"
                       step={60}
@@ -280,12 +287,12 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                     />
                   </Form.Group>
                   <Form.Group controlId="medication-slot-label">
-                    <Form.Label>Column label (optional)</Form.Label>
+                    <Form.Label>{t("Column label (optional)")}</Form.Label>
                     <Form.Control
                       value={draftSlot.label}
                       maxLength={40}
                       disabled={busy}
-                      placeholder="Morning, evening…"
+                      placeholder={t("Morning, evening…")}
                       onChange={(event) =>
                         setDraftSlot((value) => ({ ...value, label: event.target.value }))
                       }
@@ -299,10 +306,10 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                     disabled={busy}
                     onClick={() => setDraftSlot(null)}
                   >
-                    Cancel editing
+                    {t("Cancel editing")}
                   </Button>
                   <Button type="submit" className="theme-button" disabled={busy}>
-                    {pending ? "Saving…" : "Save intake time"}
+                    {pending ? t("Saving…") : t("Save intake time")}
                   </Button>
                 </div>
               </Form>
@@ -311,12 +318,13 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
         ) : (
           <>
             <p className="medication-manager-help">
-              Choose the days and intake times for each medication. Marks belong to the selected
-              calendar day.
+              {t(
+                "Choose the days and intake times for each medication. Marks belong to the selected calendar day.",
+              )}
             </p>
             {!plan.slots.length && (
               <div className="medication-empty">
-                <p>Add an intake time before adding a medication.</p>
+                <p>{t("Add an intake time before adding a medication.")}</p>
                 <Button
                   className="theme-button-outline"
                   variant="outline-secondary"
@@ -325,7 +333,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                     setDraftSlot(newSlot());
                   }}
                 >
-                  Add first intake time
+                  {t("Add first intake time")}
                 </Button>
               </div>
             )}
@@ -336,7 +344,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                     <strong>{row.name}</strong>
                     {row.detail && <small>{row.detail}</small>}
                     <small>
-                      {repeatLabel(row)} ·{" "}
+                      {repeatLabel(row, locale)} ·{" "}
                       {plan.slots
                         .filter((slot) => row.slotIds.includes(slot.id))
                         .map((slot) => slot.time)
@@ -348,7 +356,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                     <button
                       type="button"
                       className="icon-button"
-                      aria-label={"Edit medication " + row.name}
+                      aria-label={t("Edit medication {name}", { name: row.name })}
                       disabled={busy}
                       onClick={() => {
                         setDraftRow({
@@ -365,7 +373,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                     <button
                       type="button"
                       className="icon-button"
-                      aria-label={"Remove medication " + row.name}
+                      aria-label={t("Remove medication {name}", { name: row.name })}
                       disabled={busy}
                       onClick={() => {
                         setRemoving({ kind: "medication", id: row.id, name: row.name });
@@ -390,14 +398,14 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                 }}
               >
                 <FiPlus aria-hidden="true" />
-                Add medication
+                {t("Add medication")}
               </Button>
             )}
             {draftRow && (
               <Form className="medication-edit-form" onSubmit={submitRow}>
-                <h3>{rowExists ? "Edit medication" : "New medication"}</h3>
+                <h3>{rowExists ? t("Edit medication") : t("New medication")}</h3>
                 <Form.Group controlId="medication-name" className="mb-3">
-                  <Form.Label>Medication name</Form.Label>
+                  <Form.Label>{t("Medication name")}</Form.Label>
                   <Form.Control
                     autoFocus
                     required
@@ -410,25 +418,25 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                   />
                 </Form.Group>
                 <Form.Group controlId="medication-detail" className="mb-3">
-                  <Form.Label>Note or label (optional)</Form.Label>
+                  <Form.Label>{t("Note or label (optional)")}</Form.Label>
                   <Form.Control
                     maxLength={120}
                     value={draftRow.detail}
                     disabled={busy}
-                    placeholder="Your own instructions"
+                    placeholder={t("Your own instructions")}
                     onChange={(event) =>
                       setDraftRow((value) => ({ ...value, detail: event.target.value }))
                     }
                   />
                 </Form.Group>
                 <fieldset className="medication-repeat">
-                  <legend>Repeat on</legend>
+                  <legend>{t("Repeat on")}</legend>
                   <div className="medication-weekdays">
                     {WEEKDAYS.map((day) => (
                       <button
                         type="button"
                         key={day.value}
-                        aria-label={day.name}
+                        aria-label={t(day.name)}
                         aria-pressed={draftRow.weekdays.includes(day.value)}
                         disabled={busy}
                         onClick={() =>
@@ -440,7 +448,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                           }))
                         }
                       >
-                        {day.short}
+                        {locale === "ru" ? weekdayLabel(day.value, locale) : day.short}
                       </button>
                     ))}
                   </div>
@@ -450,11 +458,11 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                     disabled={busy}
                     onClick={() => setDraftRow((value) => ({ ...value, weekdays: [...EVERY_DAY] }))}
                   >
-                    Every day
+                    {t("Every day")}
                   </button>
                 </fieldset>
                 <fieldset className="medication-intake-options">
-                  <legend>Intake times</legend>
+                  <legend>{t("Intake times")}</legend>
                   {plan.slots.map((slot) => (
                     <label key={slot.id}>
                       <input
@@ -480,7 +488,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                 </fieldset>
                 <div className="medication-form-columns">
                   <Form.Group controlId="medication-course-start">
-                    <Form.Label>Start date</Form.Label>
+                    <Form.Label>{t("Start date")}</Form.Label>
                     <Form.Control
                       type="date"
                       required
@@ -493,7 +501,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                     />
                   </Form.Group>
                   <Form.Group controlId="medication-course-end">
-                    <Form.Label>End date (optional)</Form.Label>
+                    <Form.Label>{t("End date (optional)")}</Form.Label>
                     <Form.Control
                       type="date"
                       min={draftRow.startDate}
@@ -513,14 +521,14 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
                     disabled={busy}
                     onClick={() => setDraftRow(null)}
                   >
-                    Cancel editing
+                    {t("Cancel editing")}
                   </Button>
                   <Button
                     type="submit"
                     className="theme-button"
                     disabled={busy || !draftRow.weekdays.length || !draftRow.slotIds.length}
                   >
-                    {pending ? "Saving…" : "Save medication"}
+                    {pending ? t("Saving…") : t("Save medication")}
                   </Button>
                 </div>
               </Form>
@@ -528,7 +536,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
           </>
         )}
         <p className="medication-manager-help medication-history-hint">
-          Changing or removing a schedule keeps previous intake marks.
+          {t("Changing or removing a schedule keeps previous intake marks.")}
         </p>
       </Modal.Body>
       <Modal.Footer>
@@ -538,7 +546,7 @@ export default function MedicationManager({ tracker, intent = {}, onClose }) {
           disabled={busy}
           onClick={onClose}
         >
-          Done
+          {t("Done")}
         </Button>
       </Modal.Footer>
     </Modal>
