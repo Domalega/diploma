@@ -27,7 +27,7 @@ final class UpdateManager {
         try {
             UpdateManifest update = candidate(c);
             if (update != null && update.code <= BuildConfig.VERSION_CODE) {
-                prefs(c).edit().remove("candidate").remove("ready").remove("error").remove("installRequested").remove("progress").commit();
+                prefs(c).edit().remove("candidate").remove("ready").remove("error").remove("installRequested").remove("installing").remove("progress").commit();
                 apk(c).delete(); new File(apk(c).getParentFile(), "update.part").delete();
                 c.getSystemService(NotificationManager.class).cancel(NOTIFICATION);
             }
@@ -56,17 +56,22 @@ final class UpdateManager {
         // Releases/latest excludes prereleases. Read the preview channel explicitly.
         JSONArray releases = new JSONArray(UpdateHttp.json("https://api.github.com/repos/Domalega/diploma/releases?per_page=30"));
         UpdateManifest best = UpdateDiscovery.find(releases, BuildConfig.VERSION_CODE, Build.VERSION.SDK_INT, UpdateHttp::json);
-        synchronized (UpdateManager.class) {
+        applyCheckResult(c, best);
+    }
+    static synchronized void applyCheckResult(Context c, UpdateManifest best) throws Exception {
         UpdateManifest previous = candidate(c);
         android.content.SharedPreferences.Editor edit = prefs(c).edit().putLong("checkedAt", System.currentTimeMillis()).remove("error");
         // Keep the selected version fixed while a user-requested download/install is in flight.
-        if (!prefs(c).getBoolean("downloading", false) && !prefs(c).getBoolean("installRequested", false)) {
-            if (best == null) { edit.remove("candidate").remove("ready"); apk(c).delete(); }
+        if (!prefs(c).getBoolean("downloading", false) && !prefs(c).getBoolean("installRequested", false)
+            && !prefs(c).getBoolean("installing", false) && !prefs(c).getBoolean("awaitingPermission", false)) {
+            if (best == null) {
+                edit.remove("candidate").remove("ready"); apk(c).delete();
+                c.getSystemService(NotificationManager.class).cancel(NOTIFICATION);
+            }
             else if (previous == null || best.code != previous.code) { edit.putString("candidate", best.json().toString()).remove("ready"); apk(c).delete(); }
         }
         edit.commit();
         if (best != null && prefs(c).getInt("notified", 0) < best.code && notify(c, false)) prefs(c).edit().putInt("notified", best.code).apply();
-        }
     }
     static boolean notify(Context c, boolean ready) throws Exception {
         if (!ReminderService.allowed(c)) return false;
@@ -134,6 +139,7 @@ final class UpdateManager {
             prefs(activity).edit().putBoolean("awaitingPermission", true).commit();
             activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + activity.getPackageName()))); return;
         }
+        prefs(activity).edit().putBoolean("installing", true).commit();
         activity.startActivityForResult(installerIntent(activity), 43);
     }
 }

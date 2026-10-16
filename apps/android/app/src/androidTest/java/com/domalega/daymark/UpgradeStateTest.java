@@ -33,10 +33,15 @@ public class UpgradeStateTest {
     @Test public void prepareInstaller() throws Exception {
         android.app.Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         Context c = instrumentation.getTargetContext();
+        // Keep a real foreground activity alive while the external CI driver confirms
+        // the system dialog. Installing this update intentionally kills instrumentation.
+        UpdateManager.prefs(c).edit().putLong("checkedAt", System.currentTimeMillis()).commit();
+        android.app.Activity activity = instrumentation.startActivitySync(new android.content.Intent(c, MainActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
         UpdateManifest update = UpdateSecurityTest.fixture(c);
         UpdateManager.verify(c, UpdateManager.apk(c), update);
-        UpdateManager.prefs(c).edit().putString("candidate", update.json().toString()).putInt("ready", update.code).commit();
-        // Use the same intent and permission grant as the production installer.
-        c.startActivity(UpdateManager.installerIntent(c).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+        UpdateManager.prefs(c).edit().putString("candidate", update.json().toString()).putInt("ready", update.code).putBoolean("installRequested", true).commit();
+        instrumentation.runOnMainSync(() -> { try { UpdateManager.install(activity); } catch (Exception error) { throw new RuntimeException(error); } });
+        Thread.sleep(120000);
+        fail("The system update must replace the target before this timeout");
     }
 }

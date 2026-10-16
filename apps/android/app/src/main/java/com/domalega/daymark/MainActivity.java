@@ -182,6 +182,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == 43) UpdateManager.prefs(this).edit().remove("installing").apply();
         if (request == 44 && result == RESULT_OK && data != null && data.getData() != null) {
             Uri uri = data.getData();
             offlineExecutor.execute(() -> {
@@ -207,6 +208,7 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         resumed = true;
+        UpdateManager.prefs(this).edit().remove("installing").apply();
         try { ReminderService.reschedule(this); } catch (JSONException ignored) { }
         if (OfflineStore.get(this).active() != null) SyncWorker.schedule(this, true);
         UpdateManager.schedule(this);

@@ -25,7 +25,9 @@ def test(method):
 
 test("seed")
 adb("shell", "appops", "set", PACKAGE, "REQUEST_INSTALL_PACKAGES", "allow")
-test("prepareInstaller")
+installer = subprocess.Popen(["adb", "shell", "am", "instrument", "-w", "-e", "class",
+                              PACKAGE + ".UpgradeStateTest#prepareInstaller", RUNNER],
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 clicked = False
 for _ in range(15):
     time.sleep(1)
@@ -40,12 +42,21 @@ for _ in range(15):
     if clicked:
         break
 if not clicked:
+    print("Visible UI:", [(node.get("text"), node.get("resource-id")) for node in root.iter("node") if node.get("text")])
+    print(adb("logcat", "-d", "-s", "ActivityTaskManager", "PackageInstaller", "AndroidRuntime")[-8000:])
+    installer.terminate()
     raise RuntimeError("System installer did not offer Install/Update")
 for _ in range(30):
     if re.search(r"versionCode=" + str(expected) + r"\b", adb("shell", "dumpsys", "package", PACKAGE)):
         break
     time.sleep(1)
 else:
+    print(adb("logcat", "-d", "-s", "PackageInstaller", "PackageManager", "AndroidRuntime")[-8000:])
+    installer.terminate()
     raise RuntimeError("System installer did not install the next version")
+try:
+    print(installer.communicate(timeout=10)[0])
+except subprocess.TimeoutExpired:
+    installer.terminate()
 test("verifyRetained")
 print(f"PASS: system installation -> {expected} retained SQLite changes, preferences and Keystore credentials")
