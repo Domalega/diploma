@@ -1,12 +1,15 @@
 import { useRef, useState } from "react";
 import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
+import { formatDay, todayKey } from "../../calendar/utils/calendarDates";
 import "../styles/Todos.css";
 
-export default function TodoTile({ tracker }) {
+export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectDate }) {
   const { t } = useLanguage();
   const { list, loading, pending, conflict, error, reload, send } = tracker;
   const [draft, setDraft] = useState("");
+  const [date, setDate] = useState("");
+  const [scope, setScope] = useState("all");
   const [validation, setValidation] = useState("");
   const adding = useRef(false);
   const input = useRef(null);
@@ -29,8 +32,9 @@ export default function TodoTile({ tracker }) {
     adding.current = true;
     setValidation("");
     try {
-      await send({ type: "add", titles });
+      await send({ type: "add", titles, date: date || todayKey() });
       setDraft("");
+      if (scope === "day" && (date || todayKey()) !== selectedDate) setScope("all");
       input.current?.focus();
     } catch {
       // Keep the full draft for retry, including pasted lines.
@@ -38,11 +42,31 @@ export default function TodoTile({ tracker }) {
       adding.current = false;
     }
   }
-  const completed = list.tasks.filter((task) => task.completed).length;
+  const tasks =
+    scope === "day" ? list.tasks.filter((task) => task.date === selectedDate) : list.tasks;
+  const completed = tasks.filter((task) => task.completed).length;
   return (
     <div className="todo-workspace" aria-busy={loading || pending}>
       <div className="todo-summary" role="status">
-        {t("{completed} of {total} completed", { completed, total: list.tasks.length })}
+        {t("{completed} of {total} completed", { completed, total: tasks.length })}
+      </div>
+      <div className="todo-scope" role="group" aria-label={t("To-do view")}>
+        <button
+          type="button"
+          className="todo-button"
+          aria-pressed={scope === "all"}
+          onClick={() => setScope("all")}
+        >
+          {t("All tasks")}
+        </button>
+        <button
+          type="button"
+          className="todo-button"
+          aria-pressed={scope === "day"}
+          onClick={() => setScope("day")}
+        >
+          {t("Selected day")}
+        </button>
       </div>
       {(error || validation) && (
         <div className="todo-error" role="alert">
@@ -57,10 +81,16 @@ export default function TodoTile({ tracker }) {
       <div className="todo-items">
         {loading ? (
           <p role="status">{t("Loading to-do list…")}</p>
-        ) : list.tasks.length ? (
+        ) : tasks.length ? (
           <ul aria-label={t("To-do tasks")}>
-            {list.tasks.map((task) => (
-              <TodoRow key={task.id} task={task} busy={busy} send={send} />
+            {tasks.map((task) => (
+              <TodoRow
+                key={task.id}
+                task={task}
+                busy={busy}
+                send={send}
+                onSelectDate={onSelectDate}
+              />
             ))}
           </ul>
         ) : (
@@ -83,7 +113,6 @@ export default function TodoTile({ tracker }) {
           rows={2}
           value={draft}
           readOnly={busy}
-          aria-describedby="todo-input-hint"
           placeholder={t("What needs to be done?")}
           onChange={(event) => {
             const value = event.target.value;
@@ -99,9 +128,15 @@ export default function TodoTile({ tracker }) {
           }}
         />
         <div className="todo-composer-footer">
-          <small id="todo-input-hint">
-            {t("Enter adds a task. Paste several lines to add several tasks.")}
-          </small>
+          <label className="todo-date-field">
+            <span>{t("Task date (today if empty)")}</span>
+            <input
+              type="date"
+              value={date}
+              disabled={busy}
+              onChange={(event) => setDate(event.target.value)}
+            />
+          </label>
           <button type="submit" className="todo-button" disabled={busy || !draft.trim()}>
             <FiPlus aria-hidden="true" />
             {t("Add tasks")}
@@ -112,15 +147,16 @@ export default function TodoTile({ tracker }) {
   );
 }
 
-function TodoRow({ task, busy, send }) {
-  const { t } = useLanguage();
+export function TodoRow({ task, busy, send, onSelectDate }) {
+  const { t, locale } = useLanguage();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
+  const [date, setDate] = useState(task.date || "");
   async function save(event) {
     event.preventDefault();
     if (busy || !title.trim()) return;
     try {
-      await send({ type: "edit", id: task.id, title });
+      await send({ type: "edit", id: task.id, title, date: date || todayKey() });
       setEditing(false);
     } catch {
       // A failed save must leave the editor open.
@@ -153,6 +189,15 @@ function TodoRow({ task, busy, send }) {
               if (event.key === "Escape") setEditing(false);
             }}
           />
+          <label className="todo-date-field">
+            <span>{t("Task date (today if empty)")}</span>
+            <input
+              type="date"
+              value={date}
+              disabled={busy}
+              onChange={(event) => setDate(event.target.value)}
+            />
+          </label>
           <button className="todo-button" disabled={busy || !title.trim()}>
             {t("Save")}
           </button>
@@ -162,7 +207,19 @@ function TodoRow({ task, busy, send }) {
         </form>
       ) : (
         <>
-          <span className="todo-title">{task.completed ? <s>{task.title}</s> : task.title}</span>
+          <span className="todo-title">
+            {task.completed ? <s>{task.title}</s> : task.title}
+            {task.date && (
+              <button
+                type="button"
+                className="todo-task-date"
+                onClick={() => onSelectDate?.(task.date)}
+                aria-label={t("Show {date} in calendar", { date: formatDay(task.date, locale) })}
+              >
+                <time dateTime={task.date}>{formatDay(task.date, locale)}</time>
+              </button>
+            )}
+          </span>
           <button
             type="button"
             className="icon-button"
@@ -170,6 +227,7 @@ function TodoRow({ task, busy, send }) {
             aria-label={t("Edit to-do {title}", { title: task.title })}
             onClick={() => {
               setTitle(task.title);
+              setDate(task.date || "");
               setEditing(true);
             }}
           >

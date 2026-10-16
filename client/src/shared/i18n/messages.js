@@ -9,6 +9,12 @@ export const en = {
   },
 };
 export const ru = {
+  "Hide tile headings": "Скрыть заголовки плиток",
+  "Task date (today if empty)": "Дата (по умолчанию сегодня)",
+  "To-do view": "Показать задачи",
+  "All tasks": "Все задачи",
+  "Show {date} in calendar": "Показать в календаре: {date}",
+  "To-do list for selected day": "Список дел на выбранный день",
   "To-do list": "Список дел",
   "One task per line. Check off completed tasks.":
     "Каждая строка — отдельное дело. Отмечайте выполненное галочкой.",

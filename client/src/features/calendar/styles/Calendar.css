@@ -34,7 +34,7 @@
   background: var(--surface);
 }
 .planner-header-inner {
-  max-width: 1500px;
+  width: 100%;
   margin: auto;
   padding: 22px 44px;
   display: flex;
@@ -121,8 +121,8 @@
   font-weight: 550;
 }
 .planner-main {
-  max-width: 1500px;
-  padding: 40px 44px 20px;
+  width: 100%;
+  padding: 28px 32px 20px;
   margin: auto;
   outline: none;
 }
@@ -240,6 +240,7 @@
   border-right: 0;
 }
 .planner .day-cell {
+  position: relative;
   width: 100%;
   height: clamp(126px, calc((100svh - 350px) / 6), 156px);
   border: 2px solid transparent;

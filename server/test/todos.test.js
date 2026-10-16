@@ -95,3 +95,21 @@ test("invalid batches are atomic; deleting removes only the selected task", asyn
   await change({ type: "remove", id: saved.tasks[0].id });
   assert.deepEqual((await read()).tasks, saved.tasks.slice(1));
 });
+
+test("task dates persist through edits and completion; invalid dates never change the list", async () => {
+  let saved = (await change({ type: "add", titles: ["Dated task"], date: "2028-02-29" })).data;
+  const task = saved.tasks.at(-1);
+  assert.equal(task.date, "2028-02-29");
+  await change({ type: "complete", id: task.id, completed: true });
+  assert.equal((await read()).tasks.at(-1).date, "2028-02-29");
+  await change({ type: "edit", id: task.id, title: "Renamed" });
+  assert.equal((await read()).tasks.at(-1).date, "2028-02-29");
+  await change({ type: "edit", id: task.id, title: "Moved", date: "2028-03-01" });
+  assert.equal((await read()).tasks.at(-1).date, "2028-03-01");
+  for (const date of ["2027-02-29", "2028-13-01", "not-a-date", 123]) {
+    saved = await read();
+    assert.equal((await change({ type: "add", titles: ["Invalid"], date })).status, 400);
+    assert.equal((await change({ type: "edit", id: task.id, title: "Invalid", date })).status, 400);
+    assert.deepEqual(await read(), saved);
+  }
+});

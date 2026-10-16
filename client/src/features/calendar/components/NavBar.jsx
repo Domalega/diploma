@@ -12,6 +12,7 @@ export default function NavBar({
   onMedicationConfigure,
   kanban,
   todos,
+  panelHeaders,
 }) {
   const { t } = useLanguage();
 
@@ -57,6 +58,7 @@ export default function NavBar({
             onMedicationConfigure={onMedicationConfigure}
             kanban={kanban}
             todos={todos}
+            panelHeaders={panelHeaders}
           />
         </nav>
       </div>

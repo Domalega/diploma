@@ -12,6 +12,17 @@ function title(value) {
     throw ApiError.badRequest("Use one line of up to 500 characters per task");
   return value.trim();
 }
+function taskDate(value) {
+  if (value === null) return null;
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+    Number.isNaN(Date.parse(value + "T00:00:00Z")) ||
+    new Date(value + "T00:00:00Z").toISOString().slice(0, 10) !== value
+  )
+    throw ApiError.badRequest("Enter a valid task date");
+  return value;
+}
 async function getList(userId) {
   const list = await TodoList.findByPk(userId);
   return list ? list.toJSON() : { ...defaults, userId };
@@ -46,12 +57,16 @@ async function changeList(userId, command) {
             id: randomUUID(),
             title: title(value),
             completed: false,
+            ...(command.date !== undefined ? { date: taskDate(command.date) } : {}),
           })),
         );
       } else if (["edit", "complete", "remove"].includes(command.type)) {
         const index = tasks.findIndex((task) => task.id === command.id);
         if (index < 0) throw ApiError.notFound("Task was not found");
-        if (command.type === "edit") tasks[index].title = title(command.title);
+        if (command.type === "edit") {
+          tasks[index].title = title(command.title);
+          if (command.date !== undefined) tasks[index].date = taskDate(command.date);
+        }
         if (command.type === "complete") {
           if (typeof command.completed !== "boolean") fail();
           tasks[index].completed = command.completed;

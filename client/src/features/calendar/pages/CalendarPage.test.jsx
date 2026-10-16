@@ -435,3 +435,61 @@ test("tracker view is chosen only while arranging, persists after reopening, and
   fireEvent.click(screen.getByRole("button", { name: "Settings", exact: true }));
   expect(await screen.findByRole("heading", { name: "Experimental options" })).toBeInTheDocument();
 });
+
+/* eslint-disable testing-library/no-node-access -- These layout checks inspect the containers that hide headings and style completed tasks. */
+test("dated checklist tasks appear on the calendar and can be completed from the selected day", async () => {
+  const tracker = {
+    ...useTodoList(),
+    list: {
+      ...emptyList,
+      enabled: true,
+      tasks: [{ id: "dated-todo", title: "Checklist appointment", date: today, completed: true }],
+    },
+  };
+  useTodoList.mockReturnValue(tracker);
+  mount();
+  await calendarReady();
+  const day = screen.getByRole("button", { name: /Tasks: Checklist appointment · Completed/ });
+  expect(within(day).getByText("Checklist appointment").closest(".day-task")).toHaveClass(
+    "is-completed",
+  );
+  fireEvent.click(day);
+  const tasks = within(screen.getByRole("region", { name: "To-do list for selected day" }));
+  fireEvent.click(tasks.getByRole("checkbox", { name: "Reopen task Checklist appointment" }));
+  expect(tracker.send).toHaveBeenCalledWith({
+    type: "complete",
+    id: "dated-todo",
+    completed: false,
+  });
+  expect(
+    screen.queryByText("Your calendar is a fresh page. Choose a day to leave your first note."),
+  ).not.toBeInTheDocument();
+});
+
+test("hide headings is an ordinary appearance setting and survives reopening the calendar", async () => {
+  const view = mount();
+  await calendarReady();
+  fireEvent.click(screen.getByRole("button", { name: "Settings", exact: true }));
+  const toggle = await screen.findByRole("checkbox", { name: "Hide tile headings" });
+  expect(
+    within(toggle.closest("section")).getByRole("heading", { name: "Appearance" }),
+  ).toBeInTheDocument();
+  fireEvent.click(toggle);
+  expect(
+    screen.getByRole("region", { name: "Calendar", exact: true }).querySelector("header"),
+  ).toHaveClass("is-title-hidden");
+  view.unmount();
+  mount();
+  await calendarReady();
+  expect(
+    screen.getByRole("region", { name: "Calendar", exact: true }).querySelector("header"),
+  ).toHaveClass("is-title-hidden");
+  fireEvent.click(screen.getByRole("button", { name: "Arrange panels" }));
+  expect(
+    screen.getByRole("region", { name: "Calendar", exact: true }).querySelector("header"),
+  ).not.toHaveClass("is-title-hidden");
+  fireEvent.click(screen.getByRole("button", { name: "Done arranging" }));
+  expect(
+    screen.getByRole("region", { name: "Calendar", exact: true }).querySelector("header"),
+  ).toHaveClass("is-title-hidden");
+});

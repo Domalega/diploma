@@ -40,6 +40,8 @@ import useKanbanBoard from "../../kanban/hooks/useKanbanBoard";
 import KanbanTile from "../../kanban/components/KanbanTile";
 import useTodoList from "../../todos/hooks/useTodoList";
 import TodoTile from "../../todos/components/TodoTile";
+import SelectedDayTodos from "../../todos/components/SelectedDayTodos";
+import usePanelHeaders from "../hooks/usePanelHeaders";
 import "../styles/Calendar.css";
 import useDeviceReminders from "../../../shared/reminders/useDeviceReminders";
 
@@ -73,6 +75,19 @@ export default function CalendarPage() {
   const medications = useMedicationTracker(selectedDate, today);
   const kanban = useKanbanBoard();
   const todos = useTodoList();
+  const [hideHeaders, setHideHeaders] = usePanelHeaders();
+  const calendarTasks = [
+    ...(kanban.board.enabled
+      ? kanban.board.tasks.map((task) => ({ ...task, id: "kanban-" + task.id }))
+      : []),
+    ...(todos.list.enabled
+      ? todos.list.tasks.map((task) => ({
+          ...task,
+          id: "todo-" + task.id,
+          completedAt: task.completed,
+        }))
+      : []),
+  ];
   useMedicationReminders(
     medications.plan,
     medications.todayRecords,
@@ -224,7 +239,7 @@ export default function CalendarPage() {
           month={month}
           selectedDate={selectedDate}
           dates={dates}
-          tasks={kanban.board.enabled ? kanban.board.tasks : []}
+          tasks={calendarTasks}
           onSelect={selectDay}
           onMonthChange={(date) => setMonth(monthStart(date))}
         />
@@ -233,6 +248,7 @@ export default function CalendarPage() {
         !error &&
         !dates.length &&
         !(kanban.board.enabled && kanban.board.tasks.length) &&
+        !(todos.list.enabled && todos.list.tasks.some((task) => task.date)) &&
         !searching &&
         view === "month" && (
           <p className="calendar-empty-hint">
@@ -251,6 +267,7 @@ export default function CalendarPage() {
         onMedicationConfigure={configureMedications}
         kanban={kanban}
         todos={todos}
+        panelHeaders={{ hidden: hideHeaders, setHidden: setHideHeaders }}
       />
       <main id="planner-main" tabIndex={-1} className="planner-main">
         <div className="planner-feedback" role="status" aria-live="polite">
@@ -274,6 +291,7 @@ export default function CalendarPage() {
           </Alert>
         )}
         <DashboardBoard
+          hideHeaders={hideHeaders}
           heading={
             <h1>
               {t("Your") + " "}
@@ -310,11 +328,22 @@ export default function CalendarPage() {
                   aria-label={t("Selected day notes")}
                 >
                   <NoteDetails {...detailsProps} />
+                  <SelectedDayTodos tracker={todos} date={selectedDate} onSelectDate={selectDay} />
                 </div>
               ),
             },
             todos: todos.list.enabled
-              ? { title: t("To-do list"), icon: <FiCheck />, content: <TodoTile tracker={todos} /> }
+              ? {
+                  title: t("To-do list"),
+                  icon: <FiCheck />,
+                  content: (
+                    <TodoTile
+                      tracker={todos}
+                      selectedDate={selectedDate}
+                      onSelectDate={selectDay}
+                    />
+                  ),
+                }
               : null,
             kanban: kanban.board.enabled
               ? {

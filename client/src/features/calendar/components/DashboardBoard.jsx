@@ -14,7 +14,7 @@ import {
 } from "../utils/panelGrid";
 import "../styles/Dashboard.css";
 
-export default function DashboardBoard({ panels, heading, primaryAction }) {
+export default function DashboardBoard({ panels, heading, primaryAction, hideHeaders = false }) {
   const { t } = useLanguage();
   const layout = usePanelLayout();
   const [arranging, setArranging] = useState(false);
@@ -247,8 +247,21 @@ export default function DashboardBoard({ panels, heading, primaryAction }) {
                 "--panel-height": bounds.height + "px",
               }}
             >
-              <header className="dashboard-tile-header">
-                <div className="dashboard-tile-label">
+              <header
+                className={
+                  "dashboard-tile-header" +
+                  (hideHeaders && !arranging
+                    ? " is-title-hidden" + (panel.actions ? " has-actions" : "")
+                    : "")
+                }
+              >
+                <div
+                  className={
+                    hideHeaders && !arranging
+                      ? "dashboard-tile-label visually-hidden"
+                      : "dashboard-tile-label"
+                  }
+                >
                   {panel.icon && (
                     <span className="dashboard-tile-icon" aria-hidden="true">
                       {panel.icon}

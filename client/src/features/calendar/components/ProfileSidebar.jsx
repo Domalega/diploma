@@ -13,6 +13,7 @@ export default function ProfileSidebar({
   onMedicationConfigure,
   kanban,
   todos,
+  panelHeaders,
 }) {
   const { t, locale } = useLanguage();
 
@@ -55,6 +56,16 @@ export default function ProfileSidebar({
               {" " + t("Appearance")}
             </h2>
             <ThemeSwitcher />
+            {panelHeaders && (
+              <label className="notification-toggle mt-3">
+                <input
+                  type="checkbox"
+                  checked={panelHeaders.hidden}
+                  onChange={(event) => panelHeaders.setHidden(event.target.checked)}
+                />
+                <span>{t("Hide tile headings")}</span>
+              </label>
+            )}
           </section>
           <section className="account-section">
             <LanguageSwitcher />
