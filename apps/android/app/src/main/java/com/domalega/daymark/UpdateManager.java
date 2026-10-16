@@ -142,4 +142,11 @@ final class UpdateManager {
         prefs(activity).edit().putBoolean("installing", true).commit();
         activity.startActivityForResult(installerIntent(activity), 43);
     }
+    static void installFailed(Context c, Exception error) {
+        boolean invalid = error instanceof SecurityException || error instanceof IOException;
+        android.content.SharedPreferences.Editor edit = prefs(c).edit().putBoolean("installRequested", false).remove("installing").remove("awaitingPermission")
+            .putString("error", invalid ? "Could not download or verify the update. Try again." : "Could not open the installer. Try again.");
+        if (invalid) { edit.remove("ready"); apk(c).delete(); }
+        edit.commit();
+    }
 }

@@ -37,7 +37,12 @@ public class UpdateSecurityTest {
             try { androidx.core.content.FileProvider.getUriForFile(c, c.getPackageName() + ".updates", new File(c.getFilesDir(), "private-credentials")); fail("Private files must never be shared"); }
             catch (IllegalArgumentException expected) { }
             try (RandomAccessFile file = new RandomAccessFile(UpdateManager.apk(c), "rw")) { file.seek(100); file.writeByte(file.readByte() ^ 1); }
-            try { UpdateManager.verify(c, UpdateManager.apk(c), update); fail("Tampered update must fail verification"); } catch (SecurityException expected) { }
+            UpdateManager.prefs(c).edit().putString("candidate", update.json().toString()).putInt("ready", update.code).putBoolean("installRequested", true).commit();
+            try { UpdateManager.verify(c, UpdateManager.apk(c), update); fail("Tampered update must fail verification"); }
+            catch (SecurityException expected) { UpdateManager.installFailed(c, expected); }
+            assertFalse("A bad cached APK must be downloadable again", UpdateManager.status(c).getBoolean("ready"));
+            assertFalse(UpdateManager.apk(c).exists());
+            assertFalse(UpdateManager.prefs(c).getBoolean("installRequested", true));
         } finally { UpdateManager.apk(c).delete(); UpdateManager.prefs(c).edit().clear().commit(); }
     }
     @Test public void wrongVersionIsRejectedEvenWithTheCorrectHash() throws Exception {

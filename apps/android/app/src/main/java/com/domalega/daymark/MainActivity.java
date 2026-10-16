@@ -30,8 +30,7 @@ public class MainActivity extends Activity {
                 if (UpdateManager.prefs(MainActivity.this).getBoolean("installRequested", false)
                     && UpdateManager.status(MainActivity.this).getBoolean("ready")) UpdateManager.install(MainActivity.this);
             } catch (Exception error) {
-                UpdateManager.prefs(MainActivity.this).edit().putBoolean("installRequested", false)
-                    .putString("error", "Could not open the installer. Try again.").apply();
+                UpdateManager.installFailed(MainActivity.this, error);
             }
         }
     };
