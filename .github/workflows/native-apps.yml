@@ -75,6 +75,7 @@ jobs:
           arch: x86_64
           disable-animations: true
           script: |
+            python3 scripts/android-test-webview.py
             python3 scripts/android-native-tests.py
             python3 scripts/android-upgrade-smoke.py
       - name: Package the release and update manifest
