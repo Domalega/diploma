@@ -1,32 +1,34 @@
-# Обновления Android
+# Android updates
 
-Начиная с 0.3.0 Daymark проверяет новые версии при запуске (не чаще раза в 6 часов) и примерно раз в сутки в фоне. Проверить вручную можно в **Настройки → Обновления приложения**. Уведомление и баннер предлагают скачать обновление. Загрузка начинается только после нажатия кнопки; после обрыва сети WorkManager повторяет её до трёх раз. Android может откладывать фоновую работу ради экономии заряда.
+Starting with 0.3.0, Daymark checks for new versions on launch (at most once every six hours) and approximately daily in the background. You can also check manually in **Settings → App updates**. A notification and an in-app banner offer the update. Downloads start only after you press the button; WorkManager retries an interrupted download up to three times. Android may postpone background work to save battery.
 
-После загрузки приложение проверяет размер, SHA-256, имя пакета, версию и совпадение сертификата подписи с установленным приложением. При первой установке из Daymark нужно разрешить этому приложению установку APK в настройках Android. Затем появляется системное подтверждение установки. Отказ оставляет старую версию и данные. При обычном обновлении 0.3.0 → следующая версия удалять приложение не нужно; локальная база, ожидающие отправки изменения и настройки остаются на устройстве.
+After downloading, the app verifies the APK's size, SHA-256 checksum, package name, version, and signing certificate against the installed app. The first time you install an update through Daymark, allow it to install APKs in Android settings. Android then asks you to confirm installation. Canceling keeps the existing version and data. Regular updates from 0.3.0 onward do not require uninstalling: the local database, pending changes, and settings stay on the device.
 
-Уведомления об обновлениях нужно разрешить отдельно от самой проверки версии: без разрешения новая версия всё равно видна в приложении. Уведомление показывается один раз для каждой версии; уже скачанное обновление имеет отдельное уведомление о готовности. После принудительной остановки приложения откройте его снова, чтобы возобновить фоновые проверки.
+Update notifications require notification permission. Without it, available updates still appear inside the app. Each new version is announced once; a downloaded update has a separate ready-to-install notification. Reopen Daymark after force-stopping it to resume background checks.
 
-## Первый переход с 0.2.0
+## First upgrade from 0.2.0
 
-Ключ подписи старой тестовой 0.2.0 не сохранился: журнал её сборки подтверждает, что файл ключа отсутствовал при сохранении кеша. Установить 0.3.0 поверх 0.2.0 Android не позволит. С 0.3.0 используется постоянный ключ в защищённых секретах GitHub Actions. Эта смена подписи выполняется один раз.
+The signing key for the old 0.2.0 preview was not retained: its build log confirms that the key file was missing when the cache was saved. Android therefore cannot install 0.3.0 over 0.2.0. Starting with 0.3.0, a permanent key is stored in protected GitHub Actions secrets. This signing identity change is a one-time migration.
 
-Если все записи уже есть на сервере, можно удалить 0.2.0, установить 0.3.0 и снова войти. Если на телефоне есть локальные изменения, сначала сохраните их:
+If all your records are already on the server, uninstall 0.2.0, install 0.3.0, and sign in again. To save pending changes first, open 0.2.0 online, press **Sync now**, wait for a successful exchange with no pending changes, and verify your records on the website. Repeat for each account you used.
 
-1. Не удаляйте 0.2.0. Установите на компьютер Python 3 и [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools). Подключите телефон по USB, включите отладку USB и разрешите доступ этому компьютеру. Команда `adb devices` должна показать ровно один доступный телефон.
-2. Скачайте `android-export-legacy.py` из релиза и выполните `python android-export-legacy.py daymark-0.2-backup.json`. Можно передать `--adb C:\path\to\adb.exe`. Скрипт остановит приложение, выгрузит и проверит локальные данные. Он не удаляет приложение и не очищает его хранилище. Уже существующий файл копии не перезаписывается.
-3. Убедитесь, что скрипт сообщил `Saved and verified`. Скопируйте JSON на телефон, например в «Загрузки». Файл содержит личные записи; храните его как резервную копию.
-4. Удалите старую 0.2.0 и установите APK 0.3.0.
-5. **До первого входа в аккаунт** на экране входа нажмите **Восстановить копию из 0.2** и выберите JSON. Дождитесь сообщения об успешном восстановлении.
-6. Войдите в тот же аккаунт. Локальные записи и очередь изменений доступны снова. Данные разных аккаунтов восстанавливаются раздельно. При конфликте с сервером выберите нужную версию записи.
+If synchronization is unavailable or you want a separate local backup, use the export tool:
 
-Копия переносит локальные документы календаря, списков, канбана и лекарств, очередь отправки и сведения о конфликтах. Пароли и токены входа в неё не включаются. Язык, оформление и разрешения Android при этом одноразовом переходе настройте заново. После переноса можно отключить отладку USB. Обычные последующие обновления не требуют компьютера или этой процедуры.
+1. Keep 0.2.0 installed. Install Python 3 and [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) on your computer. Connect the phone over USB, enable USB debugging, and authorize the computer. `adb devices` should list exactly one available phone.
+2. Download `android-export-legacy.py` from the release and run `python android-export-legacy.py daymark-0.2-backup.json`. You can pass `--adb C:\path\to\adb.exe`. The script stops the app, exports its local data, and verifies the backup. It does not uninstall the app or clear its storage. An existing backup file is never overwritten.
+3. Confirm that the script reports `Saved and verified`. Copy the JSON file to the phone, for example into Downloads. The file contains personal records; keep it private as a backup.
+4. Uninstall 0.2.0 and install the 0.3.0 APK.
+5. **Before signing in for the first time**, press **Restore a 0.2 backup** on the sign-in screen and select the JSON file. Wait for the successful restoration message.
+6. Sign in to the same account. Your local records and pending changes are available again. Accounts are restored separately. If a record conflicts with the server, choose which version to keep.
 
-Восстановление разрешено только в пустое хранилище до первого входа. Ошибочный файл отклоняется, вставка документов выполняется одной транзакцией. Для обмена с сервером по-прежнему нужен доступный `/api/sync`; обновления APK получают данные из GitHub и от этого API не зависят.
+The backup transfers local calendar, to-do, Kanban, and medication documents, the upload queue, and conflict information. It excludes passwords and sign-in tokens. Language, appearance, and Android permissions must be configured again during this one-time migration. You can disable USB debugging afterward. Regular subsequent updates do not require a computer or this procedure.
 
-## Сборка и публикация следующих версий
+Restoration is allowed only into empty storage before the first sign-in. Invalid files are rejected, and all documents are inserted in one transaction. Calendar synchronization still requires an available `/api/sync` endpoint; APK updates use GitHub independently of that API.
 
-В `apps/android/version.properties` увеличивайте и `versionCode`, и `versionName`. Не меняйте `applicationId` или ключ подписи. `Native apps` получает `ANDROID_KEYSTORE_BASE64` и `ANDROID_KEYSTORE_PASSWORD` из секретов репозитория, собирает подписанную release APK без режима отладки и не сохраняет ключ в кеш или артефакты. Потеря ключа снова сделает обновления несовместимыми; локальная зашифрованная резервная копия создана при настройке 0.3.0.
+## Building and publishing future versions
 
-Каждый Android-релиз канала preview должен иметь тег `native-preview-X.Y.Z` и три согласованных файла: `Daymark-Android-X.Y.Z.apk`, `android-update.json` и `SHA256SUMS.txt`. Скрипт `scripts/package-android-update.cjs` создаёт их из APK и фактических метаданных `aapt`; описание изменений можно передать через `DAYMARK_UPDATE_NOTES`. Приложение читает список опубликованных релизов, включая prerelease: endpoint `releases/latest` их пропускает. Релиз сначала собирается как draft, файлы проверяются, и только затем публикуется. В уже выпущенной версии APK и манифест не заменяйте — увеличивайте номер версии.
+Increment both `versionCode` and `versionName` in `apps/android/version.properties`. Keep the same `applicationId` and signing key. **Native apps** reads `ANDROID_KEYSTORE_BASE64` and `ANDROID_KEYSTORE_PASSWORD` from repository secrets and builds a signed release APK without debugging enabled. The key is excluded from caches and artifacts. Losing it would make future updates incompatible again; an encrypted local recovery backup was created when 0.3.0 was configured.
 
-Проверки CI: модульные тесты расписания, слияния и выбора обновления; инструментальные проверки базы, Keystore, доверенного WebView, подписи и повреждённого APK; выгрузка базы из настоящей 0.2.0 и восстановление в release APK; установка тестовой следующей версии через системное окно Android с сохранением локальной очереди и зашифрованной сессии. Батарейные ограничения конкретных моделей телефонов требуют проверки на устройстве.
+Every preview-channel Android release must use the tag `native-preview-X.Y.Z` and include three matching files: `Daymark-Android-X.Y.Z.apk`, `android-update.json`, and `SHA256SUMS.txt`. `scripts/package-android-update.cjs` generates them from the APK and its actual `aapt` metadata. Set `DAYMARK_UPDATE_NOTES` to supply release notes. The app reads published releases, including prereleases: `releases/latest` excludes them. Prepare a draft, verify its assets, and then publish it. Increase the version for subsequent builds instead of replacing an already published APK or manifest.
+
+CI covers scheduling, merging, and update selection; instrumented database, Keystore, trusted WebView, signing, and damaged-APK checks; export from an actual 0.2.0 installation and restoration into the release APK; and installation of a test next version through Android's system installer while retaining the local queue and encrypted session. Battery restrictions on specific phone models require on-device validation.
