@@ -3,7 +3,14 @@ name: Native apps
 on:
   push:
     branches: [redesign]
-    paths: ["apps/**", "client/**", "scripts/android-*.py", ".github/workflows/native-apps.yml"]
+    paths:
+      [
+        "apps/**",
+        "client/**",
+        "scripts/android-*.py",
+        "scripts/package-android-update.cjs",
+        ".github/workflows/native-apps.yml",
+      ]
   workflow_dispatch:
 
 permissions:
@@ -67,10 +74,12 @@ jobs:
           script: |
             python3 scripts/android-native-tests.py
             python3 scripts/android-upgrade-smoke.py
+      - name: Package the release and update manifest
+        run: node scripts/package-android-update.cjs apps/android/app/build/outputs/apk/release/app-release.apk dist/android
       - uses: actions/upload-artifact@v4
         with:
           name: Daymark-Android-preview
-          path: apps/android/app/build/outputs/apk/release/app-release.apk
+          path: dist/android/*
       - name: Remove signing material
         if: always()
         run: rm -f "$DAYMARK_KEYSTORE_FILE"

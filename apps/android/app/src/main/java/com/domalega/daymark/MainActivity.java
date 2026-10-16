@@ -125,6 +125,12 @@ public class MainActivity extends Activity {
                 JSONObject request = new JSONObject(raw); id = request.getString("id");
                 String action = request.getString("action");
                 if ("status".equals(action)) { reply(reply, id, UpdateManager.status(this), null); return; }
+                if ("notifications".equals(action) && !UpdateManager.notificationsAllowed(this)
+                    && ((Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+                        || (UpdateManager.prefs(this).getBoolean("notificationPermissionRequested", false) && !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)))) {
+                    startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName()));
+                    reply(reply, id, UpdateManager.status(this), null); return;
+                }
                 if ("restoreLegacy".equals(action)) {
                     if (!LegacyBackup.canImport(this)) throw new IllegalStateException("Restore before signing in");
                     startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json"), 44);
@@ -133,6 +139,7 @@ public class MainActivity extends Activity {
                 if ("notifications".equals(action) && Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                     if (updatePermissionReply != null) throw new IllegalStateException("Permission request pending");
                     updatePermissionReply = reply; updatePermissionId = id;
+                    UpdateManager.prefs(this).edit().putBoolean("notificationPermissionRequested", true).apply();
                     requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 42); return;
                 }
                 final String replyId = id;

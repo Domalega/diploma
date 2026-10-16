@@ -1,5 +1,7 @@
 # Daymark device reminders
 
+Android 0.3.0 adds verified in-app updates, background version checks and update notifications. See [Android updates and the one-time 0.2 migration](../docs/ANDROID_UPDATES.md) before replacing 0.2.0. Future versions use a permanent signing identity and install over the existing app after Android confirmation.
+
 Android 0.2.0 bundles the interface and keeps account data in local SQLite storage. After the first online sign-in, notes, to-do tasks, Kanban and medication marks work offline; changes exchange with the server on connectivity, app activation, manually and approximately hourly in the background. Conflicting edits show both versions for an explicit choice. See [local storage and exchange](../docs/OFFLINE_SYNC.md) for behavior, build steps and validation.
 
 Windows opens the existing Daymark website and saves a local copy of timed note and medication schedules. Saved reminders on both platforms run with the app and browser closed, without a notification server or push subscription. Windows calendar editing still requires an internet connection and the existing API.
@@ -11,7 +13,7 @@ Windows opens the existing Daymark website and saves a local copy of timed note 
 - Use **Test notification**, then close the app. A test notification is scheduled five seconds later.
 - **Disable device reminders** cancels schedules on that device. Signing out also removes the saved plan and schedules. Before removing the Windows files, disable device reminders or run `Daymark.exe --clear`.
 
-Both downloads are previews. The Android APK uses a development signing key; replacing it with a build signed using a different key requires uninstalling the previous preview. Windows binaries are unsigned. No installer, administrator rights, store account, or subscription is needed.
+Both downloads are previews. Android 0.3.0 and later use a permanent release signing key. The old 0.2.0 signature is incompatible: export pending local data before the one-time reinstall described above. Windows binaries are unsigned. No store account or subscription is needed.
 
 ## Behavior and limits
 

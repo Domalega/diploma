@@ -39,7 +39,7 @@ final class UpdateManager {
             .put("candidate", update == null ? JSONObject.NULL : update.json()).put("checkedAt", p.getLong("checkedAt", 0))
             .put("downloading", p.getBoolean("downloading", false)).put("progress", p.getInt("progress", 0))
             .put("ready", update != null && p.getInt("ready", 0) == update.code && apk(c).isFile())
-            .put("error", p.getString("error", "")).put("notifications", ReminderService.allowed(c))
+            .put("error", p.getString("error", "")).put("notifications", notificationsAllowed(c))
             .put("canImportLegacy", LegacyBackup.canImport(c)).put("importMessage", p.getString("importMessage", ""));
     }
     static void schedule(Context c) {
@@ -55,21 +55,7 @@ final class UpdateManager {
     static void check(Context c) throws Exception {
         // Releases/latest excludes prereleases. Read the preview channel explicitly.
         JSONArray releases = new JSONArray(UpdateHttp.json("https://api.github.com/repos/Domalega/diploma/releases?per_page=30"));
-        UpdateManifest best = null;
-        for (int i = 0; i < releases.length(); i++) {
-            JSONObject release = releases.getJSONObject(i);
-            if (release.optBoolean("draft") || !release.optString("tag_name").matches("native-preview-[0-9]+\\.[0-9]+\\.[0-9]+")) continue;
-            JSONArray assets = release.getJSONArray("assets");
-            for (int j = 0; j < assets.length(); j++) {
-                JSONObject asset = assets.getJSONObject(j);
-                if (!"android-update.json".equals(asset.optString("name"))) continue;
-                String url = asset.getString("browser_download_url");
-                if (!UpdateManifest.releaseUrl(url) || asset.getLong("size") > 16000) continue;
-                UpdateManifest next = new UpdateManifest(new JSONObject(UpdateHttp.json(url)));
-                if (!next.url.contains("/" + release.getString("tag_name") + "/")) throw new IOException("Release metadata mismatch");
-                if (next.newerThan(BuildConfig.VERSION_CODE, Build.VERSION.SDK_INT) && (best == null || next.code > best.code)) best = next;
-            }
-        }
+        UpdateManifest best = UpdateDiscovery.find(releases, BuildConfig.VERSION_CODE, Build.VERSION.SDK_INT, UpdateHttp::json);
         synchronized (UpdateManager.class) {
         UpdateManifest previous = candidate(c);
         android.content.SharedPreferences.Editor edit = prefs(c).edit().putLong("checkedAt", System.currentTimeMillis()).remove("error");
@@ -96,6 +82,11 @@ final class UpdateManager {
         manager.notify(NOTIFICATION, new Notification.Builder(c, CHANNEL).setSmallIcon(com.domalega.daymark.R.drawable.ic_daymark)
             .setContentTitle(title).setContentText(text).setContentIntent(intent).setAutoCancel(true).build());
         return true;
+    }
+    static boolean notificationsAllowed(Context c) {
+        if (!ReminderService.allowed(c)) return false;
+        NotificationChannel channel = c.getSystemService(NotificationManager.class).getNotificationChannel(CHANNEL);
+        return channel == null || channel.getImportance() != NotificationManager.IMPORTANCE_NONE;
     }
     static synchronized void download(Context c) throws Exception {
         UpdateManifest update = candidate(c);
