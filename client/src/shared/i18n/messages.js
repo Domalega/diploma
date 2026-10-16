@@ -29,7 +29,6 @@ export const ru = {
     "Новые версии проверяются при открытии приложения и периодически в фоне.",
   "You have the latest version.": "У вас последняя версия.",
   "Last checked: {time}": "Последняя проверка: {time}",
-  "Please wait…": "Подождите…",
   "Check for updates": "Проверить обновления",
   "Allow notifications to hear about new versions while the app is closed.":
     "Разрешите уведомления, чтобы узнавать о новых версиях, когда приложение закрыто. Если разрешение уже было отклонено, включите уведомления в настройках Android.",

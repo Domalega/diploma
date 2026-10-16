@@ -26,7 +26,6 @@ test("a hung native service times out and permits another attempt", async () => 
   jest.useFakeTimers();
   window.DaymarkUpdates = { postMessage: jest.fn() };
   const request = updateNative("check");
-  const result = expect(request).rejects.toThrow("did not respond");
   jest.advanceTimersByTime(90001);
-  await result;
+  await expect(request).rejects.toThrow("did not respond");
 });
