@@ -46,6 +46,11 @@ with tempfile.TemporaryDirectory() as temporary:
     adb("uninstall", PACKAGE)
     adb("install", "apps/android/app/build/outputs/apk/release/app-release.apk")
     adb("install", "apps/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk")
+    sdk = int(adb("shell", "getprop", "ro.build.version.sdk", text=True).strip())
+    if sdk >= 33:
+        adb("shell", "pm", "grant", PACKAGE, "android.permission.POST_NOTIFICATIONS")
+    if sdk >= 31:
+        adb("shell", "appops", "set", PACKAGE, "SCHEDULE_EXACT_ALARM", "allow")
     output = adb("shell", "am", "instrument", "-w", "-e", "class", CLASS, "-e", "legacyBackup",
                  base64.b64encode(payload).decode(), RUNNER, text=True)
     print(output)

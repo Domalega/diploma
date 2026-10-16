@@ -104,7 +104,8 @@ final class UpdateManager {
         try (InputStream input = new FileInputStream(file)) { byte[] buffer = new byte[65536]; int n; while ((n = input.read(buffer)) != -1) digest.update(buffer, 0, n); }
         if (!hex(digest.digest()).equals(update.sha256)) throw new SecurityException("Update checksum mismatch");
         PackageManager pm = c.getPackageManager();
-        int flags = Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
+        // Android 9/10 only collect archive certificates when GET_SIGNATURES is also set.
+        int flags = PackageManager.GET_SIGNATURES | (Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : 0);
         PackageInfo installed = pm.getPackageInfo(c.getPackageName(), flags), archive = pm.getPackageArchiveInfo(file.getAbsolutePath(), flags);
         if (archive == null || !c.getPackageName().equals(archive.packageName) || version(archive) != update.code
             || !update.version.equals(archive.versionName) || version(archive) <= version(installed)
