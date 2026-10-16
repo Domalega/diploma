@@ -8,6 +8,7 @@ on:
         "apps/**",
         "client/**",
         "scripts/android-*.py",
+        "scripts/android-*.cjs",
         "scripts/package-android-update.cjs",
         ".github/workflows/native-apps.yml",
       ]
@@ -19,6 +20,10 @@ permissions:
 jobs:
   android:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [29, 35]
     env:
       DAYMARK_KEYSTORE_FILE: ${{ github.workspace }}/.android-signing/daymark.keystore
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -58,9 +63,7 @@ jobs:
           chmod 600 "$DAYMARK_KEYSTORE_FILE"
       - name: Build future update test fixture
         run: |
-          gradle -p apps/android assembleRelease -PdaymarkVersionCode=4 -PdaymarkVersionName=0.3.1 --no-daemon
-          mkdir -p apps/android/app/build/generated/upgradeFixture
-          cp apps/android/app/build/outputs/apk/release/app-release.apk apps/android/app/build/generated/upgradeFixture/future.apk
+          node scripts/android-build-fixtures.cjs
           keytool -genkeypair -keystore "$RUNNER_TEMP/other-key.jks" -storepass only-for-tests -keypass only-for-tests -alias other -keyalg RSA -validity 1 -dname CN=Untrusted-Test
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign --ks "$RUNNER_TEMP/other-key.jks" --ks-pass pass:only-for-tests --out apps/android/app/build/generated/upgradeFixture/untrusted.apk apps/android/app/build/generated/upgradeFixture/future.apk
       - run: gradle -p apps/android testDebugUnitTest assembleRelease assembleDebugAndroidTest --no-daemon
@@ -68,7 +71,7 @@ jobs:
         run: sudo chmod a+rw /dev/kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
+          api-level: ${{ matrix.api }}
           arch: x86_64
           disable-animations: true
           script: |
@@ -77,6 +80,7 @@ jobs:
       - name: Package the release and update manifest
         run: node scripts/package-android-update.cjs apps/android/app/build/outputs/apk/release/app-release.apk dist/android
       - uses: actions/upload-artifact@v4
+        if: matrix.api == 35
         with:
           name: Daymark-Android-preview
           path: dist/android/*

@@ -19,9 +19,11 @@ public class UpdateSecurityTest {
         }
         MessageDigest hash = MessageDigest.getInstance("SHA-256");
         try (InputStream input = new FileInputStream(file)) { byte[] buffer = new byte[65536]; int n; while ((n = input.read(buffer)) != -1) hash.update(buffer, 0, n); }
-        return new UpdateManifest(new JSONObject().put("schema", 1).put("channel", "preview").put("versionCode", 4).put("versionName", "0.3.1").put("minSdk", 26)
-            .put("url", "https://github.com/Domalega/diploma/releases/download/native-preview-0.3.1/Daymark-Android-0.3.1.apk")
-            .put("size", file.length()).put("sha256", UpdateManager.hex(hash.digest())));
+        try (InputStream input = InstrumentationRegistry.getInstrumentation().getContext().getAssets().open("future.json"); ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096]; int n; while ((n = input.read(buffer)) != -1) bytes.write(buffer, 0, n);
+            UpdateManifest update = new UpdateManifest(new JSONObject(bytes.toString("UTF-8")));
+            assertEquals(file.length(), update.size); assertEquals(UpdateManager.hex(hash.digest()), update.sha256); return update;
+        }
     }
     @Test public void signedNewerApkIsVerifiedAndInstallerCanReadOnlyTheUpdateDirectory() throws Exception {
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -42,7 +44,7 @@ public class UpdateSecurityTest {
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
         UpdateManifest update = fixture(c);
         try {
-            UpdateManifest fake = new UpdateManifest(update.json().put("versionCode", 5));
+            UpdateManifest fake = new UpdateManifest(update.json().put("versionCode", update.code + 1));
             try { UpdateManager.verify(c, UpdateManager.apk(c), fake); fail("Manifest version must match APK"); } catch (SecurityException expected) { }
         } finally { UpdateManager.apk(c).delete(); }
     }

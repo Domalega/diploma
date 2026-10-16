@@ -1,11 +1,13 @@
 plugins { id 'com.android.application' }
+def appVersion = new Properties()
+rootProject.file('version.properties').withInputStream { appVersion.load(it) }
 android {
     namespace 'com.domalega.daymark'
     compileSdk 35
     defaultConfig {
         applicationId 'com.domalega.daymark'; minSdk 26; targetSdk 35
-        versionCode = (project.findProperty('daymarkVersionCode') ?: '3').toInteger()
-        versionName = (project.findProperty('daymarkVersionName') ?: '0.3.0')
+        versionCode = (project.findProperty('daymarkVersionCode') ?: appVersion.getProperty('versionCode')).toInteger()
+        versionName = (project.findProperty('daymarkVersionName') ?: appVersion.getProperty('versionName'))
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         buildConfigField 'String', 'API_URL', '"https://diploma-api-zozr.onrender.com/api"'
     }

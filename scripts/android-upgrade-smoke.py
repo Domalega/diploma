@@ -1,11 +1,14 @@
 """CI only: confirm the real Android installer and verify the retained SQLite outbox."""
 import re
+import json
+import pathlib
 import subprocess
 import time
 import xml.etree.ElementTree as ET
 
 PACKAGE = "com.domalega.daymark"
 RUNNER = PACKAGE + ".test/androidx.test.runner.AndroidJUnitRunner"
+expected = json.loads(pathlib.Path("apps/android/app/build/generated/upgradeFixture/future.json").read_text())["versionCode"]
 
 
 def adb(*args):
@@ -39,10 +42,10 @@ for _ in range(15):
 if not clicked:
     raise RuntimeError("System installer did not offer Install/Update")
 for _ in range(30):
-    if re.search(r"versionCode=4\b", adb("shell", "dumpsys", "package", PACKAGE)):
+    if re.search(r"versionCode=" + str(expected) + r"\b", adb("shell", "dumpsys", "package", PACKAGE)):
         break
     time.sleep(1)
 else:
-    raise RuntimeError("System installer did not install version 4")
+    raise RuntimeError("System installer did not install the next version")
 test("verifyRetained")
-print("PASS: system installation 3 -> 4 retained SQLite changes, preferences and Keystore credentials")
+print(f"PASS: system installation -> {expected} retained SQLite changes, preferences and Keystore credentials")

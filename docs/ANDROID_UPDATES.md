@@ -25,7 +25,7 @@
 
 ## Сборка и публикация следующих версий
 
-В `apps/android/app/build.gradle` увеличивайте и `versionCode`, и `versionName`. Не меняйте `applicationId` или ключ подписи. `Native apps` получает `ANDROID_KEYSTORE_BASE64` и `ANDROID_KEYSTORE_PASSWORD` из секретов репозитория, собирает подписанную release APK без режима отладки и не сохраняет ключ в кеш или артефакты. Потеря ключа снова сделает обновления несовместимыми; локальная зашифрованная резервная копия создана при настройке 0.3.0.
+В `apps/android/version.properties` увеличивайте и `versionCode`, и `versionName`. Не меняйте `applicationId` или ключ подписи. `Native apps` получает `ANDROID_KEYSTORE_BASE64` и `ANDROID_KEYSTORE_PASSWORD` из секретов репозитория, собирает подписанную release APK без режима отладки и не сохраняет ключ в кеш или артефакты. Потеря ключа снова сделает обновления несовместимыми; локальная зашифрованная резервная копия создана при настройке 0.3.0.
 
 Каждый Android-релиз канала preview должен иметь тег `native-preview-X.Y.Z` и три согласованных файла: `Daymark-Android-X.Y.Z.apk`, `android-update.json` и `SHA256SUMS.txt`. Скрипт `scripts/package-android-update.cjs` создаёт их из APK и фактических метаданных `aapt`; описание изменений можно передать через `DAYMARK_UPDATE_NOTES`. Приложение читает список опубликованных релизов, включая prerelease: endpoint `releases/latest` их пропускает. Релиз сначала собирается как draft, файлы проверяются, и только затем публикуется. В уже выпущенной версии APK и манифест не заменяйте — увеличивайте номер версии.
 

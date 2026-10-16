@@ -120,8 +120,9 @@ final class UpdateManager {
     static String hex(byte[] values) { StringBuilder out = new StringBuilder(); for (byte value : values) out.append(String.format(Locale.ROOT, "%02x", value & 255)); return out.toString(); }
     static Intent installerIntent(Context c) {
         Uri uri = FileProvider.getUriForFile(c, c.getPackageName() + ".updates", apk(c));
-        return new Intent(Intent.ACTION_INSTALL_PACKAGE).setDataAndType(uri, "application/vnd.android.package-archive")
-            .setClipData(ClipData.newRawUri("Daymark update", uri)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).putExtra(Intent.EXTRA_RETURN_RESULT, true);
+        Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE).setDataAndType(uri, "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).putExtra(Intent.EXTRA_RETURN_RESULT, true);
+        intent.setClipData(ClipData.newRawUri("Daymark update", uri)); return intent;
     }
     static void install(Activity activity) throws Exception {
         UpdateManifest update = candidate(activity);
