@@ -15,6 +15,15 @@ public class UpdateNotificationTest {
         for (StatusBarNotification item : manager.getActiveNotifications()) if (item.getId() == UpdateManager.NOTIFICATION) return item;
         return null;
     }
+    private StatusBarNotification awaitPosted(NotificationManager manager, boolean present) {
+        long deadline = android.os.SystemClock.elapsedRealtime() + 3000;
+        StatusBarNotification value;
+        do {
+            value = posted(manager); if ((value != null) == present) return value;
+            android.os.SystemClock.sleep(50);
+        } while (android.os.SystemClock.elapsedRealtime() < deadline);
+        return value;
+    }
     @Test public void announcesEachVersionOnceAndKeepsTheSelectedUpdateDuringDownload() throws Exception {
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
         NotificationManager manager = c.getSystemService(NotificationManager.class);
@@ -22,7 +31,7 @@ public class UpdateNotificationTest {
         try {
             UpdateManifest update = UpdateSecurityTest.fixture(c);
             UpdateManager.applyCheckResult(c, update);
-            StatusBarNotification first = posted(manager);
+            StatusBarNotification first = awaitPosted(manager, true);
             assertNotNull("The available update must post a native notification", first);
             assertEquals(UpdateManager.CHANNEL, first.getNotification().getChannelId());
             assertEquals(c.getPackageName(), first.getNotification().contentIntent.getCreatorPackage());
@@ -35,7 +44,7 @@ public class UpdateNotificationTest {
             assertEquals(update.code, UpdateManager.candidate(c).code);
             UpdateManager.prefs(c).edit().putBoolean("downloading", false).putBoolean("installRequested", false).commit();
             UpdateManager.applyCheckResult(c, null);
-            assertNull(UpdateManager.candidate(c)); assertNull(posted(manager));
+            assertNull(UpdateManager.candidate(c)); assertNull(awaitPosted(manager, false));
         } finally { manager.cancel(UpdateManager.NOTIFICATION); UpdateManager.prefs(c).edit().clear().commit(); UpdateManager.apk(c).delete(); }
     }
 }
