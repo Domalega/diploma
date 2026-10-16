@@ -7,6 +7,7 @@ import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
 import LanguageSwitcher from "../../../shared/i18n/LanguageSwitcher";
 import { clearToken } from "../../../shared/api/tokenStorage";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
+import { AppUpdateSettings } from "../../../shared/updates/AppUpdates";
 export default function ProfileSidebar({
   notifications = { supported: false },
   medications,
@@ -50,6 +51,7 @@ export default function ProfileSidebar({
           <Offcanvas.Title id="account-title">{t("Settings")}</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
+          <AppUpdateSettings />
           <section className="account-section settings-appearance">
             <h2>
               <FiSun aria-hidden="true" />

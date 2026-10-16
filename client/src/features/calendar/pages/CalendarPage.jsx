@@ -45,6 +45,7 @@ import usePanelHeaders from "../hooks/usePanelHeaders";
 import "../styles/Calendar.css";
 import useDeviceReminders from "../../../shared/reminders/useDeviceReminders";
 import SyncStatus from "../../../shared/offline/SyncStatus";
+import { AppUpdateBanner } from "../../../shared/updates/AppUpdates";
 
 export default function CalendarPage() {
   const { t, locale } = useLanguage();
@@ -272,6 +273,7 @@ export default function CalendarPage() {
       />
       <main id="planner-main" tabIndex={-1} className="planner-main">
         <SyncStatus />
+        <AppUpdateBanner />
         <div className="planner-feedback" role="status" aria-live="polite">
           {message && (
             <>

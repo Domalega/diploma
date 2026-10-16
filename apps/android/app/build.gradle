@@ -4,12 +4,30 @@ android {
     compileSdk 35
     defaultConfig {
         applicationId 'com.domalega.daymark'; minSdk 26; targetSdk 35
-        versionCode 2; versionName '0.2.0'
+        versionCode (project.findProperty('daymarkVersionCode') ?: '3').toInteger()
+        versionName project.findProperty('daymarkVersionName') ?: '0.3.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         buildConfigField 'String', 'API_URL', '"https://diploma-api-zozr.onrender.com/api"'
     }
     buildFeatures { buildConfig true }
-    sourceSets { main.assets.srcDir layout.buildDirectory.dir('generated/webAssets') }
+    signingConfigs {
+        durable {
+            if (System.getenv('DAYMARK_KEYSTORE_FILE')) {
+                storeFile file(System.getenv('DAYMARK_KEYSTORE_FILE'))
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias 'daymark'
+                keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        debug { if (System.getenv('DAYMARK_KEYSTORE_FILE')) signingConfig signingConfigs.durable }
+        release { signingConfig signingConfigs.durable }
+    }
+    sourceSets {
+        main.assets.srcDir layout.buildDirectory.dir('generated/webAssets')
+        androidTest.assets.srcDir layout.buildDirectory.dir('generated/upgradeFixture')
+    }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 dependencies {

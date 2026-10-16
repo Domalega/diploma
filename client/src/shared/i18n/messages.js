@@ -9,6 +9,43 @@ export const en = {
   },
 };
 export const ru = {
+  "Moving from 0.2? Restore your exported backup before signing in.":
+    "Переходите с 0.2? Восстановите выгруженную копию до входа в аккаунт.",
+  "Restore a 0.2 backup": "Восстановить копию из 0.2",
+  "Backup restored. Sign in to the same account to use your saved data.":
+    "Копия восстановлена. Войдите в прежний аккаунт, чтобы открыть сохранённые данные.",
+  "Could not restore the backup. Use the Daymark 0.2 export and restore before signing in.":
+    "Не удалось восстановить копию. Выберите выгрузку Daymark 0.2. Восстановление доступно до первого входа в аккаунт.",
+  "App updates": "Обновления приложения",
+  "Daymark {version} is available": "Доступен Daymark {version}",
+  "Your saved data stays on this phone. Android will ask you to confirm installation.":
+    "Данные на телефоне сохранятся. Android попросит подтвердить установку. При первом обновлении разрешите Daymark установку приложений.",
+  "Downloading update… {progress}%": "Скачиваем обновление… {progress}%",
+  "Update download": "Загрузка обновления",
+  "Install update": "Установить обновление",
+  "Download and update": "Скачать и обновить",
+  "Installed version: {version}": "Установлена версия {version}",
+  "New versions are checked automatically when you open the app and periodically in the background.":
+    "Новые версии проверяются при открытии приложения и периодически в фоне.",
+  "You have the latest version.": "У вас последняя версия.",
+  "Last checked: {time}": "Последняя проверка: {time}",
+  "Please wait…": "Подождите…",
+  "Check for updates": "Проверить обновления",
+  "Allow notifications to hear about new versions while the app is closed.":
+    "Разрешите уведомления, чтобы узнавать о новых версиях, когда приложение закрыто. Если разрешение уже было отклонено, включите уведомления в настройках Android.",
+  "Enable update notifications": "Разрешить уведомления об обновлениях",
+  "The update service did not respond. Try again.":
+    "Служба обновления не ответила. Попробуйте ещё раз.",
+  "Could not check for updates. Check your connection and try again.":
+    "Не удалось проверить обновления. Проверьте подключение и повторите попытку.",
+  "Could not update the app. Try again.": "Не удалось обновить приложение. Попробуйте ещё раз.",
+  "Download interrupted. Retrying when connected.":
+    "Загрузка прервалась. Повторим при подключении к сети.",
+  "Could not download or verify the update. Try again.":
+    "Не удалось скачать или проверить обновление. Попробуйте ещё раз.",
+  "Allow Daymark to install updates in Android settings, then try again.":
+    "Разрешите Daymark установку обновлений в настройках Android и повторите попытку.",
+  "Could not open the installer. Try again.": "Не удалось открыть установщик. Попробуйте ещё раз.",
   "Hide tile headings": "Скрыть заголовки плиток",
   "Task date (today if empty)": "Дата (по умолчанию сегодня)",
   "To-do view": "Показать задачи",

@@ -16,6 +16,25 @@ import java.util.concurrent.*;
 public class MainActivity extends Activity {
     static final String HOME = "https://appassets.androidplatform.net/assets/www/index.html";
     private final ExecutorService offlineExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService updateExecutor = Executors.newSingleThreadExecutor();
+    private final Handler updateHandler = new Handler(Looper.getMainLooper());
+    private JavaScriptReplyProxy updatePermissionReply;
+    private String updatePermissionId;
+    private boolean updateDialogVisible;
+    private boolean resumed;
+    private final Runnable updateTick = new Runnable() {
+        @Override public void run() {
+            if (!resumed) return;
+            updateHandler.postDelayed(this, 1500);
+            try {
+                if (UpdateManager.prefs(MainActivity.this).getBoolean("installRequested", false)
+                    && UpdateManager.status(MainActivity.this).getBoolean("ready")) UpdateManager.install(MainActivity.this);
+            } catch (Exception error) {
+                UpdateManager.prefs(MainActivity.this).edit().putBoolean("installRequested", false)
+                    .putString("error", "Could not open the installer. Try again.").apply();
+            }
+        }
+    };
     private WebView web;
     private JavaScriptReplyProxy permissionReply;
     private String permissionId;
@@ -98,10 +117,74 @@ public class MainActivity extends Activity {
                 reply(reply, id, result, null);
             } catch (Exception e) { reply(reply, id, null, "Could not update device reminders."); }
         });
+        WebViewCompat.addWebMessageListener(web, "DaymarkUpdates", Collections.singleton("https://appassets.androidplatform.net"), (view, message, origin, mainFrame, reply) -> {
+            if (!mainFrame || !trusted(view.getUrl())) return;
+            String id = "";
+            try {
+                String raw = message.getData(); if (raw == null || raw.length() > 1000) throw new JSONException("Invalid update request");
+                JSONObject request = new JSONObject(raw); id = request.getString("id");
+                String action = request.getString("action");
+                if ("status".equals(action)) { reply(reply, id, UpdateManager.status(this), null); return; }
+                if ("restoreLegacy".equals(action)) {
+                    if (!LegacyBackup.canImport(this)) throw new IllegalStateException("Restore before signing in");
+                    startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json"), 44);
+                    reply(reply, id, UpdateManager.status(this), null); return;
+                }
+                if ("notifications".equals(action) && Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    if (updatePermissionReply != null) throw new IllegalStateException("Permission request pending");
+                    updatePermissionReply = reply; updatePermissionId = id;
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 42); return;
+                }
+                final String replyId = id;
+                updateExecutor.execute(() -> {
+                    try {
+                        switch (action) {
+                            case "check": UpdateManager.check(this); break;
+                            case "install": UpdateManager.download(this); break;
+                            case "status": case "notifications": break;
+                            default: throw new IllegalArgumentException("Unknown update action");
+                        }
+                        JSONObject result = UpdateManager.status(this); runOnUiThread(() -> reply(reply, replyId, result, null));
+                    } catch (Exception error) {
+                        runOnUiThread(() -> reply(reply, replyId, null, "Could not check for updates. Check your connection and try again."));
+                    }
+                });
+            } catch (Exception error) { reply(reply, id, null, "Could not update the app. Try again."); }
+        });
         web.loadUrl(HOME + "#/calendar");
+        if (getIntent().getBooleanExtra("showUpdates", false)) showUpdateDialog();
+    }
+    private void showUpdateDialog() {
+        try {
+            UpdateManifest update = UpdateManager.candidate(this);
+            if (update == null || updateDialogVisible) return;
+            boolean ru = "ru".equals(getResources().getConfiguration().getLocales().get(0).getLanguage());
+            updateDialogVisible = true;
+            new AlertDialog.Builder(this).setTitle("Daymark " + update.version)
+                .setMessage((ru ? "Обновите приложение. Локальные данные сохранятся. Android попросит подтвердить установку." : "Update the app. Your saved data is retained. Android will ask you to confirm installation.") + "\n\n" + update.notes)
+                .setPositiveButton(ru ? "Обновить" : "Update", (dialog, which) -> { try { UpdateManager.download(this); } catch (Exception ignored) { } })
+                .setNegativeButton(ru ? "Позже" : "Later", null).setOnDismissListener(dialog -> updateDialogVisible = false).show();
+        } catch (Exception ignored) { }
+    }
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent); setIntent(intent);
+        if (intent.getBooleanExtra("showUpdates", false)) showUpdateDialog();
     }
     private void reply(JavaScriptReplyProxy reply, String id, JSONObject result, String error) {
         try { JSONObject response = new JSONObject().put("id", id); if (error == null) response.put("result", result); else response.put("error", error); reply.postMessage(response.toString()); } catch (Exception ignored) { }
+    }
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request == 44 && result == RESULT_OK && data != null && data.getData() != null) {
+            Uri uri = data.getData();
+            offlineExecutor.execute(() -> {
+                String message;
+                try (java.io.InputStream input = getContentResolver().openInputStream(uri)) {
+                    LegacyBackup.restore(this, input); message = "Backup restored. Sign in to the same account to use your saved data.";
+                } catch (Exception error) { message = "Could not restore the backup. Use the Daymark 0.2 export and restore before signing in."; }
+                UpdateManager.prefs(this).edit().putString("importMessage", message).commit();
+            });
+        }
     }
     @Override public void onRequestPermissionsResult(int request, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(request, permissions, results);
@@ -109,13 +192,26 @@ public class MainActivity extends Activity {
             try { JSONObject status = ReminderService.status(this); if (!ReminderService.allowed(this)) status.put("permission", "denied"); reply(permissionReply, permissionId, status, null); } catch (JSONException ignored) { }
             permissionReply = null;
         }
+        if (request == 42 && updatePermissionReply != null) {
+            try { reply(updatePermissionReply, updatePermissionId, UpdateManager.status(this), null); } catch (Exception ignored) { }
+            updatePermissionReply = null;
+        }
     }
     @Override protected void onResume() {
         super.onResume();
+        resumed = true;
         try { ReminderService.reschedule(this); } catch (JSONException ignored) { }
         if (OfflineStore.get(this).active() != null) SyncWorker.schedule(this, true);
+        UpdateManager.schedule(this);
+        if (UpdateManager.prefs(this).getBoolean("awaitingPermission", false)) {
+            boolean allowed = getPackageManager().canRequestPackageInstalls();
+            UpdateManager.prefs(this).edit().remove("awaitingPermission").putBoolean("installRequested", allowed)
+                .putString("error", allowed ? "" : "Allow Daymark to install updates in Android settings, then try again.").apply();
+        }
+        updateHandler.removeCallbacks(updateTick); updateHandler.post(updateTick);
         if (web != null) web.evaluateJavascript("window.dispatchEvent(new Event('focus'))", null);
     }
+    @Override protected void onPause() { resumed = false; updateHandler.removeCallbacks(updateTick); super.onPause(); }
     @Override public void onBackPressed() { if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed(); }
-    @Override protected void onDestroy() { offlineExecutor.shutdownNow(); if (web != null) web.destroy(); super.onDestroy(); }
+    @Override protected void onDestroy() { updateHandler.removeCallbacksAndMessages(null); updateExecutor.shutdownNow(); offlineExecutor.shutdownNow(); if (web != null) web.destroy(); super.onDestroy(); }
 }

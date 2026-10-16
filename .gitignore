@@ -32,3 +32,5 @@ local.properties
 *.aab
 *.jks
 *.keystore
+.android-signing/
+__pycache__/

@@ -7,6 +7,7 @@ import LanguageSwitcher from "../../../shared/i18n/LanguageSwitcher";
 import { weekdayLabel } from "../../../shared/i18n/formatters";
 import InteractivePhrase from "../../../shared/components/InteractivePhrase";
 import BrandMark from "../../../shared/components/BrandMark";
+import { AppUpdateSettings } from "../../../shared/updates/AppUpdates";
 import "../styles/Auth.css";
 
 export default function AuthLayout({ children }) {
@@ -92,7 +93,10 @@ export default function AuthLayout({ children }) {
             <LanguageSwitcher />
           </div>
         </div>
-        <div className="auth-form-wrap">{children}</div>
+        <div className="auth-form-wrap">
+          {children}
+          <AppUpdateSettings />
+        </div>
         <div className="auth-main-footer">
           <InteractivePhrase />
         </div>

@@ -3,7 +3,7 @@ name: Native apps
 on:
   push:
     branches: [redesign]
-    paths: ["apps/**", "client/**", ".github/workflows/native-apps.yml"]
+    paths: ["apps/**", "client/**", "scripts/android-*.py", ".github/workflows/native-apps.yml"]
   workflow_dispatch:
 
 permissions:
@@ -12,6 +12,9 @@ permissions:
 jobs:
   android:
     runs-on: ubuntu-latest
+    env:
+      DAYMARK_KEYSTORE_FILE: ${{ github.workspace }}/.android-signing/daymark.keystore
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,12 +41,22 @@ jobs:
         with:
           gradle-version: "8.11.1"
       - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - name: Reuse the preview signing key
-        uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: daymark-android-preview-signing-v1
-      - run: gradle -p apps/android testDebugUnitTest assembleDebug --no-daemon
+      - name: Restore permanent signing identity
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64" && test -n "$ANDROID_KEYSTORE_PASSWORD"
+          mkdir -m 700 .android-signing
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$DAYMARK_KEYSTORE_FILE"
+          chmod 600 "$DAYMARK_KEYSTORE_FILE"
+      - name: Build future update test fixture
+        run: |
+          gradle -p apps/android assembleRelease -PdaymarkVersionCode=4 -PdaymarkVersionName=0.3.1 --no-daemon
+          mkdir -p apps/android/app/build/generated/upgradeFixture
+          cp apps/android/app/build/outputs/apk/release/app-release.apk apps/android/app/build/generated/upgradeFixture/future.apk
+          keytool -genkeypair -keystore "$RUNNER_TEMP/other-key.jks" -storepass only-for-tests -keypass only-for-tests -alias other -keyalg RSA -validity 1 -dname CN=Untrusted-Test
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign --ks "$RUNNER_TEMP/other-key.jks" --ks-pass pass:only-for-tests --out apps/android/app/build/generated/upgradeFixture/untrusted.apk apps/android/app/build/generated/upgradeFixture/future.apk
+      - run: gradle -p apps/android testDebugUnitTest assembleRelease assembleDebugAndroidTest --no-daemon
       - name: Enable emulator acceleration
         run: sudo chmod a+rw /dev/kvm
       - uses: reactivecircus/android-emulator-runner@v2
@@ -51,11 +64,16 @@ jobs:
           api-level: 29
           arch: x86_64
           disable-animations: true
-          script: gradle -p apps/android connectedDebugAndroidTest --no-daemon
+          script: |
+            python3 scripts/android-native-tests.py
+            python3 scripts/android-upgrade-smoke.py
       - uses: actions/upload-artifact@v4
         with:
           name: Daymark-Android-preview
-          path: apps/android/app/build/outputs/apk/debug/app-debug.apk
+          path: apps/android/app/build/outputs/apk/release/app-release.apk
+      - name: Remove signing material
+        if: always()
+        run: rm -f "$DAYMARK_KEYSTORE_FILE"
 
   windows:
     runs-on: windows-latest
