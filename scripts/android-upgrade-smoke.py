@@ -29,10 +29,18 @@ installer = subprocess.Popen(["adb", "shell", "am", "instrument", "-w", "-e", "c
                               PACKAGE + ".UpgradeStateTest#prepareInstaller", RUNNER],
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 clicked = False
-for _ in range(15):
+root = ET.Element("hierarchy")
+for _ in range(20):
     time.sleep(1)
-    adb("shell", "uiautomator", "dump", "/sdcard/daymark-installer.xml")
-    root = ET.fromstring(adb("shell", "cat", "/sdcard/daymark-installer.xml"))
+    if installer.poll() is not None:
+        print(installer.communicate()[0])
+        raise RuntimeError("Installer preparation exited before user confirmation")
+    try:
+        adb("shell", "uiautomator", "dump", "/sdcard/daymark-installer.xml")
+        root = ET.fromstring(adb("shell", "cat", "/sdcard/daymark-installer.xml"))
+    except (subprocess.CalledProcessError, ET.ParseError):
+        # UIAutomator can briefly return no root while WebView/installer starts.
+        continue
     for node in root.iter("node"):
         if node.get("text", "").lower() in {"install", "update"} and node.get("enabled") == "true":
             x1, y1, x2, y2 = map(int, re.findall(r"\d+", node.attrib["bounds"]))
