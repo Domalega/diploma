@@ -61,4 +61,6 @@ excluded = PACKAGE + ".UpgradeStateTest," + CLASS
 output = adb("shell", "am", "instrument", "-w", "-e", "notClass", excluded, RUNNER, text=True)
 print(output)
 if "OK (" not in output or "FAILURES" in output:
+    print(adb("shell", "dumpsys", "webviewupdate", text=True))
+    print(adb("logcat", "-d", "-s", "chromium", "AndroidRuntime", text=True)[-12000:])
     raise RuntimeError("Native instrumentation tests failed")
