@@ -36,5 +36,5 @@ export function reminderPlan({ dates, notesEnabled, plan, recordsByDate, locale,
   Object.entries(recordsByDate).forEach(([date, records]) => {
     marks[date] = records.map((record) => "med:" + record.medicationId + ":" + record.slotId);
   });
-  return { version: 1, owner: String(plan.userId), locale, rules, onOpen, marks };
+  return { version: 1, owner: String(plan.userId), locale, notesEnabled, rules, onOpen, marks };
 }

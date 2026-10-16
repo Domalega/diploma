@@ -20,7 +20,7 @@ The workspace uses the full screen width. **Settings → Appearance → Hide til
 
 [Live demo](https://domalega.github.io/diploma/) · [API health](https://diploma-api-zozr.onrender.com/api/health)
 
-Optional [Android and Windows clients](apps/README.md) save reminders on the device. Scheduled alerts do not require an open browser, notification server, or paid hosting. The calendar UI and synchronization still use the hosted website and API. Preview builds are available in [Releases](https://github.com/Domalega/diploma/releases).
+Optional [Android and Windows clients](apps/README.md) save reminders on the device. Scheduled alerts do not require an open browser, notification server, or paid hosting. Android 0.2.0 also bundles the interface, saves account data locally and exchanges offline edits with the API; Windows uses the hosted website. See [Android local storage and exchange](docs/OFFLINE_SYNC.md). Preview builds are available in GitHub Actions artifacts; existing published previews remain in [Releases](https://github.com/Domalega/diploma/releases).
 
 ## Background
 

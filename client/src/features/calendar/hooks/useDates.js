@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as datesApi from "../api/datesApi";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
+import useSyncRefresh from "../../../shared/offline/useSyncRefresh";
 
 export default function useDates() {
   const [dates, setDates] = useState([]);
@@ -32,6 +33,7 @@ export default function useDates() {
     [handleError],
   );
 
+  useSyncRefresh(reload);
   useEffect(() => {
     const controller = new AbortController();
     reload(controller.signal);

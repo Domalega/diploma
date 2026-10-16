@@ -45,6 +45,7 @@ public final class ReminderService {
         result.put("permission", allowed(c) ? "granted" : "default");
         result.put("exact", exact(c));
         result.put("savedAt", store(c).getString("savedAt", null));
+        result.put("error", store(c).getString("syncError", ""));
         return result;
     }
     static JSONObject sync(Context c, JSONObject plan) throws JSONException {

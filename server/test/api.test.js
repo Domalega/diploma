@@ -19,10 +19,14 @@ const app = require("../src/app");
 const sequelize = require("../src/config/database");
 const { User, UserDate, AccountSecurity } = require("../src/models");
 const { generateToken } = require("../src/services/tokenService");
+const testTransaction = { LOCK: { UPDATE: "UPDATE" } };
 
 beforeEach((t) => {
   t.mock.method(AccountSecurity, "findByPk", async () => null);
-  t.mock.method(User, "findByPk", async () => User.findOne());
+  t.mock.method(User, "findByPk", async (id, options) =>
+    options?.transaction ? { id } : User.findOne(),
+  );
+  t.mock.method(sequelize, "transaction", async (action) => action(testTransaction));
 });
 let server;
 let baseUrl;
@@ -254,7 +258,7 @@ test("updating a note validates input and scopes the write to its authenticated 
   );
   assert.deepEqual(update.mock.calls[0].arguments, [
     { comment: "Updated", date: "2026-10-14" },
-    { where: { userId: 7, id: 99 } },
+    { where: { userId: 7, id: 99 }, transaction: testTransaction },
   ]);
   t.mock.method(UserDate, "update", async () => [0]);
   assert.equal(

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import * as api from "../api/todoApi";
+import useSyncRefresh from "../../../shared/offline/useSyncRefresh";
 
 export const emptyList = { enabled: false, revision: 0, tasks: [] };
 export default function useTodoList() {
@@ -12,6 +13,7 @@ export default function useTodoList() {
   const [conflict, setConflict] = useState(false);
   const current = useRef(list);
   const mutating = useRef(false);
+  const refreshAfterWrite = useRef(false);
   const controller = useRef(null);
   const epoch = useRef(0);
   const alive = useRef(true);
@@ -31,7 +33,10 @@ export default function useTodoList() {
     [navigate],
   );
   const reload = useCallback(async () => {
-    if (mutating.current) return;
+    if (mutating.current) {
+      refreshAfterWrite.current = true;
+      return;
+    }
     controller.current?.abort();
     const abort = new AbortController();
     controller.current = abort;
@@ -50,6 +55,7 @@ export default function useTodoList() {
       if (alive.current && requestId === epoch.current) setLoading(false);
     }
   }, [handleError]);
+  useSyncRefresh(reload);
   useEffect(() => {
     alive.current = true;
     reload();
@@ -79,6 +85,10 @@ export default function useTodoList() {
     } finally {
       mutating.current = false;
       if (alive.current) setPending(false);
+      if (alive.current && refreshAfterWrite.current) {
+        refreshAfterWrite.current = false;
+        reload();
+      }
     }
   }
   return { list, loading, pending, error, conflict, reload, send };

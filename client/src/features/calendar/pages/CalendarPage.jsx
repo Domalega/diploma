@@ -44,6 +44,7 @@ import SelectedDayTodos from "../../todos/components/SelectedDayTodos";
 import usePanelHeaders from "../hooks/usePanelHeaders";
 import "../styles/Calendar.css";
 import useDeviceReminders from "../../../shared/reminders/useDeviceReminders";
+import SyncStatus from "../../../shared/offline/SyncStatus";
 
 export default function CalendarPage() {
   const { t, locale } = useLanguage();
@@ -270,6 +271,7 @@ export default function CalendarPage() {
         panelHeaders={{ hidden: hideHeaders, setHidden: setHideHeaders }}
       />
       <main id="planner-main" tabIndex={-1} className="planner-main">
+        <SyncStatus />
         <div className="planner-feedback" role="status" aria-live="polite">
           {message && (
             <>

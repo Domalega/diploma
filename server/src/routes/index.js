@@ -6,5 +6,6 @@ router.use("/userDate", require("./userDateRoutes"));
 router.use("/medications", require("./medicationRoutes"));
 router.use("/kanban", require("./kanbanRoutes"));
 router.use("/todos", require("./todoRoutes"));
+router.use("/sync", require("./syncRoutes"));
 
 module.exports = router;

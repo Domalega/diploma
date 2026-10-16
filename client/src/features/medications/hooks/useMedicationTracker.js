@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as api from "../api/medicationApi";
 import { emptyPlan } from "../utils/schedule";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
+import useSyncRefresh from "../../../shared/offline/useSyncRefresh";
 
 export default function useMedicationTracker(date, today) {
   const [plan, setPlan] = useState(emptyPlan);
@@ -53,6 +54,7 @@ export default function useMedicationTracker(date, today) {
     }
   }, [date, today, handleError]);
   latestReload.current = reload;
+  useSyncRefresh(reload);
   useEffect(() => {
     reload();
     return () => controller.current?.abort();

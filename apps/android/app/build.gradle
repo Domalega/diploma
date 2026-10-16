@@ -2,13 +2,27 @@ plugins { id 'com.android.application' }
 android {
     namespace 'com.domalega.daymark'
     compileSdk 35
-    defaultConfig { applicationId 'com.domalega.daymark'; minSdk 26; targetSdk 35; versionCode 1; versionName '0.1.0'; testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner' }
+    defaultConfig {
+        applicationId 'com.domalega.daymark'; minSdk 26; targetSdk 35
+        versionCode 2; versionName '0.2.0'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        buildConfigField 'String', 'API_URL', '"https://diploma-api-zozr.onrender.com/api"'
+    }
+    buildFeatures { buildConfig true }
+    sourceSets { main.assets.srcDir layout.buildDirectory.dir('generated/webAssets') }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 dependencies {
     implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.work:work-runtime:2.10.5'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20240303'
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }
+def webAssets = tasks.register('copyWebAssets', Copy) {
+    from '../../../client/build'
+    into layout.buildDirectory.dir('generated/webAssets/www')
+    doFirst { if (!file('../../../client/build/index.html').exists()) throw new GradleException('Build client first with PUBLIC_URL=. and REACT_APP_ROUTER=hash') }
+}
+tasks.named('preBuild').configure { dependsOn webAssets }

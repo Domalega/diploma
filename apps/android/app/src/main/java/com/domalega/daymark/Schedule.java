@@ -72,7 +72,7 @@ public final class Schedule {
     }
     public static JSONObject merge(JSONObject old, JSONObject fresh) throws JSONException {
         JSONObject marks = fresh.getJSONObject("marks");
-        if (old != null && old.optString("owner").equals(fresh.getString("owner"))) {
+        if (!fresh.optBoolean("marksComplete") && old != null && old.optString("owner").equals(fresh.getString("owner"))) {
             JSONObject previous = old.optJSONObject("marks");
             if (previous != null) for (Iterator<String> it = previous.keys(); it.hasNext();) {
                 String date = it.next();

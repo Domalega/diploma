@@ -3,7 +3,7 @@ name: Native apps
 on:
   push:
     branches: [redesign]
-    paths: ["apps/**", ".github/workflows/native-apps.yml"]
+    paths: ["apps/**", "client/**", ".github/workflows/native-apps.yml"]
   workflow_dispatch:
 
 permissions:
@@ -14,6 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci --prefix client
+      - name: Build bundled offline interface
+        run: npm run build --prefix client
+        env:
+          CI: "true"
+          PUBLIC_URL: .
+          REACT_APP_ROUTER: hash
+          REACT_APP_API_URL: https://diploma-api-zozr.onrender.com/api
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -25,6 +38,11 @@ jobs:
         with:
           gradle-version: "8.11.1"
       - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Reuse the preview signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: daymark-android-preview-signing-v1
       - run: gradle -p apps/android testDebugUnitTest assembleDebug --no-daemon
       - name: Enable emulator acceleration
         run: sudo chmod a+rw /dev/kvm

@@ -1,5 +1,5 @@
 const { randomUUID } = require("node:crypto");
-const database = require("../config/database");
+const userWrite = require("./userWrite");
 const { TodoList } = require("../models");
 const ApiError = require("../errors/ApiError");
 
@@ -35,8 +35,8 @@ async function changeList(userId, command) {
     command.revision < 0
   )
     fail();
-  await TodoList.findOrCreate({ where: { userId }, defaults });
-  return database.transaction(async (transaction) => {
+  return userWrite(userId, async (transaction) => {
+    await TodoList.findOrCreate({ where: { userId }, defaults, transaction });
     const list = await TodoList.findByPk(userId, { transaction, lock: transaction.LOCK.UPDATE });
     if (list.revision !== command.revision)
       throw ApiError.conflict("The to-do list changed. Reload it before saving.");

@@ -1,0 +1,44 @@
+.sync-status {
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 13px;
+}
+.sync-status-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sync-status p {
+  margin: 0 0 8px;
+}
+.sync-status small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.sync-conflicts h2 {
+  font-size: 16px;
+  margin-top: 16px;
+}
+.sync-conflicts ul {
+  padding-left: 20px;
+  max-height: 240px;
+  overflow: auto;
+}
+.sync-conflicts li {
+  padding: 6px 0;
+  overflow-wrap: anywhere;
+}
+.sync-conflicts li span {
+  display: block;
+}
+.sync-conflict-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import * as api from "../api/kanbanApi";
+import useSyncRefresh from "../../../shared/offline/useSyncRefresh";
 
 export const emptyBoard = { enabled: false, revision: 0, columns: [], tasks: [] };
 export default function useKanbanBoard() {
@@ -12,6 +13,7 @@ export default function useKanbanBoard() {
   const [conflict, setConflict] = useState(false);
   const current = useRef(board);
   const mutating = useRef(false);
+  const refreshAfterWrite = useRef(false);
   const controller = useRef(null);
   const epoch = useRef(0);
   const alive = useRef(true);
@@ -28,7 +30,10 @@ export default function useKanbanBoard() {
     [navigate],
   );
   const reload = useCallback(async () => {
-    if (mutating.current) return;
+    if (mutating.current) {
+      refreshAfterWrite.current = true;
+      return;
+    }
     controller.current?.abort();
     const abort = new AbortController();
     controller.current = abort;
@@ -47,6 +52,7 @@ export default function useKanbanBoard() {
       if (alive.current && requestId === epoch.current) setLoading(false);
     }
   }, [handleError]);
+  useSyncRefresh(reload);
   useEffect(() => {
     alive.current = true;
     reload();
@@ -76,6 +82,10 @@ export default function useKanbanBoard() {
     } finally {
       mutating.current = false;
       if (alive.current) setPending(false);
+      if (alive.current && refreshAfterWrite.current) {
+        refreshAfterWrite.current = false;
+        reload();
+      }
     }
   }
   return { board, loading, pending, error, conflict, reload, send };

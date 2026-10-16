@@ -1,4 +1,4 @@
-const sequelize = require("../config/database");
+const userWrite = require("./userWrite");
 const { MedicationPlan, MedicationIntake } = require("../models");
 const ApiError = require("../errors/ApiError");
 
@@ -32,8 +32,12 @@ async function lockedPlan(userId, revision, transaction) {
   return plan;
 }
 async function savePlan(userId, values) {
-  await MedicationPlan.findOrCreate({ where: { userId }, defaults: defaultPlan(userId) });
-  return sequelize.transaction(async (transaction) => {
+  return userWrite(userId, async (transaction) => {
+    await MedicationPlan.findOrCreate({
+      where: { userId },
+      defaults: defaultPlan(userId),
+      transaction,
+    });
     const plan = await lockedPlan(userId, values.revision, transaction);
     const slots = values.slots.map(({ id, time, label }) => ({ id, time, label: label.trim() }));
     const rows = values.rows.map(({ id, name, detail, slotIds, weekdays, startDate, endDate }) => ({
@@ -59,7 +63,7 @@ async function savePlan(userId, values) {
   });
 }
 async function mark(userId, values, entireColumn = false) {
-  return sequelize.transaction(async (transaction) => {
+  return userWrite(userId, async (transaction) => {
     const plan = await lockedPlan(userId, values.revision, transaction);
     if (!plan.enabled) throw ApiError.conflict("Enable the experimental medication tracker first.");
     const slot = plan.slots.find((item) => item.id === values.slotId);

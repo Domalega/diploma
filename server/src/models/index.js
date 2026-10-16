@@ -7,6 +7,8 @@ const KanbanBoard = require("./KanbanBoard");
 const KanbanTask = require("./KanbanTask");
 const KanbanEvent = require("./KanbanEvent");
 const TodoList = require("./TodoList");
+const SyncReceipt = require("./SyncReceipt");
+const SyncNoteKey = require("./SyncNoteKey");
 
 User.hasMany(UserDate);
 UserDate.belongsTo(User);
@@ -28,6 +30,12 @@ KanbanTask.hasMany(KanbanEvent, { foreignKey: "taskId", onDelete: "CASCADE" });
 KanbanEvent.belongsTo(KanbanTask, { foreignKey: "taskId" });
 User.hasOne(TodoList, { foreignKey: "userId", onDelete: "CASCADE" });
 TodoList.belongsTo(User, { foreignKey: "userId" });
+for (const model of [SyncReceipt, SyncNoteKey]) {
+  User.hasMany(model, { foreignKey: "userId", onDelete: "CASCADE" });
+  model.belongsTo(User, { foreignKey: "userId" });
+}
+UserDate.hasOne(SyncNoteKey, { foreignKey: "noteId", onDelete: "CASCADE" });
+SyncNoteKey.belongsTo(UserDate, { foreignKey: "noteId" });
 module.exports = {
   User,
   UserDate,
@@ -38,4 +46,6 @@ module.exports = {
   KanbanTask,
   KanbanEvent,
   TodoList,
+  SyncReceipt,
+  SyncNoteKey,
 };

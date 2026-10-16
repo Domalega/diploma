@@ -15,6 +15,39 @@ export const ru = {
   "All tasks": "Все задачи",
   "Show {date} in calendar": "Показать в календаре: {date}",
   "To-do list for selected day": "Список дел на выбранный день",
+  "Phone synchronization": "Обмен данными телефона",
+  "Preparing data for offline use…": "Подготавливаем данные для работы без сети…",
+  "Data is saved on this phone": "Данные сохранены на телефоне",
+  "{count} changes saved on this phone": "На телефоне сохранено изменений: {count}",
+  "Last exchange: {time}": "Последний обмен: {time}",
+  "Sync now": "Обменяться сейчас",
+  "Sign in again": "Войти повторно",
+  "Sign in again to resume exchange. Local changes are retained.":
+    "Войдите повторно, чтобы возобновить обмен. Локальные изменения сохранены.",
+  "These items changed on both devices": "Эти записи изменены на двух устройствах",
+  "Choose a version for the conflicting items. Other changes will be merged.":
+    "Выберите версии для спорных записей. Остальные изменения будут объединены.",
+  "Keep phone versions": "Оставить версии телефона",
+  "Keep server versions": "Оставить версии сервера",
+  Phone: "Телефон",
+  Server: "Сервер",
+  Deleted: "Удалено",
+  Enabled: "Включено",
+  Disabled: "Выключено",
+  "Choose which changes to keep.": "Выберите, какие изменения сохранить.",
+  "Offline. Your changes are saved on this phone.":
+    "Нет связи с сервером. Изменения сохранены на телефоне.",
+  "Sign in to synchronize your data.": "Войдите для обмена данными.",
+  "Connect once to download your data.":
+    "Подключитесь к интернету, чтобы впервые загрузить данные.",
+  "Local storage could not be updated. Try again.":
+    "Не удалось сохранить данные на телефоне. Повторите попытку.",
+  "Local storage did not respond. Try again.":
+    "Локальное хранилище не ответило. Повторите попытку.",
+  "The phone data changed. Try again.": "Данные телефона изменились. Повторите попытку.",
+  "Synchronization failed. Try again.": "Обмен не выполнен. Повторите попытку.",
+  "This action requires an internet connection.": "Для этого действия нужен интернет.",
+  "Invalid offline data": "Проверьте локальные данные",
   "To-do list": "Список дел",
   "One task per line. Check off completed tasks.":
     "Каждая строка — отдельное дело. Отмечайте выполненное галочкой.",

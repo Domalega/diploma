@@ -1,5 +1,5 @@
 const { randomUUID } = require("node:crypto");
-const database = require("../config/database");
+const userWrite = require("./userWrite");
 const { KanbanBoard, KanbanTask, KanbanEvent } = require("../models");
 const ApiError = require("../errors/ApiError");
 
@@ -124,8 +124,8 @@ async function changeBoard(userId, command) {
     typeof command.type !== "string"
   )
     fail("Enter a valid board update");
-  await KanbanBoard.findOrCreate({ where: { userId }, defaults: defaults(userId) });
-  return database.transaction(async (transaction) => {
+  return userWrite(userId, async (transaction) => {
+    await KanbanBoard.findOrCreate({ where: { userId }, defaults: defaults(userId), transaction });
     const board = await KanbanBoard.findByPk(userId, {
       transaction,
       lock: transaction.LOCK.UPDATE,
