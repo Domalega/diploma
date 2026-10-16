@@ -19,7 +19,7 @@ const panels = {
   },
   medications: { title: "Medication tracker", content: <p>Intake table</p> },
 };
-const visiblePanelOrder = PANEL_ORDER.filter((id) => id !== "kanban");
+const visiblePanelOrder = PANEL_ORDER.filter((id) => panels[id]);
 const visibleOrder = () =>
   within(screen.getByRole("group", { name: "Calendar panels" }))
     .getAllByRole("region")

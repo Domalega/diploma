@@ -11,6 +11,7 @@ export default function NavBar({
   medications,
   onMedicationConfigure,
   kanban,
+  todos,
 }) {
   const { t } = useLanguage();
 
@@ -55,6 +56,7 @@ export default function NavBar({
             medications={medications}
             onMedicationConfigure={onMedicationConfigure}
             kanban={kanban}
+            todos={todos}
           />
         </nav>
       </div>

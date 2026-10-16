@@ -2,7 +2,11 @@
 
 ## Current workspace
 
-Calendar, current date, notes, medication tracker and the optional Kanban board are independent, movable and resizable tiles on a collision-aware grid. Workspace positions and sizes are browser preferences; notes, medication data and board data belong to the signed-in account.
+Calendar, current date, notes, medication tracker, optional Kanban board and to-do list are independent, movable and resizable tiles on a collision-aware grid. Workspace positions and sizes are browser preferences; notes, medication data, board data and to-do tasks belong to the signed-in account.
+
+## Experimental to-do list
+
+Enable the checklist in Settings → Experimental options. Enter creates a task; pasting multiple lines creates separate tasks. Checkboxes mark completion with strikethrough and can reopen tasks. Inline editing and deletion are available. Tasks persist in the account when the tile is disabled; stale updates are rejected and failed saves preserve drafts. The list is independent of calendar notes and Kanban stages.
 
 ## Experimental Kanban board
 

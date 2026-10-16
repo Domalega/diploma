@@ -15,6 +15,11 @@ import {
   formatMonth,
 } from "../utils/calendarDates";
 import useKanbanBoard, { emptyBoard } from "../../kanban/hooks/useKanbanBoard";
+import useTodoList, { emptyList } from "../../todos/hooks/useTodoList";
+jest.mock("../../todos/hooks/useTodoList", () => {
+  const actual = jest.requireActual("../../todos/hooks/useTodoList");
+  return { ...actual, __esModule: true, default: jest.fn() };
+});
 jest.mock("../../kanban/hooks/useKanbanBoard", () => {
   const actual = jest.requireActual("../../kanban/hooks/useKanbanBoard");
   return { ...actual, __esModule: true, default: jest.fn() };
@@ -26,6 +31,15 @@ const note = { id: 1, date: today, comment: "Read a little" };
 beforeEach(() => {
   jest.resetAllMocks();
   localStorage.clear();
+  useTodoList.mockReturnValue({
+    list: emptyList,
+    loading: false,
+    pending: false,
+    error: "",
+    conflict: false,
+    reload: jest.fn(),
+    send: jest.fn().mockResolvedValue({}),
+  });
   useKanbanBoard.mockReturnValue({
     board: emptyBoard,
     loading: false,
@@ -59,6 +73,19 @@ function mount() {
 }
 const panel = () => within(screen.getByRole("region", { name: "Notes", exact: true }));
 const calendarReady = () => screen.findByRole("table", { name: "Monthly calendar" });
+
+test("the to-do list has an independent experimental toggle and dashboard tile", async () => {
+  const tracker = { ...useTodoList(), list: { ...emptyList, enabled: true } };
+  useTodoList.mockReturnValue(tracker);
+  mount();
+  await calendarReady();
+  expect(screen.getByRole("region", { name: "To-do list", exact: true })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Settings", exact: true }));
+  const settings = await screen.findByRole("dialog", { name: "Settings" });
+  expect(within(settings).getByRole("checkbox", { name: "To-do list" })).toBeChecked();
+  fireEvent.click(within(settings).getByRole("checkbox", { name: "To-do list" }));
+  expect(tracker.send).toHaveBeenCalledWith({ type: "enabled", enabled: false });
+});
 
 test("experimental board dates appear in the calendar and selecting a task date opens that day", async () => {
   const taskDate = moveMonths(today, 1);

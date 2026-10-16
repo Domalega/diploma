@@ -10,6 +10,7 @@ export const DEFAULT_HEIGHT = {
   notes: 424,
   medications: 524,
   kanban: 644,
+  todos: 444,
 };
 export const gridRows = (height) => Math.ceil((height + GRID_GAP) / (GRID_ROW_HEIGHT + GRID_GAP));
 export const gridHeight = (rows) => rows * (GRID_ROW_HEIGHT + GRID_GAP) - GRID_GAP;

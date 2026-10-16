@@ -38,6 +38,8 @@ import MedicationViewControl from "../../medications/components/MedicationViewCo
 import useMedicationView from "../../medications/hooks/useMedicationView";
 import useKanbanBoard from "../../kanban/hooks/useKanbanBoard";
 import KanbanTile from "../../kanban/components/KanbanTile";
+import useTodoList from "../../todos/hooks/useTodoList";
+import TodoTile from "../../todos/components/TodoTile";
 import "../styles/Calendar.css";
 import useDeviceReminders from "../../../shared/reminders/useDeviceReminders";
 
@@ -70,6 +72,7 @@ export default function CalendarPage() {
   useDateNotifications(dates, notifications.enabled, notifications.permission);
   const medications = useMedicationTracker(selectedDate, today);
   const kanban = useKanbanBoard();
+  const todos = useTodoList();
   useMedicationReminders(
     medications.plan,
     medications.todayRecords,
@@ -247,6 +250,7 @@ export default function CalendarPage() {
         medications={medications}
         onMedicationConfigure={configureMedications}
         kanban={kanban}
+        todos={todos}
       />
       <main id="planner-main" tabIndex={-1} className="planner-main">
         <div className="planner-feedback" role="status" aria-live="polite">
@@ -309,6 +313,9 @@ export default function CalendarPage() {
                 </div>
               ),
             },
+            todos: todos.list.enabled
+              ? { title: t("To-do list"), icon: <FiCheck />, content: <TodoTile tracker={todos} /> }
+              : null,
             kanban: kanban.board.enabled
               ? {
                   title: t("Kanban board"),

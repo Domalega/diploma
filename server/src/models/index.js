@@ -6,6 +6,7 @@ const MedicationIntake = require("./MedicationIntake");
 const KanbanBoard = require("./KanbanBoard");
 const KanbanTask = require("./KanbanTask");
 const KanbanEvent = require("./KanbanEvent");
+const TodoList = require("./TodoList");
 
 User.hasMany(UserDate);
 UserDate.belongsTo(User);
@@ -25,6 +26,8 @@ for (const model of [KanbanTask, KanbanEvent]) {
 }
 KanbanTask.hasMany(KanbanEvent, { foreignKey: "taskId", onDelete: "CASCADE" });
 KanbanEvent.belongsTo(KanbanTask, { foreignKey: "taskId" });
+User.hasOne(TodoList, { foreignKey: "userId", onDelete: "CASCADE" });
+TodoList.belongsTo(User, { foreignKey: "userId" });
 module.exports = {
   User,
   UserDate,
@@ -34,4 +37,5 @@ module.exports = {
   KanbanBoard,
   KanbanTask,
   KanbanEvent,
+  TodoList,
 };

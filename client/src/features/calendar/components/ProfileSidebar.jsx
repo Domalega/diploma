@@ -12,6 +12,7 @@ export default function ProfileSidebar({
   medications,
   onMedicationConfigure,
   kanban,
+  todos,
 }) {
   const { t, locale } = useLanguage();
 
@@ -176,6 +177,31 @@ export default function ProfileSidebar({
               <span>{t("Kanban board")}</span>
             </label>
             <p>{t("Custom workflow columns, calendar dates and completed task history.")}</p>
+            <label className="notification-toggle">
+              <input
+                type="checkbox"
+                checked={!!todos?.list.enabled}
+                disabled={!todos || todos.loading || todos.pending || todos.conflict}
+                onChange={(event) =>
+                  todos.send({ type: "enabled", enabled: event.target.checked }).catch(() => {})
+                }
+              />
+              <span>{t("To-do list")}</span>
+            </label>
+            <p>{t("One task per line. Check off completed tasks.")}</p>
+            {todos?.error && (
+              <div role="alert" className="form-error">
+                <p>{t(todos.error)}</p>
+                <Button
+                  className="theme-button-outline"
+                  variant="outline-secondary"
+                  disabled={todos.pending}
+                  onClick={todos.reload}
+                >
+                  {t("Reload to-do list")}
+                </Button>
+              </div>
+            )}
             {kanban?.error && (
               <div role="alert" className="form-error">
                 <p>{t(kanban.error)}</p>

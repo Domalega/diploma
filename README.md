@@ -14,6 +14,8 @@ Enable **Settings → Experimental options → Medication tracker** to create a 
 
 Enable **Settings → Experimental options → Kanban board** for a separate task tile. Start with To do, In progress and Done; add, rename, reorder or hide any column and set work-in-progress limits. Drag cards between stages or use the stage selector and reorder buttons. Optional task dates appear in the calendar. Completed tasks remain in Done and History, can be reopened, and retain an activity log. Board data is saved to your account; hiding columns or disabling the tile preserves it. Tasks are currently separate from notes and do not send reminders.
 
+Enable **Settings → Experimental options → To-do list** for a movable, resizable checklist. Enter adds a task and keeps the input ready for the next one; pasting several lines adds one task per nonempty line. Check a task to strike it through, or uncheck it to reopen it. Tasks can be edited or deleted. The list is saved to your account, with revision checks for concurrent edits; disabling the tile preserves its tasks. Failed saves preserve your draft.
+
 [Live demo](https://domalega.github.io/diploma/) · [API health](https://diploma-api-zozr.onrender.com/api/health)
 
 Optional [Android and Windows clients](apps/README.md) save reminders on the device. Scheduled alerts do not require an open browser, notification server, or paid hosting. The calendar UI and synchronization still use the hosted website and API. Preview builds are available in [Releases](https://github.com/Domalega/diploma/releases).

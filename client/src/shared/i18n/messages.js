@@ -9,6 +9,31 @@ export const en = {
   },
 };
 export const ru = {
+  "To-do list": "Список дел",
+  "One task per line. Check off completed tasks.":
+    "Каждая строка — отдельное дело. Отмечайте выполненное галочкой.",
+  "New to-do tasks": "Новые дела",
+  "To-do tasks": "Дела",
+  "What needs to be done?": "Что нужно сделать?",
+  "Enter adds a task. Paste several lines to add several tasks.":
+    "Enter — новое дело. Можно вставить сразу несколько строк.",
+  "Add tasks": "Добавить дела",
+  "Start with one small task.": "Начните с одного небольшого дела.",
+  "{completed} of {total} completed": "Выполнено {completed} из {total}",
+  "Loading to-do list…": "Загружаем список дел…",
+  "Reload to-do list": "Обновить список дел",
+  "Edit to-do {title}": "Изменить дело «{title}»",
+  "Delete to-do {title}": "Удалить дело «{title}»",
+  "Enter a valid to-do update": "Проверьте изменения списка дел",
+  "Use one line of up to 500 characters per task":
+    "Текст дела должен занимать одну строку и содержать до 500 символов",
+  "Add up to 100 tasks at a time": "Добавляйте до 100 дел за один раз",
+  "Use up to 1000 to-do tasks": "В списке может быть до 1000 дел",
+  "The to-do list changed. Reload it before saving.":
+    "Список дел изменился в другом окне. Обновите его перед сохранением.",
+  "Enable the to-do list first": "Сначала включите список дел",
+  "Reload the to-do list before making another change":
+    "Обновите список дел перед новым изменением",
   "Show column {column}": "Показывать столбец «{column}»",
   "Kanban board": "Канбан-доска",
   "Task board": "Доска задач",
