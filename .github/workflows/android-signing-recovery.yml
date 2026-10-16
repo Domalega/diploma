@@ -1,4 +1,4 @@
-name: Preserve Android signing identity
+name: Establish durable Android signing identity
 on:
   push:
     branches: [redesign]
@@ -10,23 +10,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache/restore@v4
+      - uses: actions/setup-java@v4
         with:
-          path: ~/.android/debug.keystore
-          key: daymark-android-preview-signing-v1
-          fail-on-cache-miss: true
-      - name: Encrypt the existing key for private recovery
+          distribution: temurin
+          java-version: "17"
+      - name: Generate and encrypt the permanent signing identity
         shell: bash
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          import os from 'node:os';
           import crypto from 'node:crypto';
+          import {execFileSync} from 'node:child_process';
+          const password = crypto.randomBytes(32).toString('hex');
+          execFileSync('keytool', ['-genkeypair', '-keystore', 'daymark.keystore', '-storetype', 'PKCS12', '-storepass', password, '-keypass', password, '-alias', 'daymark', '-keyalg', 'RSA', '-keysize', '4096', '-validity', '10000', '-dname', 'CN=Daymark Android']);
           const key = crypto.randomBytes(32), iv = crypto.randomBytes(12);
           const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-          const data = Buffer.concat([cipher.update(fs.readFileSync(os.homedir() + '/.android/debug.keystore')), cipher.final()]);
+          const data = Buffer.concat([cipher.update(JSON.stringify({keystore: fs.readFileSync('daymark.keystore').toString('base64'), password})), cipher.final()]);
           const encryptedKey = crypto.publicEncrypt({key: fs.readFileSync('.github/android-signing-recovery-public.pem'), oaepHash: 'sha256'}, key);
           fs.writeFileSync('android-signing.encrypted.json', JSON.stringify(Object.fromEntries(Object.entries({key: encryptedKey, iv, tag: cipher.getAuthTag(), data}).map(([k,v]) => [k,v.toString('base64')]))));
+          fs.unlinkSync('daymark.keystore');
           NODE
       - uses: actions/upload-artifact@v4
         with:
