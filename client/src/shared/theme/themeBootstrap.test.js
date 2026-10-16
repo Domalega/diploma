@@ -14,12 +14,17 @@ test.each([
   "the page applies saved %s with system dark=%s before React loads",
   (saved, systemDark, expected) => {
     const root = { dataset: {}, style: {} };
+    const postMessage = jest.fn();
     vm.runInNewContext(bootstrap, {
       localStorage: { getItem: () => saved },
-      window: { matchMedia: () => ({ matches: systemDark }) },
+      window: {
+        matchMedia: () => ({ matches: systemDark }),
+        DaymarkAppearance: { postMessage },
+      },
       document: { documentElement: root, querySelector: () => ({ setAttribute() {} }) },
     });
     expect(root.dataset.theme).toBe(expected);
     expect(root.style.colorScheme).toBe(expected);
+    expect(postMessage).toHaveBeenCalledWith(JSON.stringify({ theme: expected }));
   },
 );

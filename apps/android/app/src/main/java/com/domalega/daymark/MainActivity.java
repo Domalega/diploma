@@ -8,6 +8,15 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.webkit.*;
 import android.Manifest;
+import android.content.res.Configuration;
+import android.graphics.Color;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.webkit.*;
 import org.json.*;
 import java.util.Collections;
@@ -35,6 +44,7 @@ public class MainActivity extends Activity {
         }
     };
     private WebView web;
+    private FrameLayout content;
     private JavaScriptReplyProxy permissionReply;
     private String permissionId;
     static boolean trusted(String value) {
@@ -44,9 +54,29 @@ public class MainActivity extends Activity {
     }
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= 29) {
+            getWindow().setStatusBarContrastEnforced(false);
+            getWindow().setNavigationBarContrastEnforced(false);
+        }
+        content = new FrameLayout(this);
         web = new WebView(this);
-        web.setFitsSystemWindows(true);
-        setContentView(web);
+        content.addView(web, new FrameLayout.LayoutParams(-1, -1));
+        // Keep every WebView screen (including fixed drawers and dialogs) inside the safe area.
+        // Consume the insets here so WebView does not add a second set of offsets.
+        ViewCompat.setOnApplyWindowInsetsListener(content, (view, windowInsets) -> {
+            Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            Insets keyboard = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+            view.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, keyboard.bottom));
+            return WindowInsetsCompat.CONSUMED;
+        });
+        boolean systemDark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        applySystemTheme(getSharedPreferences("appearance", MODE_PRIVATE).getString("theme", systemDark ? "dark" : "light"));
+        setContentView(content);
+        ViewCompat.requestApplyInsets(content);
         web.getSettings().setJavaScriptEnabled(true);
         web.getSettings().setDomStorageEnabled(true);
         web.getSettings().setAllowFileAccess(false);
@@ -71,6 +101,15 @@ public class MainActivity extends Activity {
             new AlertDialog.Builder(this).setMessage("Update Android System WebView to use local reminders.").setPositiveButton("Close", (d,w) -> finish()).show();
             return;
         }
+        WebViewCompat.addWebMessageListener(web, "DaymarkAppearance", Collections.singleton("https://appassets.androidplatform.net"), (view, message, origin, mainFrame, reply) -> {
+            if (!mainFrame || !trusted(view.getUrl())) return;
+            String raw = message.getData();
+            if (raw == null || raw.length() > 100) return;
+            try {
+                String theme = new JSONObject(raw).getString("theme");
+                if ("light".equals(theme) || "dark".equals(theme)) runOnUiThread(() -> applySystemTheme(theme));
+            } catch (JSONException ignored) { }
+        });
         WebViewCompat.addWebMessageListener(web, "DaymarkOffline", Collections.singleton("https://appassets.androidplatform.net"), (view, message, origin, mainFrame, reply) -> {
             if (!mainFrame || !trusted(view.getUrl())) return;
             String raw = message.getData();
@@ -159,6 +198,17 @@ public class MainActivity extends Activity {
         });
         web.loadUrl(HOME + "#/calendar");
         if (getIntent().getBooleanExtra("showUpdates", false)) showUpdateDialog();
+    }
+    private void applySystemTheme(String theme) {
+        boolean dark = "dark".equals(theme);
+        int background = Color.parseColor(dark ? "#101a17" : "#fcfcf9");
+        content.setBackgroundColor(background);
+        web.setBackgroundColor(background);
+        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(background));
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.setAppearanceLightStatusBars(!dark);
+        controller.setAppearanceLightNavigationBars(!dark);
+        getSharedPreferences("appearance", MODE_PRIVATE).edit().putString("theme", theme).apply();
     }
     private void showUpdateDialog() {
         try {

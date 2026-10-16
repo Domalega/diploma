@@ -690,6 +690,19 @@
 }
 .planner-drawer .offcanvas-body {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+.account-footer {
+  margin-top: auto;
+}
+.account-footer .sign-out-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  width: 100%;
 }
 .planner-drawer .offcanvas-title,
 .planner-modal .modal-title {

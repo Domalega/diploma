@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageProvider";
-import { getToken } from "../api/tokenStorage";
 import { LOGIN_ROUTE } from "../config/routes";
-import { isOfflineApp, offlineNative } from "./bridge";
+import { isOfflineApp } from "./bridge";
+import { FiRefreshCw } from "react-icons/fi";
 import "./SyncStatus.css";
 
 function preview(value, t) {
@@ -32,62 +31,18 @@ function preview(value, t) {
     ].join(" · ");
   return t(value.enabled ? "Enabled" : "Disabled");
 }
-export default function SyncStatus() {
+export default function SyncStatus({ sync }) {
   const { t, locale } = useLanguage();
   const navigate = useNavigate();
-  const [state, setState] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const revision = useRef(null);
-  const active = useRef(true);
-  const refresh = useCallback(async () => {
-    try {
-      const next = await offlineNative("status");
-      if (!active.current) return;
-      setState(next);
-      setError("");
-      if (revision.current !== null && revision.current !== next.syncRevision)
-        window.dispatchEvent(new Event("daymark:sync"));
-      revision.current = next.syncRevision;
-    } catch (error) {
-      if (active.current) setError(error.message);
-    }
-  }, []);
-  useEffect(() => {
-    if (!isOfflineApp()) return;
-    active.current = true;
-    refresh();
-    const poll = setInterval(() => {
-      if (!document.hidden) refresh();
-    }, 3000);
-    const sync = () =>
-      offlineNative("sync")
-        .then(refresh)
-        .catch(() => {});
-    window.addEventListener("online", sync);
-    window.addEventListener("focus", sync);
-    return () => {
-      active.current = false;
-      clearInterval(poll);
-      window.removeEventListener("online", sync);
-      window.removeEventListener("focus", sync);
-    };
-  }, [refresh]);
+  const { state, busy, error, action } = sync;
   if (!isOfflineApp()) return null;
-  async function action(name, payload = {}) {
-    setBusy(true);
-    try {
-      await offlineNative(name, { ...payload, token: getToken() });
-      await refresh();
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setBusy(false);
-    }
-  }
   const conflicts = state?.conflicts || [];
   return (
-    <aside className="sync-status" aria-label={t("Phone synchronization")}>
+    <section className="sync-status" aria-label={t("Phone synchronization")}>
+      <h2>
+        <FiRefreshCw aria-hidden="true" />
+        {t("Phone synchronization")}
+      </h2>
       <div className="sync-status-heading">
         <p role="status">
           {!state?.ready
@@ -169,6 +124,6 @@ export default function SyncStatus() {
           </div>
         </div>
       )}
-    </aside>
+    </section>
   );
 }

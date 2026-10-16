@@ -87,6 +87,26 @@ test("returning to System immediately resumes the latest device preference", () 
   expect(document.documentElement.dataset.theme).toBe("dark");
 });
 
+test("Android system bars receive the resolved theme on startup, manual changes and system changes", () => {
+  const postMessage = jest.fn();
+  window.DaymarkAppearance = { postMessage };
+  try {
+    mount();
+    expect(postMessage).toHaveBeenLastCalledWith(JSON.stringify({ theme: "dark" }));
+    select("light");
+    expect(postMessage).toHaveBeenLastCalledWith(JSON.stringify({ theme: "light" }));
+    systemChange(false);
+    systemChange(true);
+    expect(postMessage).toHaveBeenLastCalledWith(JSON.stringify({ theme: "light" }));
+    select("system");
+    expect(postMessage).toHaveBeenLastCalledWith(JSON.stringify({ theme: "dark" }));
+    systemChange(false);
+    expect(postMessage).toHaveBeenLastCalledWith(JSON.stringify({ theme: "light" }));
+  } finally {
+    delete window.DaymarkAppearance;
+  }
+});
+
 test("theme preferences synchronize across tabs and invalid values fall back to System", () => {
   mount();
   act(() =>

@@ -41,7 +41,7 @@ const metadata = {
   url: `https://github.com/Domalega/diploma/releases/download/native-preview-${version}/${filename}`,
   notes:
     process.env.DAYMARK_UPDATE_NOTES ||
-    "Update checks, notifications, and in-app installation of new versions.",
+    fs.readFileSync(path.join(__dirname, "../apps/android/release-notes.txt"), "utf8").trim(),
 };
 if (metadata.versionCode < 3 || apk.length > 150 * 1024 * 1024 || metadata.notes.length > 4000)
   throw new Error("Invalid release metadata");

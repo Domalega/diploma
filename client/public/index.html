@@ -29,6 +29,9 @@
         document
           .querySelector('meta[name="theme-color"]')
           .setAttribute("content", dark ? "#101a17" : "#fcfcf9");
+        if (window.DaymarkAppearance) {
+          window.DaymarkAppearance.postMessage(JSON.stringify({ theme: theme }));
+        }
       })();
     </script>
     <title>Daymark — Personal calendar</title>

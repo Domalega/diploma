@@ -1,5 +1,7 @@
 # Daymark device reminders
 
+Android 0.3.1 keeps the interface clear of system bars and display cutouts, follows the app theme for system icon contrast, and moves manual synchronization to the bottom of **Settings**, above **Sign out**. Background exchange remains active. It installs over 0.3.0 without removing local data.
+
 Android 0.3.0 adds verified in-app updates, background version checks and update notifications. See [Android updates and the one-time 0.2 migration](../docs/ANDROID_UPDATES.md) before replacing 0.2.0. Future versions use a permanent signing identity and install over the existing app after Android confirmation.
 
 Android 0.2.0 bundles the interface and keeps account data in local SQLite storage. After the first online sign-in, notes, to-do tasks, Kanban and medication marks work offline; changes exchange with the server on connectivity, app activation, manually and approximately hourly in the background. Conflicting edits show both versions for an explicit choice. See [local storage and exchange](../docs/OFFLINE_SYNC.md) for behavior, build steps and validation.

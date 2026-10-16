@@ -1,8 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import SyncStatus from "./SyncStatus";
+import useOfflineSyncStatus from "./useOfflineSyncStatus";
 import { isOfflineApp, offlineNative } from "./bridge";
 jest.mock("./bridge");
+function SyncedStatus() {
+  return <SyncStatus sync={useOfflineSyncStatus()} />;
+}
 beforeEach(() => {
   jest.clearAllMocks();
   isOfflineApp.mockReturnValue(true);
@@ -11,10 +15,10 @@ test("a normal browser has no misleading phone-storage indicator", () => {
   isOfflineApp.mockReturnValue(false);
   render(
     <MemoryRouter>
-      <SyncStatus />
+      <SyncedStatus />
     </MemoryRouter>,
   );
-  expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "Phone synchronization" })).not.toBeInTheDocument();
 });
 test("pending changes and both conflict versions are visible before choosing", async () => {
   offlineNative.mockResolvedValue({
@@ -27,7 +31,7 @@ test("pending changes and both conflict versions are visible before choosing", a
   });
   render(
     <MemoryRouter>
-      <SyncStatus />
+      <SyncedStatus />
     </MemoryRouter>,
   );
   expect(await screen.findByText("2 changes saved on this phone")).toBeInTheDocument();

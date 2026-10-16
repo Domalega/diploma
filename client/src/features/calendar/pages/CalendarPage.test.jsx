@@ -1,9 +1,10 @@
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import CalendarPage from "./CalendarPage";
 import { ThemeProvider } from "../../../shared/theme/ThemeProvider";
 import { LanguageProvider, LANGUAGE_KEY } from "../../../shared/i18n/LanguageProvider";
 import * as datesApi from "../api/datesApi";
+import * as offlineBridge from "../../../shared/offline/bridge";
 import useMedicationTracker from "../../medications/hooks/useMedicationTracker";
 import { emptyPlan } from "../../medications/utils/schedule";
 import {
@@ -73,6 +74,48 @@ function mount() {
 }
 const panel = () => within(screen.getByRole("region", { name: "Notes", exact: true }));
 const calendarReady = () => screen.findByRole("table", { name: "Monthly calendar" });
+
+test("phone sync is at the bottom of settings while background refresh works with settings closed", async () => {
+  let syncRevision = 1;
+  jest.spyOn(offlineBridge, "isOfflineApp").mockReturnValue(true);
+  const native = jest.spyOn(offlineBridge, "offlineNative").mockImplementation(async () => ({
+    ready: true,
+    pending: 0,
+    syncRevision,
+    conflicts: [],
+  }));
+  const changed = jest.fn();
+  window.addEventListener("daymark:sync", changed);
+  try {
+    mount();
+    await calendarReady();
+    await waitFor(() => expect(native).toHaveBeenCalledWith("status"));
+    expect(screen.queryByRole("button", { name: "Sync now" })).not.toBeInTheDocument();
+
+    syncRevision = 2;
+    fireEvent(window, new Event("focus"));
+    await waitFor(() => expect(changed).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole("button", { name: "Settings", exact: true }));
+    const settings = await screen.findByRole("dialog", { name: "Settings" });
+    const sync = within(settings).getByRole("region", { name: "Phone synchronization" });
+    const signOut = within(settings).getByRole("button", { name: "Sign out" });
+    const syncButton = within(sync).getByRole("button", { name: "Sync now" });
+    expect(within(settings).getAllByRole("button").slice(-2)).toEqual([syncButton, signOut]);
+    await act(async () => syncButton.click());
+    await waitFor(() => expect(native).toHaveBeenCalledWith("sync", expect.any(Object)));
+    await waitFor(() =>
+      expect(within(sync).getByRole("button", { name: "Sync now" })).toBeEnabled(),
+    );
+    fireEvent.click(within(settings).getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    syncRevision = 3;
+    fireEvent(window, new Event("focus"));
+    await waitFor(() => expect(changed).toHaveBeenCalledTimes(2));
+  } finally {
+    window.removeEventListener("daymark:sync", changed);
+    jest.restoreAllMocks();
+  }
+});
 
 test("the to-do list has an independent experimental toggle and dashboard tile", async () => {
   const tracker = { ...useTodoList(), list: { ...emptyList, enabled: true } };

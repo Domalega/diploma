@@ -1,10 +1,21 @@
 .sync-status {
-  margin: 0 0 18px;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
   font-size: 13px;
+}
+.sync-status h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+.sync-status .todo-button {
+  min-height: 44px;
+}
+.sync-status-heading > .todo-button {
+  width: 100%;
 }
 .sync-status-heading {
   display: flex;

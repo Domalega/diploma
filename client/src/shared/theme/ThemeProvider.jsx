@@ -30,6 +30,7 @@ export function ThemeProvider({ children }) {
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", resolvedTheme === "dark" ? "#101a17" : "#fcfcf9");
+    window.DaymarkAppearance?.postMessage(JSON.stringify({ theme: resolvedTheme }));
   }, [preference, resolvedTheme]);
 
   useEffect(() => {

@@ -1,0 +1,1 @@
+Fix overlap with Android system bars and display cutouts. Match clock, notification and navigation icon contrast to the app theme. Move manual synchronization to the bottom of Settings, above Sign out, while keeping background exchange active.

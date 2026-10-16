@@ -8,6 +8,8 @@ import LanguageSwitcher from "../../../shared/i18n/LanguageSwitcher";
 import { clearToken } from "../../../shared/api/tokenStorage";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import { AppUpdateSettings } from "../../../shared/updates/AppUpdates";
+import SyncStatus from "../../../shared/offline/SyncStatus";
+import useOfflineSyncStatus from "../../../shared/offline/useOfflineSyncStatus";
 export default function ProfileSidebar({
   notifications = { supported: false },
   medications,
@@ -17,6 +19,7 @@ export default function ProfileSidebar({
   panelHeaders,
 }) {
   const { t, locale } = useLanguage();
+  const sync = useOfflineSyncStatus();
 
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
@@ -306,17 +309,20 @@ export default function ProfileSidebar({
               </>
             )}
           </section>
-          <Button
-            variant="outline-secondary"
-            className="theme-button-outline sign-out-button"
-            onClick={() => {
-              clearToken();
-              navigate(LOGIN_ROUTE, { replace: true });
-            }}
-          >
-            <FiLogOut aria-hidden="true" />
-            {t("Sign out")}
-          </Button>
+          <div className="account-footer">
+            <SyncStatus sync={sync} />
+            <Button
+              variant="outline-secondary"
+              className="theme-button-outline sign-out-button"
+              onClick={() => {
+                clearToken();
+                navigate(LOGIN_ROUTE, { replace: true });
+              }}
+            >
+              <FiLogOut aria-hidden="true" />
+              {t("Sign out")}
+            </Button>
+          </div>
         </Offcanvas.Body>
       </Offcanvas>
     </>
