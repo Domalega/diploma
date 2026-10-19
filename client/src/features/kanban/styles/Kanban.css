@@ -367,17 +367,6 @@
   flex: 1;
   margin: 0;
 }
-.kanban-modal .theme-button,
-.kanban-modal .theme-button-outline {
-  padding: 10px 14px;
-  min-height: 42px;
-  border-radius: 8px;
-}
-.kanban-modal .theme-button {
-  background: var(--primary-bg);
-  color: var(--primary-text);
-  border: 1px solid var(--primary-bg);
-}
 .day-task-count {
   display: inline-flex;
   align-items: center;

@@ -55,7 +55,7 @@ export default function TaskHistory({ taskId, columns }) {
       {error && (
         <p role="alert">
           {t(error)}{" "}
-          <button type="button" onClick={() => load(nextCursor)}>
+          <button type="button" className="kanban-text-button" onClick={() => load(nextCursor)}>
             {t("Retry")}
           </button>
         </p>
@@ -86,7 +86,12 @@ export default function TaskHistory({ taskId, columns }) {
       </ol>
       {loading && <p role="status">{t("Loading task history…")}</p>}
       {nextCursor && !error && (
-        <button type="button" disabled={loading} onClick={() => load(nextCursor)}>
+        <button
+          type="button"
+          className="kanban-text-button"
+          disabled={loading}
+          onClick={() => load(nextCursor)}
+        >
           {t("Load more activity")}
         </button>
       )}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Modal } from "react-bootstrap";
+import { Button, Modal } from "react-bootstrap";
 import {
   FiPlus,
   FiColumns,
@@ -459,39 +459,49 @@ export default function KanbanTile({ tracker, selectedDate, onSelectDate }) {
           onHide={pending ? undefined : () => setDialog(null)}
           className="planner-modal kanban-modal"
           aria-labelledby="kanban-delete-title"
+          aria-describedby="kanban-delete-description"
         >
           <Modal.Header closeButton={!pending} closeLabel={t("Close")}>
             <Modal.Title id="kanban-delete-title">{t("Delete this task?")}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <p>{t("The task and its activity history will be permanently deleted.")}</p>
-            <strong>{dialog.task.title}</strong>
+            <p id="kanban-delete-description">
+              {t("The task and its activity history will be permanently deleted.")}
+            </p>
+            <p className="delete-note-preview">{dialog.task.title}</p>
             {error && (
-              <p role="alert">
+              <div role="alert" className="kanban-error">
                 {t(error)}{" "}
-                <button type="button" disabled={pending} onClick={reload}>
+                <Button
+                  type="button"
+                  variant="outline-secondary"
+                  className="theme-button-outline"
+                  disabled={pending || loading}
+                  onClick={reload}
+                >
                   {t("Reload board")}
-                </button>
-              </p>
+                </Button>
+              </div>
             )}
           </Modal.Body>
           <Modal.Footer>
-            <button
+            <Button
               type="button"
+              variant="outline-secondary"
               className="theme-button-outline"
               disabled={pending}
               onClick={() => setDialog(null)}
             >
               {t("Cancel")}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="theme-button"
+              className="danger-button"
               disabled={busy}
               onClick={() => update({ type: "task.delete", taskId: dialog.task.id }, true)}
             >
               {t("Delete task")}
-            </button>
+            </Button>
           </Modal.Footer>
         </Modal>
       )}
@@ -581,25 +591,31 @@ function TaskDialog({
         </Modal.Body>
         <Modal.Footer>
           {task && (
-            <button
+            <Button
               type="button"
-              className="theme-button-outline delete-note-button"
+              className="danger-button"
               disabled={busy || conflict}
               onClick={onDelete}
             >
               {t("Delete task")}
-            </button>
+            </Button>
           )}
-          <button type="button" className="theme-button-outline" disabled={busy} onClick={onClose}>
+          <Button
+            type="button"
+            variant="outline-secondary"
+            className="theme-button-outline"
+            disabled={busy}
+            onClick={onClose}
+          >
             {t("Cancel")}
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             className="theme-button"
             disabled={busy || conflict || !title.trim()}
           >
             {t("Save task")}
-          </button>
+          </Button>
         </Modal.Footer>
       </form>
     </Modal>
@@ -663,20 +679,27 @@ function ColumnDialog({ board, busy, conflict, error, onReload, onClose, onSave 
               onChange={(event) => setName(event.target.value)}
             />
           </label>
-          <button
+          <Button
             type="submit"
+            variant="outline-secondary"
             className="theme-button-outline"
             disabled={busy || conflict || !name.trim()}
           >
             <FiPlus aria-hidden="true" />
             {t("Add column")}
-          </button>
+          </Button>
         </form>
       </Modal.Body>
       <Modal.Footer>
-        <button className="theme-button-outline" type="button" disabled={busy} onClick={onClose}>
+        <Button
+          variant="outline-secondary"
+          className="theme-button-outline"
+          type="button"
+          disabled={busy}
+          onClick={onClose}
+        >
           {t("Done")}
-        </button>
+        </Button>
       </Modal.Footer>
     </Modal>
   );
@@ -750,9 +773,14 @@ function ColumnForm({ column, busy, onSave, onMove, first, last }) {
         >
           <FiArrowDown aria-hidden="true" />
         </button>
-        <button className="theme-button-outline" type="submit" disabled={busy}>
+        <Button
+          variant="outline-secondary"
+          className="theme-button-outline"
+          type="submit"
+          disabled={busy}
+        >
           {t("Save")}
-        </button>
+        </Button>
       </div>
     </form>
   );
