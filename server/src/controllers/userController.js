@@ -3,24 +3,11 @@ const { generateToken } = require("../services/tokenService");
 const passwordResetService = require("../services/passwordResetService");
 const mailService = require("../services/mailService");
 const ApiError = require("../errors/ApiError");
+const handle = require("../middleware/jsonHandler");
 
-exports.registration = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-    res.json(await userService.register(email, password));
-  } catch (error) {
-    next(error);
-  }
-};
+exports.registration = handle((req) => userService.register(req.body.email, req.body.password));
 
-exports.login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-    res.json(await userService.login(email, password));
-  } catch (error) {
-    next(error);
-  }
-};
+exports.login = handle((req) => userService.login(req.body.email, req.body.password));
 
 exports.check = (req, res) => {
   res.json({ token: generateToken(req.user) });
@@ -45,10 +32,6 @@ exports.forgotPassword = (req, res, next) => {
   });
 };
 
-exports.resetPassword = async (req, res, next) => {
-  try {
-    res.json(await passwordResetService.resetPassword(req.body.token, req.body.password));
-  } catch (error) {
-    next(error);
-  }
-};
+exports.resetPassword = handle((req) =>
+  passwordResetService.resetPassword(req.body.token, req.body.password),
+);

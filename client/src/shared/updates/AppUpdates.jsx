@@ -1,51 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Alert, Button, ProgressBar } from "react-bootstrap";
 import { useLanguage } from "../i18n/LanguageProvider";
-import { supportsAppUpdates, updateNative } from "./bridge";
-
-function useAppUpdates() {
-  const supported = supportsAppUpdates();
-  const [status, setStatus] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    if (!supported) return;
-    let disposed = false,
-      pending = false;
-    const refresh = async () => {
-      if (pending || document.visibilityState === "hidden") return;
-      pending = true;
-      try {
-        const result = await updateNative("status");
-        if (!disposed) setStatus(result);
-      } catch {
-        /* Manual actions report errors; offline polling stays quiet. */
-      } finally {
-        pending = false;
-      }
-    };
-    refresh();
-    const timer = setInterval(refresh, 2500);
-    window.addEventListener("focus", refresh);
-    return () => {
-      disposed = true;
-      clearInterval(timer);
-      window.removeEventListener("focus", refresh);
-    };
-  }, [supported]);
-  async function run(action) {
-    setBusy(true);
-    setError("");
-    try {
-      setStatus(await updateNative(action));
-    } catch (failure) {
-      setError(failure.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return { supported, status, busy, error, run };
-}
+import { useAppUpdates } from "./AppUpdatesProvider";
 
 function UpdateAction({ updates }) {
   const { t } = useLanguage();

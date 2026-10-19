@@ -26,7 +26,7 @@ function capacity(state, column, except) {
     fail("This column has reached its work-in-progress limit");
 }
 export function localApi(document, path, method = "GET", body = {}) {
-  const state = clone(document.state);
+  const state = method === "GET" ? document.state : clone(document.state);
   const revision = document.generation;
   const userId = document.owner;
   const board = () => ({ userId, revision, ...state.board, tasks: sorted(entries(state, "task")) });
@@ -54,7 +54,7 @@ export function localApi(document, path, method = "GET", body = {}) {
     else if (path.startsWith("/medications/intakes?date="))
       result = records(decodeURIComponent(path.split("=")[1]));
     else fail("This action requires an internet connection.");
-    return { result };
+    return { result: clone(result) };
   }
   const now = new Date().toISOString();
   if (path === "/userDate/create") {
@@ -107,6 +107,10 @@ export function localApi(document, path, method = "GET", body = {}) {
     else {
       if (!state.board.enabled) fail("Enable the Kanban board first");
       switch (body.type) {
+        case "task.delete":
+          find(state, "task", body.taskId);
+          delete state["task/" + body.taskId];
+          break;
         case "column.create":
           if (columns.length >= 30) fail("Use up to 30 columns");
           columns.splice(

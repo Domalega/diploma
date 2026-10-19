@@ -124,3 +124,18 @@ test("recovery reports unavailable without a configured mail transport", async (
   t.mock.method(mail, "isConfigured", () => false);
   assert.deepEqual((await request("/user/password-recovery")).data, { available: false });
 });
+
+test("concurrent recovery and calendar writes commit without overlapping SQLite transactions", async (t) => {
+  const deliveries = [];
+  t.mock.method(mail, "sendReset", async (email, token) => deliveries.push({ email, token }));
+  const user = await User.create({ email: "concurrent-reset@example.com", password: "test-only" });
+  const notes = require("../src/services/userDateService");
+  await Promise.all([
+    resetService.requestReset(user.email),
+    resetService.requestReset(user.email),
+    notes.create(user.id, "2026-10-19", "Preserved during recovery"),
+  ]);
+  assert.equal(deliveries.length, 1, "concurrent requests respect the delivery cooldown");
+  assert.equal((await notes.getAll(user.id)).length, 1);
+  assert.ok((await AccountSecurity.findByPk(user.id)).resetTokenHash);
+});

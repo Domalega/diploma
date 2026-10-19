@@ -1,5 +1,5 @@
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { FiArrowDown, FiArrowUp, FiGrid, FiMove, FiRotateCcw, FiCheck } from "react-icons/fi";
 import usePanelLayout from "../hooks/usePanelLayout";
 import PanelResizeHandle from "./PanelResizeHandle";
@@ -47,6 +47,22 @@ export default function DashboardBoard({ panels, heading, primaryAction, hideHea
     pointer.current = null;
     setDrag(null);
   }
+  const updateDrag = useCallback(
+    (x, y) => {
+      const current = pointer.current;
+      if (!current) return;
+      const rect = gridRef.current.getBoundingClientRect();
+      current.preview = movePanel(
+        current.grid,
+        current.id,
+        (x - rect.left - current.offsetX) / columnStep,
+        (y - rect.top - current.offsetY) / rowStep,
+        columns,
+      );
+      setDrag({ id: current.id, x, y, grid: current.preview });
+    },
+    [columnStep, rowStep, columns],
+  );
   useLayoutEffect(() => {
     const measure = () => {
       const next = gridRef.current?.getBoundingClientRect().width;
@@ -86,9 +102,7 @@ export default function DashboardBoard({ panels, heading, primaryAction, hideHea
       updateDrag(drag.x, drag.y);
     }, 30);
     return () => window.clearInterval(timer);
-    // The pointer snapshot owns the active gesture; render updates only refresh its preview.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drag]);
+  }, [drag, updateDrag]);
   function savePlacement(next, resizedId = null, reordered = false) {
     const positions = { ...layout.positions };
     if (columns === GRID_COLUMNS)
@@ -124,19 +138,6 @@ export default function DashboardBoard({ panels, heading, primaryAction, hideHea
       ),
     );
     handles.current[id]?.focus({ preventScroll: true });
-  }
-  function updateDrag(x, y) {
-    const current = pointer.current;
-    if (!current) return;
-    const rect = gridRef.current.getBoundingClientRect();
-    current.preview = movePanel(
-      current.grid,
-      current.id,
-      (x - rect.left - current.offsetX) / columnStep,
-      (y - rect.top - current.offsetY) / rowStep,
-      columns,
-    );
-    setDrag({ id: current.id, x, y, grid: current.preview });
   }
   function pointerDown(event, id) {
     if (event.button !== 0 || !event.isPrimary) return;

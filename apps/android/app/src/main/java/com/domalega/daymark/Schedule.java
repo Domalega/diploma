@@ -66,7 +66,8 @@ public final class Schedule {
         JSONArray rules = plan.getJSONArray("rules");
         for (int i = 0; i < rules.length(); i++) {
             JSONObject r = rules.getJSONObject(i);
-            if (r.getString("time").equals(at.toLocalTime().withSecond(0).withNano(0).toString()) && due(plan, r, at.toLocalDate())) result.add(r);
+            ZonedDateTime scheduled = at.toLocalDate().atTime(LocalTime.parse(r.getString("time"))).atZone(at.getZone());
+            if (scheduled.toInstant().equals(at.toInstant()) && due(plan, r, at.toLocalDate())) result.add(r);
         }
         return result;
     }

@@ -2,6 +2,7 @@ const { randomUUID } = require("node:crypto");
 const userWrite = require("./userWrite");
 const { TodoList } = require("../models");
 const ApiError = require("../errors/ApiError");
+const { validDate } = require("./validation");
 
 const defaults = { enabled: false, revision: 0, tasks: [] };
 const fail = () => {
@@ -14,13 +15,7 @@ function title(value) {
 }
 function taskDate(value) {
   if (value === null) return null;
-  if (
-    typeof value !== "string" ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-    Number.isNaN(Date.parse(value + "T00:00:00Z")) ||
-    new Date(value + "T00:00:00Z").toISOString().slice(0, 10) !== value
-  )
-    throw ApiError.badRequest("Enter a valid task date");
+  if (!validDate(value)) throw ApiError.badRequest("Enter a valid task date");
   return value;
 }
 async function getList(userId) {

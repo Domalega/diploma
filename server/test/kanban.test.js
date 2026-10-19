@@ -9,7 +9,7 @@ Object.assign(process.env, {
 });
 const app = require("../src/app");
 const database = require("../src/config/database");
-const { User } = require("../src/models");
+const { User, KanbanTask, KanbanEvent } = require("../src/models");
 const { generateToken } = require("../src/services/tokenService");
 let server, url, alice, bob;
 before(async () => {
@@ -188,4 +188,135 @@ test("custom stages can be renamed, reordered or all hidden without losing tasks
   assert.ok(saved.columns.every((column) => column.hidden));
   assert.equal(saved.tasks.length, 2);
   assert.equal(saved.columns[0].name, "Waiting");
+});
+
+test("task deletion is private, revision-checked and removes its history", async () => {
+  const created = (await change({ type: "task.create", title: "Delete me", columnId: "done" }))
+    .data;
+  const task = created.tasks.find((task) => task.title === "Delete me");
+  assert.ok(await KanbanEvent.count({ where: { taskId: task.id } }));
+  assert.equal((await change({ type: "task.delete", taskId: task.id }, bob)).status, 404);
+  assert.equal(
+    (await request(alice, { type: "task.delete", taskId: task.id, revision: created.revision - 1 }))
+      .status,
+    409,
+  );
+  assert.ok(await KanbanTask.findByPk(task.id));
+  const saved = (await change({ type: "task.delete", taskId: task.id })).data;
+  assert.ok(!saved.tasks.some((item) => item.id === task.id));
+  assert.equal(await KanbanTask.findByPk(task.id), null);
+  assert.equal(await KanbanEvent.count({ where: { taskId: task.id } }), 0);
+  assert.equal(
+    (await request(alice, undefined, "/tasks/" + task.id + "/history?limit=10")).status,
+    404,
+  );
+  assert.equal((await change({ type: "task.delete", taskId: task.id })).status, 404);
+});
+
+test("activity pages use stable cursors and retain the legacy history response", async () => {
+  const board = await read();
+  const task = board.tasks[0];
+  const recent = Array.from({ length: 6 }, (_, index) => ({
+    userId: task.userId,
+    taskId: task.id,
+    kind: "edited",
+    details: { title: "Edit " + index },
+  }));
+  await KanbanEvent.bulkCreate(recent);
+  const path = "/tasks/" + task.id + "/history";
+  const all = (await request(alice, undefined, path)).data;
+  const first = (await request(alice, undefined, path + "?limit=3")).data;
+  assert.deepEqual(first.events, all.slice(0, 3));
+  await KanbanEvent.create({ ...recent[0], details: { title: "Added between pages" } });
+  const second = (await request(alice, undefined, path + "?limit=3&before=" + first.nextCursor))
+    .data;
+  assert.deepEqual(second.events, all.slice(3, 6));
+  for (const query of ["?limit=0", "?limit=101", "?before=-1", "?before=1.2", "?limit[]=3"])
+    assert.equal((await request(alice, undefined, path + query)).status, 400);
+});
+
+test("reordering a long column updates positions in one batch and rolls back invalid moves", async () => {
+  const board = (await change({ type: "column.create", name: "Batch positions" })).data;
+  const column = board.columns.find((item) => item.name === "Batch positions");
+  const owner = board.userId;
+  const created = await KanbanTask.bulkCreate(
+    Array.from({ length: 80 }, (_, position) => ({
+      userId: owner,
+      columnId: column.id,
+      title: "Card " + position,
+      position,
+    })),
+  );
+  const sql = [];
+  const previousLogging = database.options.logging;
+  database.options.logging = (statement) => sql.push(statement);
+  let saved;
+  try {
+    saved = await change({
+      type: "task.move",
+      taskId: created[79].id,
+      columnId: column.id,
+      beforeId: created[0].id,
+    });
+  } finally {
+    database.options.logging = previousLogging;
+  }
+  assert.equal(saved.status, 200);
+  const ordered = saved.data.tasks.filter((item) => item.columnId === column.id);
+  assert.deepEqual(
+    ordered.map((item) => item.position),
+    Array.from({ length: 80 }, (_, index) => index),
+  );
+  assert.equal(ordered[0].id, created[79].id);
+  assert.equal(sql.filter((statement) => /UPDATE.*kanbanTasks.*CASE/.test(statement)).length, 1);
+  assert.equal(sql.filter((statement) => /UPDATE.*kanbanTasks/.test(statement)).length, 2);
+  const before = await read();
+  assert.equal(
+    (
+      await change({
+        type: "task.move",
+        taskId: created[0].id,
+        columnId: "todo",
+        beforeId: created[1].id,
+      })
+    ).status,
+    400,
+  );
+  assert.deepEqual(await read(), before);
+});
+
+test("a failure in a later position batch rolls back the entire move", async (t) => {
+  const board = (await change({ type: "column.create", name: "Rollback batch" })).data;
+  const column = board.columns.find((item) => item.name === "Rollback batch");
+  const created = await KanbanTask.bulkCreate(
+    Array.from({ length: 520 }, (_, position) => ({
+      userId: board.userId,
+      columnId: column.id,
+      title: "Batch card " + position,
+      position,
+    })),
+  );
+  const before = await read();
+  const query = database.query;
+  let batches = 0;
+  const mocked = t.mock.method(database, "query", function (statement, options) {
+    if (
+      typeof statement === "string" &&
+      /UPDATE.*kanbanTasks.*CASE/.test(statement) &&
+      ++batches === 2
+    )
+      return Promise.reject(new Error("Simulated second-batch failure"));
+    return query.call(this, statement, options);
+  });
+  t.mock.method(console, "error", () => {});
+  const result = await change({
+    type: "task.move",
+    taskId: created[519].id,
+    columnId: column.id,
+    beforeId: created[0].id,
+  });
+  mocked.mock.restore();
+  assert.equal(result.status, 500);
+  assert.equal(batches, 2);
+  assert.deepEqual(await read(), before);
 });

@@ -12,13 +12,11 @@ const {
 } = require("../models");
 const { defaults: boardDefaults } = require("./kanbanService");
 const { defaultPlan, isDue } = require("./medicationService");
-const { planIsValid, validDate } = require("./medicationValidation");
+const { planIsValid } = require("./medicationValidation");
+const { validDate, isUUID } = require("./validation");
 const userWrite = require("./userWrite");
 const { canonical, equal, merge } = require("./syncMerge");
 const ApiError = require("../errors/ApiError");
-const uuid = (v) =>
-  typeof v === "string" &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 const pick = (v, keys) => Object.fromEntries(keys.map((k) => [k, v[k] ?? null]));
 const noteFields = ["date", "time", "comment"];
 const taskFields = [
@@ -50,7 +48,7 @@ const integer = (v) => Number.isSafeInteger(v) && v >= 0 && v <= 1000000;
 const timestamp = (v) => typeof v === "string" && v.length <= 30 && !Number.isNaN(Date.parse(v));
 const intakeKey = (v) => `intake/${v.date}/${v.medicationId}/${v.slotId}`;
 
-async function snapshot(userId, transaction) {
+async function snapshot(userId, transaction, includeHistory = true) {
   const state = Object.create(null);
   const notes = await UserDate.findAll({ where: { userId }, transaction });
   const keys = await SyncNoteKey.findAll({ where: { userId }, transaction });
@@ -82,14 +80,15 @@ async function snapshot(userId, transaction) {
   for (const intake of await MedicationIntake.findAll({ where: { userId }, transaction }))
     state[intakeKey(intake)] = pick(intake, intakeFields);
   const history = {};
-  for (const event of await KanbanEvent.findAll({
-    where: { userId },
-    order: [["id", "DESC"]],
-    transaction,
-  })) {
-    (history[event.taskId] ||= []).push(event.toJSON());
-  }
-  return JSON.parse(JSON.stringify({ version: 1, state, history }));
+  if (includeHistory)
+    for (const event of await KanbanEvent.findAll({
+      where: { userId },
+      order: [["id", "DESC"]],
+      transaction,
+    })) {
+      (history[event.taskId] ||= []).push(event.toJSON());
+    }
+  return JSON.parse(JSON.stringify({ version: 1, state, ...(includeHistory ? { history } : {}) }));
 }
 function validate(state) {
   if (!object(state) || Object.keys(state).length > 20000) bad();
@@ -108,7 +107,7 @@ function validate(state) {
   for (const c of board.columns) {
     if (
       !object(c) ||
-      !(uuid(c.id) || ["todo", "doing", "done"].includes(c.id)) ||
+      !(isUUID(c.id) || ["todo", "doing", "done"].includes(c.id)) ||
       ids.has(c.id) ||
       !["todo", "doing", "done"].includes(c.kind) ||
       typeof c.hidden !== "boolean" ||
@@ -128,11 +127,12 @@ function validate(state) {
     bad(error.message);
   }
   let todos = 0;
+  const activeTasks = new Map();
   for (const [key, value] of Object.entries(state)) {
     if (["todos", "board", "medications"].includes(key)) continue;
     if (!object(value)) bad();
     const [kind, id] = key.split("/");
-    if (kind !== "intake" && (!uuid(id) || key !== kind + "/" + id)) bad();
+    if (kind !== "intake" && (!isUUID(id) || key !== kind + "/" + id)) bad();
     switch (kind) {
       case "note":
         if (
@@ -166,14 +166,15 @@ function validate(state) {
           (column.kind === "done") !== !!value.completedAt
         )
           bad();
+        if (!value.completedAt) activeTasks.set(column.id, (activeTasks.get(column.id) || 0) + 1);
         break;
       }
       case "intake":
         if (
           key !== intakeKey(value) ||
           !validDate(value.date) ||
-          !uuid(value.medicationId) ||
-          !uuid(value.slotId) ||
+          !isUUID(value.medicationId) ||
+          !isUUID(value.slotId) ||
           !timestamp(value.takenAt) ||
           !string(value.nameSnapshot, 80, true) ||
           !string(value.detailSnapshot, 120) ||
@@ -187,12 +188,7 @@ function validate(state) {
     }
   }
   for (const c of board.columns) {
-    if (
-      c.wipLimit !== null &&
-      Object.entries(state).filter(
-        ([k, v]) => k.startsWith("task/") && v.columnId === c.id && !v.completedAt,
-      ).length > c.wipLimit
-    )
+    if (c.wipLimit !== null && (activeTasks.get(c.id) || 0) > c.wipLimit)
       bad("This column has reached its work-in-progress limit");
   }
 }
@@ -318,16 +314,19 @@ async function apply(userId, before, after, transaction) {
     );
   }
 }
-const getSnapshot = (userId) => userWrite(userId, (transaction) => snapshot(userId, transaction));
+const getSnapshot = (userId, includeHistory = true) =>
+  userWrite(userId, (transaction) => snapshot(userId, transaction, includeHistory));
 async function exchange(userId, command) {
-  if (!object(command) || command.version !== 1 || !uuid(command.operationId)) bad();
+  if (!object(command) || command.version !== 1 || !isUUID(command.operationId)) bad();
+  if (command.includeHistory !== undefined && typeof command.includeHistory !== "boolean") bad();
+  const includeHistory = command.includeHistory !== false;
   validate(command.base);
   validate(command.local);
   const digest = createHash("sha256")
     .update(canonical({ base: command.base, local: command.local }))
     .digest("hex");
   return userWrite(userId, async (transaction) => {
-    const remote = await snapshot(userId, transaction);
+    const remote = await snapshot(userId, transaction, includeHistory);
     const receipt = await SyncReceipt.findOne({
       where: { userId, operationId: command.operationId },
       transaction,
@@ -378,7 +377,7 @@ async function exchange(userId, command) {
     }
     await apply(userId, remote.state, merged.state, transaction);
     await SyncReceipt.create({ userId, operationId: command.operationId, digest }, { transaction });
-    return { ...(await snapshot(userId, transaction)), conflicts: [] };
+    return { ...(await snapshot(userId, transaction, includeHistory)), conflicts: [] };
   });
 }
 module.exports = { getSnapshot, exchange, validate };

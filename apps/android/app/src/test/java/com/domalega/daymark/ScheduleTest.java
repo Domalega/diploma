@@ -48,4 +48,15 @@ public class ScheduleTest {
         p.getJSONObject("marks").put("2026-10-26", new JSONArray().put("med:1:am"));
         assertEquals(date("2026-11-02T08:00"), Schedule.next(p, date("2026-10-15T12:00")));
     }
+    @Test public void deliversRulesShiftedOutOfTheSpringDstGap() throws Exception {
+        JSONObject p = plan();
+        p.getJSONArray("rules").getJSONObject(0).put("startDate", "2026-03-29").put("time", "02:30")
+            .put("weekdays", new JSONArray("[0,1,2,3,4,5,6]"));
+        ZonedDateTime after = LocalDateTime.parse("2026-03-29T00:00").atZone(ZoneId.of("Europe/Berlin"));
+        ZonedDateTime next = Schedule.next(p, after);
+        assertEquals(3, next.getHour());
+        assertEquals(30, next.getMinute());
+        assertEquals(1, Schedule.at(p, next).size());
+        assertTrue(Schedule.at(p, next.plusMinutes(1)).isEmpty());
+    }
 }

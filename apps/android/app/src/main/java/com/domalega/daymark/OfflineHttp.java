@@ -12,11 +12,17 @@ final class OfflineHttp {
         Failure(int status, String message) { super(message); this.status = status; this.response = null; }
         Failure(int status, JSONObject response) { super(response.optString("message", "Synchronization failed. Try again.")); this.status = status; this.response = response; }
     }
+    static boolean supportedPath(String path) {
+        boolean user = path.startsWith("/user/") && !path.contains("?") && !path.contains("#") && !path.contains("..");
+        boolean sync = path.equals("/sync") || path.equals("/sync?history=none");
+        boolean history = path.matches("/kanban/tasks/[0-9a-fA-F-]{36}/history\\?limit=(?:[1-9]|[1-9][0-9]|100)(?:&before=[1-9][0-9]*)?");
+        return user || sync || history;
+    }
     static JSONObject call(String path, String method, JSONObject body, String token) throws Exception {
-        if (!(path.equals("/sync") || path.startsWith("/user/")) || path.contains("..") || path.contains("?") || path.contains("#")) throw new Failure(400, "Unsupported network request");
+        if (!supportedPath(path)) throw new Failure(400, "Unsupported network request");
         HttpsURLConnection connection = (HttpsURLConnection) new URL(BuildConfig.API_URL + path).openConnection();
         connection.setInstanceFollowRedirects(false);
-        connection.setConnectTimeout(15000); connection.setReadTimeout(60000); connection.setRequestMethod(method);
+        connection.setConnectTimeout(15000); connection.setReadTimeout(path.startsWith("/kanban/") ? 15000 : 60000); connection.setRequestMethod(method);
         connection.setRequestProperty("Accept", "application/json");
         if (token != null && !token.isEmpty()) connection.setRequestProperty("Authorization", "Bearer " + token);
         try {

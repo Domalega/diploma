@@ -29,6 +29,11 @@ export default function MainCalendar({
     if (!notes.has(note.date)) notes.set(note.date, []);
     notes.get(note.date).push(note);
   });
+  const tasksByDate = new Map();
+  for (const task of tasks) {
+    if (!tasksByDate.has(task.date)) tasksByDate.set(task.date, []);
+    tasksByDate.get(task.date).push(task);
+  }
   const [focusDate, setFocusDate] = useState(selectedDate);
   const focusAfterRender = useRef(false);
   const grid = useRef(null);
@@ -85,7 +90,7 @@ export default function MainCalendar({
             <tr key={row}>
               {days.slice(row * 7, row * 7 + 7).map((value) => {
                 const dayNotes = notes.get(value) || [],
-                  dayTasks = tasks.filter((task) => task.date === value),
+                  dayTasks = tasksByDate.get(value) || [],
                   selected = value === selectedDate,
                   isToday = value === today;
                 return (

@@ -1,4 +1,6 @@
 const { randomUUID } = require("node:crypto");
+const { Op } = require("sequelize");
+const { validDate, isUUID } = require("./validation");
 const userWrite = require("./userWrite");
 const { KanbanBoard, KanbanTask, KanbanEvent } = require("../models");
 const ApiError = require("../errors/ApiError");
@@ -16,9 +18,6 @@ const defaults = (userId) => ({
 const fail = (message) => {
   throw ApiError.badRequest(message);
 };
-const uuid = (value) =>
-  typeof value === "string" &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 function text(value, max, required = false) {
   if (typeof value !== "string" || value.length > max || (required && !value.trim()))
     fail("Enter a valid title or description");
@@ -26,13 +25,7 @@ function text(value, max, required = false) {
 }
 function taskDate(value) {
   if (value === null) return null;
-  if (
-    typeof value !== "string" ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-    Number.isNaN(Date.parse(value + "T00:00:00Z")) ||
-    new Date(value + "T00:00:00Z").toISOString().slice(0, 10) !== value
-  )
-    fail("Enter a valid task date");
+  if (!validDate(value)) fail("Enter a valid task date");
   return value;
 }
 async function getBoard(userId, transaction) {
@@ -52,22 +45,72 @@ async function getBoard(userId, transaction) {
   };
 }
 async function ownTask(userId, id, transaction) {
-  if (!uuid(id)) fail("Choose a valid task");
+  if (!isUUID(id)) fail("Choose a valid task");
   const task = await KanbanTask.findOne({ where: { userId, id }, transaction });
   if (!task) throw ApiError.notFound("Task was not found");
   return task;
 }
-async function getHistory(userId, id) {
+async function getHistory(userId, id, { limit, before } = {}) {
   await ownTask(userId, id);
-  return KanbanEvent.findAll({ where: { userId, taskId: id }, order: [["id", "DESC"]] });
+  const paginated = limit !== undefined || before !== undefined;
+  const pageSize = Number(limit ?? 50);
+  const cursor = before === undefined ? undefined : Number(before);
+  if (
+    (limit !== undefined && !["string", "number"].includes(typeof limit)) ||
+    (before !== undefined && !["string", "number"].includes(typeof before)) ||
+    !Number.isSafeInteger(pageSize) ||
+    pageSize < 1 ||
+    pageSize > 100 ||
+    (cursor !== undefined && (!Number.isSafeInteger(cursor) || cursor < 1))
+  )
+    fail("Choose a valid history page");
+  const events = await KanbanEvent.findAll({
+    where: { userId, taskId: id, ...(cursor ? { id: { [Op.lt]: cursor } } : {}) },
+    order: [["id", "DESC"]],
+    ...(paginated ? { limit: pageSize + 1 } : {}),
+  });
+  if (!paginated) return events;
+  return {
+    events: events.slice(0, pageSize),
+    nextCursor: events.length > pageSize ? events[pageSize - 1].id : null,
+  };
+}
+async function updatePositions(ordered, userId, transaction) {
+  const changed = ordered.flatMap((task, position) =>
+    task.position === position ? [] : [{ id: task.id, position }],
+  );
+  const database = KanbanTask.sequelize;
+  const generator = database.getQueryInterface().queryGenerator;
+  const quote = (name) => generator.quoteIdentifier(name);
+  const table = generator.quoteTable(KanbanTask.getTableName());
+  for (let offset = 0; offset < changed.length; offset += 500) {
+    const batch = changed.slice(offset, offset + 500);
+    const replacements = { userId, updatedAt: new Date() };
+    const cases = batch.map((task, index) => {
+      replacements["id" + index] = task.id;
+      replacements["position" + index] = task.position;
+      return `WHEN :id${index} THEN :position${index}`;
+    });
+    await database.query(
+      `UPDATE ${table} SET ${quote("position")} = CASE ${quote("id")} ${cases.join(" ")} END, ` +
+        `${quote("updatedAt")} = :updatedAt WHERE ${quote("userId")} = :userId ` +
+        `AND ${quote("id")} IN (${batch.map((_, index) => ":id" + index).join(", ")})`,
+      { replacements, transaction },
+    );
+  }
 }
 async function capacity(userId, column, transaction, exceptId) {
   if (column.kind !== "doing" || column.wipLimit === null) return;
-  const tasks = await KanbanTask.findAll({
-    where: { userId, columnId: column.id, completedAt: null },
+  const count = await KanbanTask.count({
+    where: {
+      userId,
+      columnId: column.id,
+      completedAt: null,
+      ...(exceptId ? { id: { [Op.ne]: exceptId } } : {}),
+    },
     transaction,
   });
-  if (tasks.filter((task) => task.id !== exceptId).length >= column.wipLimit)
+  if (count >= column.wipLimit)
     throw ApiError.conflict("This column has reached its work-in-progress limit");
 }
 async function event(task, kind, details, transaction) {
@@ -91,7 +134,7 @@ async function moveTask(userId, task, column, beforeId, transaction) {
   const ordered = target.filter((item) => item.id !== task.id);
   let index = ordered.length;
   if (beforeId !== null && beforeId !== undefined) {
-    if (!uuid(beforeId)) fail("Choose a valid task position");
+    if (!isUUID(beforeId)) fail("Choose a valid task position");
     index = ordered.findIndex((item) => item.id === beforeId);
     if (index < 0) fail("Choose a valid task position");
   }
@@ -111,8 +154,7 @@ async function moveTask(userId, task, column, beforeId, transaction) {
     { transaction },
   );
   ordered.splice(index, 0, task);
-  for (const [position, item] of ordered.entries())
-    if (item.position !== position) await item.update({ position }, { transaction });
+  await updatePositions(ordered, userId, transaction);
   await event(task, kind, { from: previous, to: column.id, title: task.title }, transaction);
 }
 async function changeBoard(userId, command) {
@@ -149,6 +191,11 @@ async function changeBoard(userId, command) {
     } else {
       if (!board.enabled) throw ApiError.conflict("Enable the Kanban board first");
       switch (command.type) {
+        case "task.delete": {
+          const task = await ownTask(userId, command.taskId, transaction);
+          await task.destroy({ transaction });
+          break;
+        }
         case "column.create": {
           if (columns.length >= 30) fail("Use up to 30 columns");
           const item = {

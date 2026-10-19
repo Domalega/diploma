@@ -1,7 +1,7 @@
 const { randomBytes, createHash } = require("node:crypto");
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
-const sequelize = require("../config/database");
+const userWrite = require("./userWrite");
 const { User, AccountSecurity } = require("../models");
 const ApiError = require("../errors/ApiError");
 const mailService = require("./mailService");
@@ -13,9 +13,9 @@ const invalidLink = () =>
 async function requestReset(email) {
   const user = await User.findOne({ where: { email } });
   if (!user) return;
-  await AccountSecurity.findOrCreate({ where: { userId: user.id } });
   const token = randomBytes(32).toString("hex");
-  const created = await sequelize.transaction(async (transaction) => {
+  const created = await userWrite(user.id, async (transaction) => {
+    await AccountSecurity.findOrCreate({ where: { userId: user.id }, transaction });
     const security = await AccountSecurity.findByPk(user.id, {
       transaction,
       lock: transaction.LOCK.UPDATE,
@@ -44,7 +44,7 @@ async function resetPassword(token, password) {
   });
   if (!existing) throw invalidLink();
   const hash = await bcrypt.hash(password, 10);
-  const user = await sequelize.transaction(async (transaction) => {
+  const user = await userWrite(existing.userId, async (transaction) => {
     const security = await AccountSecurity.findByPk(existing.userId, {
       transaction,
       lock: transaction.LOCK.UPDATE,

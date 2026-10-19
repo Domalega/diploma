@@ -1,48 +1,41 @@
-# Daymark device reminders
+# Daymark device clients
 
-Android 0.3.1 keeps the interface clear of system bars and display cutouts, follows the app theme for system icon contrast, and moves manual synchronization to the bottom of **Settings**, above **Sign out**. Background exchange remains active. It installs over 0.3.0 without removing local data.
+Android bundles the interface and supports offline notes, tasks, Kanban and medication marks after the first online sign-in. See [offline storage and sync](../docs/OFFLINE_SYNC.md).
 
-Android 0.3.0 adds verified in-app updates, background version checks and update notifications. See [Android updates and the one-time 0.2 migration](../docs/ANDROID_UPDATES.md) before replacing 0.2.0. Future versions use a permanent signing identity and install over the existing app after Android confirmation.
-
-Android 0.2.0 bundles the interface and keeps account data in local SQLite storage. After the first online sign-in, notes, to-do tasks, Kanban and medication marks work offline; changes exchange with the server on connectivity, app activation, manually and approximately hourly in the background. Conflicting edits show both versions for an explicit choice. See [local storage and exchange](../docs/OFFLINE_SYNC.md) for behavior, build steps and validation.
-
-Windows opens the existing Daymark website and saves a local copy of timed note and medication schedules. Saved reminders on both platforms run with the app and browser closed, without a notification server or push subscription. Windows calendar editing still requires an internet connection and the existing API.
+Windows opens the hosted website; editing requires internet access. Both clients save timed note and medication reminders on the device, so alerts can run with the app closed.
 
 ## Install and enable
 
-- Android 8+: install the preview APK, open Daymark, sign in, and enable notifications in Settings. Allow **Alarms & reminders** for precise timing. Keep Android System WebView updated.
-- Windows 10 2004+ / Windows 11 x64: extract the ZIP into a permanent folder and open `Daymark.exe`. Microsoft Edge WebView2 Runtime is required. Enable notifications in Settings. Keep the extracted folder in place: the local Windows task runs this executable to replenish scheduled notifications.
-- Use **Test notification**, then close the app. A test notification is scheduled five seconds later.
-- **Disable device reminders** cancels schedules on that device. Signing out also removes the saved plan and schedules. Before removing the Windows files, disable device reminders or run `Daymark.exe --clear`.
+- **Android 8+:** install the preview APK, sign in and enable notifications in Settings. Allow **Alarms & reminders** for precise timing. Keep Android System WebView updated. For updates and migration from 0.2.0, see [Android updates](../docs/ANDROID_UPDATES.md).
+- **Windows 10 2004+ / Windows 11 x64:** extract the preview ZIP into a permanent folder and run `Daymark.exe`. Microsoft Edge WebView2 Runtime is required. Keep the folder in place: the local reminder task uses that executable.
+- Use **Test notification**, then close the app. An alert is scheduled five seconds later.
+- **Disable device reminders** or sign out to cancel schedules. Before removing Windows files, disable reminders or run `Daymark.exe --clear`.
 
-Both downloads are previews. Android 0.3.0 and later use a permanent release signing key. The old 0.2.0 signature is incompatible: export pending local data before the one-time reinstall described above. Windows binaries are unsigned. No store account or subscription is needed.
+Downloads are available in GitHub Actions artifacts and [Releases](https://github.com/Domalega/diploma/releases). Both clients are previews; Windows binaries are unsigned.
 
-## Behavior and limits
+## Reminder behavior
 
-- Times follow the device's local clock. Medication weekdays, course boundaries, and saved intake marks are respected. Medication reminders due together are grouped. Past reminders are not replayed.
-- All-day notes keep their existing on-open behavior; they do not get an invented alarm time.
-- Android exchanges changes periodically even with the interface closed; Windows receives changes when Daymark opens online. An intake mark made elsewhere cannot suppress an already saved offline reminder until synchronization.
-- Android schedules the next alarm and reschedules from the saved rules after delivery, reboot, app update, and clock or timezone changes. Force-stopping the app, blocking notifications, locking Android Private Space, or vendor battery restrictions can prevent delivery. Reopen the app after a force-stop. Without exact-alarm permission, timing may be delayed.
-- Windows schedules eight days ahead. A per-user local task refills the schedule hourly and at sign-in, without internet. The app need not remain running. This task runs only while the user is signed in; Windows may drop notifications if the computer is off or asleep for too long. Clock changes are reflected on the next refill or app activation.
-- No notification mechanism can alert while the device is powered off. System Focus/Do Not Disturb settings still apply.
-- Android stores data in app-private storage with backup disabled and encrypts its background sync session using Android Keystore. Windows protects its reminder snapshot with the current user's DPAPI key. Reminder snapshots contain no account tokens.
-- Native messaging is restricted to the main frame at the bundled Android asset origin or the Windows Daymark HTTPS page. Other links open in the external browser. Permissions are requested by user action.
+Times follow the device clock. Medication weekdays, course dates and saved intake marks are respected; simultaneous medication alerts are grouped. All-day notes appear when the calendar opens. Android periodically syncs remote changes; Windows refreshes them when opened online. Until then, saved offline reminders may reflect older data.
+
+Android restores alarms after reboot, app update and clock changes. Force-stop, blocked notifications and battery restrictions can prevent delivery; reopen the app after force-stopping it. Without exact-alarm permission, alerts may be delayed.
+
+Windows schedules eight days ahead. A local task refills the schedule hourly and at sign-in while the user is signed in. Clock changes apply on the next refill or app activation. Neither platform can deliver while powered off; Windows may drop alerts during long sleep periods. Focus/Do Not Disturb settings still apply.
+
+Android uses private storage with backup disabled and Keystore encryption for sync credentials. Windows encrypts reminder snapshots with the user's DPAPI key. Reminder snapshots contain no account tokens. Native messaging is restricted to the Android bundled interface or the Windows Daymark page.
 
 ## Build
 
-The **Native apps** GitHub Actions workflow builds both previews and runs native scheduling checks. Build artifacts, SDKs, local state, and signing keys are ignored by Git.
+The **Native apps** workflow builds both previews and runs native tests. Build artifacts and signing keys are excluded from Git.
 
-Android: JDK 17, Android SDK 35 and Gradle 8.11.1. First [build the bundled interface](../docs/OFFLINE_SYNC.md#build-and-verify), then run:
+**Android:** JDK 17, Android SDK 35 and Gradle 8.11.1. First [build the bundled interface](../docs/OFFLINE_SYNC.md#build-and-verify), then run:
 
 ```sh
 gradle -p apps/android testDebugUnitTest assembleDebug
 ```
 
-Windows: .NET SDK 8 on Windows:
+**Windows:** .NET SDK 8 on Windows:
 
 ```powershell
 dotnet run --project apps/windows/ScheduleTests
 dotnet publish apps/windows/Daymark -c Release -r win-x64 --self-contained true -o dist/windows
 ```
-
-The Windows task and native notification registration are created only when reminders are enabled. Reminder rules are renewed from the device snapshot, not by an external scheduler.

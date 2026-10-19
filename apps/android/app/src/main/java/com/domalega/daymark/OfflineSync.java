@@ -28,11 +28,11 @@ final class OfflineSync {
             JSONObject document = store.read(owner);
             JSONObject flight = document.optJSONObject("flight");
             if (flight == null && document.has("state") && SyncMerge.changes(document.getJSONObject("base"), document.getJSONObject("state")) > 0) {
-                document = store.update(owner, (doc) -> { guard(store, owner, session, doc); doc.put("flight", new JSONObject().put("version", 1).put("operationId", UUID.randomUUID().toString()).put("base", doc.getJSONObject("base")).put("local", doc.getJSONObject("state"))); });
+                document = store.update(owner, (doc) -> { guard(store, owner, session, doc); doc.put("flight", new JSONObject().put("version", 1).put("includeHistory", false).put("operationId", UUID.randomUUID().toString()).put("base", doc.getJSONObject("base")).put("local", doc.getJSONObject("state"))); });
                 flight = document.getJSONObject("flight");
             }
             JSONObject result;
-            try { result = OfflineHttp.call("/sync", flight == null ? "GET" : "POST", flight, token); }
+            try { result = OfflineHttp.call(flight == null ? "/sync?history=none" : "/sync", flight == null ? "GET" : "POST", flight, token); }
             catch (OfflineHttp.Failure failure) {
                 if (failure.status != 409 || failure.response == null || !failure.response.has("state")) throw failure;
                 if (!owner.equals(store.active())) return;
@@ -54,7 +54,9 @@ final class OfflineSync {
                     doc.put("conflictRemote", remote).put("conflicts", merged.getJSONArray("conflicts"));
                     doc.put("error", "Choose which changes to keep.");
                 } else doc.put("error", "");
-                doc.put("base", remote).put("state", merged.getJSONObject("state")).put("history", result.getJSONObject("history"));
+                doc.put("base", remote).put("state", merged.getJSONObject("state"));
+                if (result.has("history")) doc.put("history", result.getJSONObject("history"));
+                OfflineHistory.prune(doc);
                 doc.put("generation", doc.getLong("generation") + 1).put("syncRevision", doc.optLong("syncRevision") + 1).put("lastSync", Instant.now().toString());
                 doc.remove("flight");
             });

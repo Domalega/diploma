@@ -4,14 +4,9 @@ const service = require("../services/medicationService");
 const auth = require("../middleware/authMiddleware");
 const validate = require("../middleware/validateRequest");
 const router = Router();
-const { validDate, planIsValid } = require("../services/medicationValidation");
-const handle = (action) => async (req, res, next) => {
-  try {
-    res.json(await action(req));
-  } catch (error) {
-    next(error);
-  }
-};
+const { planIsValid } = require("../services/medicationValidation");
+const { validDate } = require("../services/validation");
+const handle = require("../middleware/jsonHandler");
 const markRules = () => [
   body("date").custom(validDate).withMessage("Enter a valid date (YYYY-MM-DD)"),
   body("slotId").isUUID(4),

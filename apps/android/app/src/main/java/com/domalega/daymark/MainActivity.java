@@ -25,6 +25,7 @@ import java.util.concurrent.*;
 public class MainActivity extends Activity {
     static final String HOME = "https://appassets.androidplatform.net/assets/www/index.html";
     private final ExecutorService offlineExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService historyExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService updateExecutor = Executors.newSingleThreadExecutor();
     private final Handler updateHandler = new Handler(Looper.getMainLooper());
     private JavaScriptReplyProxy updatePermissionReply;
@@ -115,14 +116,20 @@ public class MainActivity extends Activity {
             String raw = message.getData();
             if (raw == null || raw.length() > 4_500_000) return;
             offlineExecutor.execute(() -> {
-                JSONObject response = new JSONObject();
-                try {
-                    JSONObject request = new JSONObject(raw); response.put("id", request.getString("id"));
-                    response.put("result", OfflineBridge.handle(this, request.getString("action"), request.optJSONObject("payload") == null ? new JSONObject() : request.getJSONObject("payload")));
-                } catch (Exception error) {
-                    try { response.put("error", error instanceof OfflineHttp.Failure || error instanceof IllegalStateException ? error.getMessage() : "Local storage could not be updated. Try again."); if (error instanceof OfflineHttp.Failure) response.put("status", ((OfflineHttp.Failure) error).status); } catch (JSONException ignored) { }
-                }
-                runOnUiThread(() -> { try { reply.postMessage(response.toString()); } catch (Exception ignored) { } });
+                JSONObject request;
+                try { request = new JSONObject(raw); } catch (JSONException ignored) { return; }
+                Runnable action = () -> {
+                    JSONObject response = new JSONObject();
+                    try {
+                        response.put("id", request.getString("id"));
+                        response.put("result", OfflineBridge.handle(this, request.getString("action"), request.optJSONObject("payload") == null ? new JSONObject() : request.getJSONObject("payload")));
+                    } catch (Exception error) {
+                        try { response.put("error", error instanceof OfflineHttp.Failure || error instanceof IllegalStateException ? error.getMessage() : "Local storage could not be updated. Try again."); if (error instanceof OfflineHttp.Failure) response.put("status", ((OfflineHttp.Failure) error).status); } catch (JSONException ignored) { }
+                    }
+                    runOnUiThread(() -> { try { reply.postMessage(response.toString()); } catch (Exception ignored) { } });
+                };
+                if ("history".equals(request.optString("action"))) historyExecutor.execute(action);
+                else action.run();
             });
         });
         WebViewCompat.addWebMessageListener(web, "DaymarkNative", Collections.singleton("https://appassets.androidplatform.net"), (view, message, origin, mainFrame, reply) -> {
@@ -240,6 +247,7 @@ public class MainActivity extends Activity {
                     LegacyBackup.restore(this, input); message = "Backup restored. Sign in to the same account to use your saved data.";
                 } catch (Exception error) { message = "Could not restore the backup. Use the Daymark 0.2 export and restore before signing in."; }
                 UpdateManager.prefs(this).edit().putString("importMessage", message).commit();
+                runOnUiThread(() -> { if (!isDestroyed() && web != null) web.evaluateJavascript("window.dispatchEvent(new Event('daymark:updates'))", null); });
             });
         }
     }
@@ -271,5 +279,5 @@ public class MainActivity extends Activity {
     }
     @Override protected void onPause() { resumed = false; updateHandler.removeCallbacks(updateTick); super.onPause(); }
     @Override public void onBackPressed() { if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed(); }
-    @Override protected void onDestroy() { updateHandler.removeCallbacksAndMessages(null); updateExecutor.shutdownNow(); offlineExecutor.shutdownNow(); if (web != null) web.destroy(); super.onDestroy(); }
+    @Override protected void onDestroy() { updateHandler.removeCallbacksAndMessages(null); updateExecutor.shutdownNow(); offlineExecutor.shutdownNow(); historyExecutor.shutdownNow(); if (web != null) web.destroy(); super.onDestroy(); }
 }

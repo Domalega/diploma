@@ -10,7 +10,7 @@ Object.assign(process.env, {
 });
 const app = require("../src/app");
 const db = require("../src/config/database");
-const { User, UserDate, SyncReceipt } = require("../src/models");
+const { User, UserDate, SyncReceipt, KanbanEvent, KanbanTask } = require("../src/models");
 const { generateToken } = require("../src/services/tokenService");
 const { merge } = require("../src/services/syncMerge");
 let server, url, alice, bob, owner;
@@ -242,4 +242,55 @@ test("simultaneous uploads and ordinary web writes do not lose unrelated tasks",
   assert.equal(saved[x].comment, "Phone A");
   assert.equal(saved[y].comment, "Phone B");
   assert(Object.values(saved).some((v) => v.comment === "Concurrent web"));
+});
+
+test("compact sync omits history queries, preserves data and keeps upload retries idempotent", async (t) => {
+  const legacy = await read();
+  const findAll = t.mock.method(KanbanEvent, "findAll", async () => {
+    throw new Error("Compact sync must not load activity");
+  });
+  const compact = await request("/sync?history=none");
+  assert.equal(compact.status, 200);
+  assert.deepEqual(compact.data.state, legacy.state);
+  assert.equal(compact.data.history, undefined);
+  const local = structuredClone(legacy.state);
+  const key = "note/" + randomUUID();
+  local[key] = { date: "2026-10-20", comment: "Compact upload", time: null };
+  const body = {
+    version: 1,
+    operationId: randomUUID(),
+    base: legacy.state,
+    local,
+    includeHistory: false,
+  };
+  const saved = await request("/sync", body);
+  assert.equal(saved.status, 200);
+  assert.equal(saved.data.history, undefined);
+  assert.equal(saved.data.state[key].comment, "Compact upload");
+  assert.deepEqual((await request("/sync", body)).data, saved.data);
+  assert.equal(findAll.mock.callCount(), 0);
+  assert.equal((await request("/sync", { ...body, includeHistory: "false" })).status, 400);
+});
+
+test("offline task deletion conflicts with remote edits and cascades activity after resolution", async () => {
+  const base = (await read()).state;
+  const key = Object.keys(base).find((name) => name.startsWith("task/"));
+  const id = key.slice(5);
+  const local = structuredClone(base);
+  delete local[key];
+  const board = (await request("/kanban")).data;
+  await request("/kanban", {
+    revision: board.revision,
+    type: "task.update",
+    taskId: id,
+    title: "Edited while phone was offline",
+  });
+  const conflict = await exchange(base, local);
+  assert.equal(conflict.status, 409);
+  assert.ok(conflict.data.conflicts.includes(key));
+  assert.ok(await KanbanTask.findByPk(id));
+  const resolved = merge(base, local, conflict.data.state, "local").state;
+  assert.equal((await exchange(conflict.data.state, resolved)).status, 200);
+  assert.equal(await KanbanTask.findByPk(id), null);
+  assert.equal(await KanbanEvent.count({ where: { taskId: id } }), 0);
 });

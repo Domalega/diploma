@@ -227,3 +227,44 @@ test("pointer dragging uses the same saved move as the explicit stage selector",
     document.elementFromPoint = original;
   }
 });
+
+test("deleting a card requires confirmation, preserves failed attempts and removes it after saving", async () => {
+  mount();
+  const remove = await screen.findByRole("button", { name: "Delete task " + task.title });
+  await click(remove);
+  let dialog = await screen.findByRole("dialog", { name: "Delete this task?" });
+  expect(api.changeBoard).not.toHaveBeenCalled();
+  await click(within(dialog).getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  await click(remove);
+  dialog = await screen.findByRole("dialog", { name: "Delete this task?" });
+  api.changeBoard.mockRejectedValueOnce(new Error("Could not delete"));
+  await click(within(dialog).getByRole("button", { name: "Delete task", exact: true }));
+  expect(await within(dialog).findByRole("alert")).toHaveTextContent("Could not delete");
+  expect(screen.getByRole("button", { name: task.title, exact: true })).toBeInTheDocument();
+  api.changeBoard.mockResolvedValueOnce({ ...initial, revision: 1, tasks: [] });
+  await click(within(dialog).getByRole("button", { name: "Delete task", exact: true }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  expect(api.changeBoard).toHaveBeenLastCalledWith({
+    type: "task.delete",
+    taskId: task.id,
+    revision: 0,
+  });
+  expect(screen.queryByRole("button", { name: task.title, exact: true })).not.toBeInTheDocument();
+});
+
+test("completed cards can be deleted from the task editor without loading hidden activity", async () => {
+  api.getBoard.mockResolvedValue({
+    ...initial,
+    tasks: [{ ...task, columnId: "done", completedAt: "2026-10-19T08:00:00Z" }],
+  });
+  mount();
+  await click(await screen.findByRole("button", { name: task.title, exact: true }));
+  const editor = await screen.findByRole("dialog", { name: "Edit task" });
+  expect(api.getHistory).not.toHaveBeenCalled();
+  await click(within(editor).getByRole("button", { name: "Delete task", exact: true }));
+  const dialog = await screen.findByRole("dialog", { name: "Delete this task?" });
+  api.changeBoard.mockResolvedValueOnce({ ...initial, revision: 1, tasks: [] });
+  await click(within(dialog).getByRole("button", { name: "Delete task", exact: true }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+});

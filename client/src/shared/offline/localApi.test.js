@@ -121,3 +121,37 @@ test("medication marks retain their historical labels after the plan changes", (
   });
   expect(unmarked.result.records).toEqual([]);
 });
+
+test("offline task deletion removes only that task and does not mutate the source", () => {
+  const sourceDoc = source();
+  const created = localApi(sourceDoc, "/kanban", "POST", {
+    type: "task.create",
+    title: "Remove offline",
+    columnId: "done",
+  });
+  const doc = { ...sourceDoc, state: created.state };
+  const deleted = localApi(doc, "/kanban", "POST", { type: "task.delete", taskId: uuid });
+  expect(deleted.state["task/" + uuid]).toBeUndefined();
+  expect(doc.state["task/" + uuid]).toBeDefined();
+  expect(deleted.state["todo/" + taskId]).toEqual(sourceDoc.state["todo/" + taskId]);
+  expect(() =>
+    localApi({ ...doc, state: deleted.state }, "/kanban", "POST", {
+      type: "task.delete",
+      taskId: uuid,
+    }),
+  ).toThrow("Task was not found");
+});
+
+test("GET copies only the requested result and keeps returned data independent", () => {
+  const doc = source();
+  // Serializing this unrelated value would fail if the whole account were still cloned.
+  doc.state.unrelated = {
+    toJSON() {
+      throw new Error("Unrelated section was copied");
+    },
+  };
+  const result = localApi(doc, "/medications/plan").result;
+  result.rows[0].name = "Changed by caller";
+  expect(doc.state.medications.rows[0].name).toBe("A");
+  expect(localApi(doc, "/todos").result.tasks[0].title).toBe("Local task");
+});

@@ -9,6 +9,17 @@ export const en = {
   },
 };
 export const ru = {
+  "Delete task {title}": "Удалить задачу {title}",
+  "Delete this task?": "Удалить эту задачу?",
+  "Delete task": "Удалить задачу",
+  "The task and its activity history will be permanently deleted.":
+    "Задача и история её изменений будут удалены без возможности восстановления.",
+  "Loading task history…": "Загружаем историю задачи…",
+  "Load more activity": "Показать ещё изменения",
+  "No activity yet.": "История изменений пока пуста.",
+  "Showing saved activity. Connect to load the latest history.":
+    "Показана сохранённая история. Подключитесь к интернету, чтобы загрузить последние изменения.",
+  "Choose a valid history page": "Не удалось открыть страницу истории",
   "Moving from 0.2? Restore your exported backup before signing in.":
     "Переходите с 0.2? Восстановите выгруженную копию до входа в аккаунт.",
   "Restore a 0.2 backup": "Восстановить копию из 0.2",

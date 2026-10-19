@@ -1,6 +1,8 @@
 package com.domalega.daymark;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import org.json.*;
 
 final class OfflineBridge {
@@ -32,17 +34,19 @@ final class OfflineBridge {
         String owner = doc.getString("owner");
         if (action.equals("read")) {
             if (!doc.has("state")) { OfflineSync.run(context); doc = store.authorized(payload.optString("token", null)); }
-            return OfflineStore.publicDocument(doc);
+            return payload.has("path") ? OfflineRead.project(doc, payload.getString("path")) : OfflineStore.publicDocument(doc);
         }
+        if (action.equals("history")) return history(context, store, doc, payload);
         if (action.equals("write")) {
             JSONObject state = payload.getJSONObject("state");
             if (state.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 1_800_000 || !state.has("todos") || !state.has("board") || !state.has("medications")) throw new JSONException("Invalid offline data");
             JSONObject saved = store.update(owner, (current) -> {
                 if (current.getLong("generation") != payload.getLong("generation")) throw new OfflineHttp.Failure(409, "The phone data changed. Try again.");
                 current.put("state", state).put("generation", current.getLong("generation") + 1);
+                OfflineHistory.prune(current);
             });
             DeviceSyncPlan.refresh(context, saved);
-            SyncWorker.schedule(context, true); return OfflineStore.publicDocument(saved);
+            SyncWorker.schedule(context, true); return new JSONObject().put("generation", saved.getLong("generation"));
         }
         if (action.equals("resolve")) {
             if (!(payload.optString("choice").equals("remote") || payload.optString("choice").equals("local"))) throw new OfflineHttp.Failure(400, "Choose which changes to keep.");
@@ -62,5 +66,54 @@ final class OfflineBridge {
             SyncWorker.schedule(context, true); return store.status();
         }
         throw new JSONException("Unknown offline action");
+    }
+    private static Object history(Context context, OfflineStore store, JSONObject doc, JSONObject payload) throws Exception {
+        String taskId = payload.getString("taskId"), owner = doc.getString("owner"), session = doc.getString("session");
+        int limit = payload.optInt("limit", 50);
+        long before = payload.isNull("before") ? 0 : payload.getLong("before");
+        if (!taskId.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}") || limit < 1 || limit > 100 || before < 0)
+            throw new OfflineHttp.Failure(400, "Choose a valid history page");
+        if (!doc.getJSONObject("state").has("task/" + taskId)) throw new OfflineHttp.Failure(404, "Task was not found");
+        if (!doc.getJSONObject("base").has("task/" + taskId)) {
+            JSONObject localPage = cachedHistory(store, payload, owner, session, taskId, before, limit);
+            localPage.remove("offline");
+            return localPage;
+        }
+        ConnectivityManager connectivity = context.getSystemService(ConnectivityManager.class);
+        NetworkCapabilities network = connectivity.getNetworkCapabilities(connectivity.getActiveNetwork());
+        if (network == null || !network.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED))
+            return cachedHistory(store, payload, owner, session, taskId, before, limit);
+        JSONObject page;
+        try {
+            String path = "/kanban/tasks/" + taskId + "/history?limit=" + limit + (before > 0 ? "&before=" + before : "");
+            page = OfflineHttp.call(path, "GET", null, SyncCredentials.decrypt(doc.getString("credential")));
+            JSONArray incoming = page.getJSONArray("events");
+            store.update(owner, (current) -> {
+                checkSession(store, current, owner, session);
+                if (!current.getJSONObject("state").has("task/" + taskId)) throw new OfflineHttp.Failure(404, "Task was not found");
+                JSONObject history = current.optJSONObject("history");
+                if (history == null) { history = new JSONObject(); current.put("history", history); }
+                history.put(taskId, OfflineHistory.merge(history.optJSONArray(taskId), incoming));
+            });
+        } catch (java.io.IOException error) {
+            if (error instanceof OfflineHttp.Failure) {
+                int status = ((OfflineHttp.Failure) error).status;
+                if (status == 400 || status == 404) throw error;
+            }
+            if (error instanceof OfflineHttp.Failure && ((OfflineHttp.Failure) error).status == 401)
+                store.update(owner, (current) -> { checkSession(store, current, owner, session); current.put("authRequired", true); });
+            page = cachedHistory(store, payload, owner, session, taskId, before, limit);
+        }
+        return page;
+    }
+    private static JSONObject cachedHistory(OfflineStore store, JSONObject payload, String owner, String session, String taskId, long before, int limit) throws Exception {
+        JSONObject latest = store.authorized(payload.optString("token", null));
+        checkSession(store, latest, owner, session);
+        if (!latest.getJSONObject("state").has("task/" + taskId)) throw new OfflineHttp.Failure(404, "Task was not found");
+        JSONObject history = latest.optJSONObject("history");
+        return OfflineHistory.page(history == null ? null : history.optJSONArray(taskId), before, limit).put("offline", true);
+    }
+    private static void checkSession(OfflineStore store, JSONObject doc, String owner, String session) throws Exception {
+        if (!owner.equals(store.active()) || !session.equals(doc.optString("session"))) throw new OfflineHttp.Failure(401, "Sign in to synchronize your data.");
     }
 }

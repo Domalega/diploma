@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "react-bootstrap";
 import {
   FiPlus,
@@ -10,11 +10,12 @@ import {
   FiArrowDown,
   FiCalendar,
   FiRotateCcw,
+  FiTrash2,
 } from "react-icons/fi";
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { formatDay } from "../../calendar/utils/calendarDates";
-import { columnName, orderedTasks } from "../utils/board";
-import * as api from "../api/kanbanApi";
+import { columnName, groupTasksByColumn } from "../utils/board";
+import TaskHistory from "./TaskHistory";
 import "../styles/Kanban.css";
 
 export default function KanbanTile({ tracker, selectedDate, onSelectDate }) {
@@ -30,6 +31,13 @@ export default function KanbanTile({ tracker, selectedDate, onSelectDate }) {
   const dragRef = useRef(null);
   const columnsRef = useRef(null);
   const busy = loading || pending || conflict;
+  const tasksByColumn = useMemo(() => groupTasksByColumn(board.tasks), [board.tasks]);
+  const taskPositions = useMemo(() => {
+    const positions = new Map();
+    for (const tasks of tasksByColumn.values())
+      tasks.forEach((task, index) => positions.set(task.id, index));
+    return positions;
+  }, [tasksByColumn]);
   async function update(command, close = false) {
     try {
       await send(command);
@@ -61,7 +69,7 @@ export default function KanbanTile({ tracker, selectedDate, onSelectDate }) {
         card &&
         event.clientY > card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2
       ) {
-        const tasks = orderedTasks(board.tasks, target.dataset.kanbanColumn).filter(
+        const tasks = (tasksByColumn.get(target.dataset.kanbanColumn) || []).filter(
           (task) => task.id !== current.id,
         );
         beforeId = tasks[tasks.findIndex((task) => task.id === beforeId) + 1]?.id || null;
@@ -98,21 +106,21 @@ export default function KanbanTile({ tracker, selectedDate, onSelectDate }) {
     }, 40);
     return () => window.clearInterval(timer);
   }, [drag]);
+  const search = query.toLocaleLowerCase(locale);
   const matching = board.tasks.filter(
     (task) =>
       (!onlyDay || task.date === selectedDate) &&
       (!history || task.completedAt) &&
-      (task.title + " " + task.description)
-        .toLocaleLowerCase(locale)
-        .includes(query.toLocaleLowerCase(locale)),
+      (task.title + " " + task.description).toLocaleLowerCase(locale).includes(search),
   );
+  const matchingByColumn = groupTasksByColumn(matching);
   const visible = board.columns.filter((column) => !column.hidden);
   function openTask(task = null, columnId = "todo") {
     setDialog({ kind: "task", task, columnId });
   }
   function card(task, column) {
-    const inColumn = orderedTasks(board.tasks, task.columnId);
-    const index = inColumn.findIndex((item) => item.id === task.id);
+    const inColumn = tasksByColumn.get(task.columnId);
+    const index = taskPositions.get(task.id);
     return (
       <article
         key={task.id}
@@ -237,6 +245,15 @@ export default function KanbanTile({ tracker, selectedDate, onSelectDate }) {
           >
             {task.completedAt ? <FiRotateCcw aria-hidden="true" /> : <FiCheck aria-hidden="true" />}
           </button>
+          <button
+            type="button"
+            className="icon-button delete-note-button"
+            disabled={busy}
+            aria-label={t("Delete task {title}", { title: task.title })}
+            onClick={() => setDialog({ kind: "delete", task })}
+          >
+            <FiTrash2 aria-hidden="true" />
+          </button>
         </div>
         {history && <small className="kanban-history-stage">{columnName(column, t)}</small>}
       </article>
@@ -334,9 +351,9 @@ export default function KanbanTile({ tracker, selectedDate, onSelectDate }) {
           aria-label={t("Board columns")}
         >
           {visible.map((column) => {
-            const tasks = orderedTasks(matching, column.id),
-              count = board.tasks.filter(
-                (task) => task.columnId === column.id && !task.completedAt,
+            const tasks = matchingByColumn.get(column.id) || [],
+              count = (tasksByColumn.get(column.id) || []).filter(
+                (task) => !task.completedAt,
               ).length;
             return (
               <section
@@ -411,6 +428,7 @@ export default function KanbanTile({ tracker, selectedDate, onSelectDate }) {
           error={error}
           onReload={reload}
           onClose={() => setDialog(null)}
+          onDelete={() => setDialog({ kind: "delete", task: dialog.task })}
           onSave={(values) =>
             update(
               {
@@ -434,6 +452,49 @@ export default function KanbanTile({ tracker, selectedDate, onSelectDate }) {
           onSave={update}
         />
       )}
+      {dialog?.kind === "delete" && (
+        <Modal
+          show
+          centered
+          onHide={pending ? undefined : () => setDialog(null)}
+          className="planner-modal kanban-modal"
+          aria-labelledby="kanban-delete-title"
+        >
+          <Modal.Header closeButton={!pending} closeLabel={t("Close")}>
+            <Modal.Title id="kanban-delete-title">{t("Delete this task?")}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>{t("The task and its activity history will be permanently deleted.")}</p>
+            <strong>{dialog.task.title}</strong>
+            {error && (
+              <p role="alert">
+                {t(error)}{" "}
+                <button type="button" disabled={pending} onClick={reload}>
+                  {t("Reload board")}
+                </button>
+              </p>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <button
+              type="button"
+              className="theme-button-outline"
+              disabled={pending}
+              onClick={() => setDialog(null)}
+            >
+              {t("Cancel")}
+            </button>
+            <button
+              type="button"
+              className="theme-button"
+              disabled={busy}
+              onClick={() => update({ type: "task.delete", taskId: dialog.task.id }, true)}
+            >
+              {t("Delete task")}
+            </button>
+          </Modal.Footer>
+        </Modal>
+      )}
     </section>
   );
 }
@@ -449,24 +510,12 @@ function TaskDialog({
   onReload,
   onClose,
   onSave,
+  onDelete,
 }) {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
   const [title, setTitle] = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
   const [date, setDate] = useState(task?.date || "");
-  const [events, setEvents] = useState([]);
-  const [historyError, setHistoryError] = useState("");
-  useEffect(() => {
-    if (!task) return;
-    const abort = new AbortController();
-    api
-      .getHistory(task.id, abort.signal)
-      .then(setEvents)
-      .catch((error) => {
-        if (!abort.signal.aborted) setHistoryError(error.message);
-      });
-    return () => abort.abort();
-  }, [task]);
   return (
     <Modal
       show
@@ -528,42 +577,19 @@ function TaskDialog({
               </button>
             )}
           </fieldset>
-          {task && (
-            <details className="kanban-task-history">
-              <summary>{t("Task history")}</summary>
-              {historyError && <p role="alert">{t(historyError)}</p>}
-              <ol>
-                {events.map((event) => (
-                  <li key={event.id}>
-                    <strong>
-                      {t(
-                        {
-                          created: "Created",
-                          edited: "Edited",
-                          moved: "Moved",
-                          completed: "Completed",
-                          reopened: "Reopened",
-                        }[event.kind],
-                      )}
-                    </strong>
-                    {event.details.to &&
-                      " · " +
-                        (columns.find((col) => col.id === event.details.to)
-                          ? columnName(
-                              columns.find((col) => col.id === event.details.to),
-                              t,
-                            )
-                          : event.details.to)}
-                    <time dateTime={event.createdAt}>
-                      {new Date(event.createdAt).toLocaleString(locale)}
-                    </time>
-                  </li>
-                ))}
-              </ol>
-            </details>
-          )}
+          {task && <TaskHistory taskId={task.id} columns={columns} />}
         </Modal.Body>
         <Modal.Footer>
+          {task && (
+            <button
+              type="button"
+              className="theme-button-outline delete-note-button"
+              disabled={busy || conflict}
+              onClick={onDelete}
+            >
+              {t("Delete task")}
+            </button>
+          )}
           <button type="button" className="theme-button-outline" disabled={busy} onClick={onClose}>
             {t("Cancel")}
           </button>
