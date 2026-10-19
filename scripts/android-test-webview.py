@@ -9,6 +9,7 @@ import os
 import pathlib
 import subprocess
 import tempfile
+import time
 import urllib.request
 
 
@@ -49,7 +50,13 @@ with tempfile.TemporaryDirectory() as temporary:
     subprocess.check_call([str(signer), "verify", str(signed)])
     print(adb("install", "-r", str(signed)))
     print(adb("shell", "cmd", "webviewupdate", "set-webview-implementation", "com.android.webview"))
-    state = adb("shell", "dumpsys", "webviewupdate")
+    deadline = time.monotonic() + 30
+    while True:
+        state = adb("shell", "dumpsys", "webviewupdate")
+        if "Current WebView package (name, version): (com.android.webview, 128.0.6613.88)" in state:
+            break
+        if time.monotonic() >= deadline:
+            print(state)
+            raise RuntimeError("The emulator did not select the pinned WebView")
+        time.sleep(0.5)
     print(state)
-    if "Current WebView package (name, version): (com.android.webview, 128.0.6613.88)" not in state:
-        raise RuntimeError("The emulator did not select the pinned WebView")
