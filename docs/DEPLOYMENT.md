@@ -18,12 +18,14 @@ For a custom domain, set `DAYMARK_SITE_URL` to its full HTTPS address and `PUBLI
 
 After publishing:
 
-1. Add the URL-prefix property `https://domalega.github.io/diploma/` to Google Search Console and add the same website to Yandex Webmaster using the owner's accounts.
-2. For HTML-file verification, save the supplied verification file unchanged in `client/public/` and publish it. It will be copied to the site root. If using HTML-meta verification instead, add the exact tag supplied by the service to the generated public head in `scripts/build-public-site.cjs`.
-3. Submit `https://domalega.github.io/diploma/sitemap.xml` in both services. It includes only public canonical pages and their language alternatives, with no app URLs or account data.
+1. Add the URL-prefix property `https://domalega.github.io/diploma/` to Google Search Console using the owner's account. Choose a URL-prefix property rather than DNS domain verification for the GitHub-owned domain.
+2. For Google's HTML-file verification, save the supplied verification file unchanged in `client/public/` and publish it. It will be copied to the property root under `/diploma/`. If using HTML-meta verification instead, add the exact tag supplied by the service to the generated public head in `scripts/build-public-site.cjs`.
+3. Submit `https://domalega.github.io/diploma/sitemap.xml` in Search Console. It includes only public canonical pages and their language alternatives, with no app URLs or account data.
 4. Inspect the homepage and the two secondary pages in each language, request indexing and monitor crawl/indexing diagnostics. A published sitemap does not guarantee indexing or rankings.
 
 The generated `robots.txt` includes the sitemap address. On project GitHub Pages it lives under `/diploma/robots.txt`; crawlers read `/robots.txt` at the origin root instead. This repository cannot control `https://domalega.github.io/robots.txt`, so submit the sitemap directly. At a custom domain root, the generated file is in the expected location. Account access is still enforced by authentication; `noindex` is not an access-control mechanism.
+
+Yandex Webmaster accepts sites at domain level, rather than a URL-prefix property for `/diploma/`. To use it with the current host, first configure a working `https://domalega.github.io/` homepage and ownership verification at that root through the separate `Domalega.github.io` Pages repository. Verification files under `client/public/` in this project are published under `/diploma/` and do not verify the host root. Alternatively, configure an owned custom domain for this project. After verifying the host in Yandex Webmaster, submit the same full sitemap URL and request recrawling of public pages. Webmaster registration is separate from whether Yandex can discover and index public pages.
 
 To check the public generator locally, run `node --test scripts/build-public-site.test.cjs`. To preview the actual published output, build with the web environment above and serve `client/build` mounted at `/diploma/`, without an SPA fallback: unknown public pages should return 404.
 
