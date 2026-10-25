@@ -9,6 +9,56 @@ export const en = {
   },
 };
 export const ru = {
+  "Connect another device": "Подключить другое устройство",
+  "Connection link from your other device": "Ссылка с другого устройства",
+  "Review connection": "Проверить подключение",
+  "If the link opens in another browser, paste the automatically generated connection link here. You will confirm the device on the next screen.":
+    "Если ссылка открывается в другом браузере, вставьте автоматически созданную ссылку здесь. Подключение нужно будет подтвердить на следующем экране.",
+  "End-to-end encryption": "Сквозное шифрование",
+  "Off. Your calendar works normally without encryption.":
+    "Выключено. Календарь работает в обычном режиме.",
+  "Create an automatic key on this device. Connect other devices by approving their connection link. No phrase or extra password is needed.":
+    "Ключ будет создан автоматически на этом устройстве. Остальные устройства подключаются по ссылке с вашим подтверждением. Фраза и дополнительный пароль не нужны.",
+  "Keep at least one connected device. Losing all device keys makes encrypted data inaccessible.":
+    "Сохраните доступ хотя бы к одному подключённому устройству. При утрате всех ключей восстановить зашифрованные данные невозможно.",
+  "On. This device opens encrypted data automatically. Approve connection links only from your own other devices.":
+    "Включено. Это устройство открывает данные автоматически. Подтверждайте ссылки подключения только со своих устройств.",
+  "Enable encryption": "Включить шифрование",
+  "Connect this device": "Подключение устройства",
+  "Open this connection link on a device that already has access, then approve this device there. No encryption phrase is needed.":
+    "Откройте ссылку на устройстве, где уже доступны данные, и подтвердите подключение. Фраза шифрования не нужна.",
+  "Device code: {code}": "Код устройства: {code}",
+  "Device connection link": "Ссылка подключения устройства",
+  "Copy connection link": "Скопировать ссылку подключения",
+  "Link copied": "Ссылка скопирована",
+  "Waiting for confirmation on your connected device…":
+    "Ожидается подтверждение на подключённом устройстве…",
+  "Approve another device": "Подключить другое устройство",
+  "Approve only a connection link opened from your own other device. It will be able to read your encrypted account data.":
+    "Подтверждайте только ссылку со своего другого устройства. Оно получит доступ к зашифрованным данным аккаунта.",
+  "Approve device": "Подтвердить подключение",
+  "Open this link on an already connected device.":
+    "Откройте ссылку на устройстве, которое уже имеет доступ к данным.",
+  "Sign in to the same account on both devices.": "Войдите в один аккаунт на обоих устройствах.",
+  "The connection link does not match this device.": "Ссылка не соответствует ключу устройства.",
+  "The connection link expired. Request a new one.":
+    "Ссылка подключения устарела. Запросите новую.",
+  "Device connection was not found": "Запрос подключения не найден",
+  "Invalid device connection": "Некорректный запрос подключения",
+  "Device key storage is unavailable.": "Хранилище ключей устройства недоступно.",
+  "The device key could not be saved.": "Не удалось сохранить ключ устройства.",
+  "Close other Daymark tabs and try again.":
+    "Закройте остальные вкладки Daymark и повторите действие.",
+  "Update the installed Daymark app to protect this device key.":
+    "Обновите установленное приложение Daymark для защиты ключа устройства.",
+  "The connection link could not be copied.": "Не удалось скопировать ссылку подключения.",
+  "Connect to finish enabling encryption.":
+    "Подключитесь к интернету, чтобы завершить включение шифрования.",
+  "Access from the previous version": "Доступ из предыдущей версии",
+  "This account used a phrase in an older version. Enter it once to save access on this device. New encryption uses automatic device keys.":
+    "В прежней версии для этого аккаунта использовалась фраза. Введите её один раз, чтобы сохранить доступ на устройстве. В новом режиме ключи создаются автоматически.",
+  "Previous encryption phrase": "Прежняя фраза шифрования",
+  "Restore device access": "Сохранить доступ на устройстве",
   "Older clients cannot sync after encryption is enabled. Update your other devices first.":
     "После включения шифрования старые приложения не смогут синхронизироваться. Сначала обновите остальные устройства.",
   "Encrypted data": "Зашифрованные данные",

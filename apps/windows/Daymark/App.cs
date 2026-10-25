@@ -84,6 +84,8 @@ public sealed class App : Application
                         "sync" => DeviceReminders.Sync(message.GetProperty("payload").GetRawText()),
                         "clear" => Clear(),
                         "test" => Test(),
+                        "protectDeviceKey" => DeviceKeyProtection.Transform(message.GetProperty("payload"), true),
+                        "unprotectDeviceKey" => DeviceKeyProtection.Transform(message.GetProperty("payload"), false),
                         _ => throw new FormatException("Unknown device action")
                     };
                 });

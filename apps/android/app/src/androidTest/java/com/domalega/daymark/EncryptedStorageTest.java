@@ -11,6 +11,25 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class EncryptedStorageTest {
+    @Test public void deviceKeysUsePurposeBoundKeystoreProtection() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        OfflineStore store = OfflineStore.get(context);
+        String owner = "device-key-protection-test", token = "device-key-test-token", key = "private-key-test-base64";
+        try {
+            store.activate(owner, token);
+            JSONObject protectedKey = (JSONObject) OfflineBridge.handle(context, "protectDeviceKey", new JSONObject().put("token", token).put("data", key));
+            assertFalse(protectedKey.getString("data").contains(key));
+            JSONObject opened = (JSONObject) OfflineBridge.handle(context, "unprotectDeviceKey", new JSONObject().put("token", token).put("data", protectedKey.getString("data")));
+            assertEquals(key, opened.getString("data"));
+            try {
+                OfflineBridge.handle(context, "unprotectDeviceKey", new JSONObject().put("token", token).put("data", SyncCredentials.encrypt("a different storage purpose")));
+                fail("Unrelated ciphertext must not be opened as a device key");
+            } catch (IllegalArgumentException expected) { }
+        } finally {
+            store.logout();
+            store.getWritableDatabase().delete("accounts", "owner=?", new String[]{owner});
+        }
+    }
     @Test public void accountDocumentsAreEncryptedAndLegacyUpgradePreservesTheirContents() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         OfflineStore store = OfflineStore.get(context);

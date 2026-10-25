@@ -2,7 +2,7 @@
 
 A personal calendar for notes, tasks and reminders. Includes user accounts, search, a month view and a notes list. Optional panels add a to-do list, Kanban board and medication tracker.
 
-The client can prepare an encrypted account document using a separate passphrase. New content and its local copy are encrypted; offline changes sync while the interface is open and unlocked. Existing unencrypted server records are retained during this preparation. See [encryption and migration limits](docs/ENCRYPTION.md).
+End-to-end encryption is an optional setting. Device keys are created automatically; new devices connect after approval from an existing device. Encrypted changes sync while the interface is open. Existing unencrypted server records are retained. See [encryption and device access](docs/ENCRYPTION.md).
 
 [Live demo](https://domalega.github.io/diploma/) · [Android and Windows clients](apps/README.md)
 

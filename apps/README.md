@@ -1,6 +1,6 @@
 # Daymark device clients
 
-The source includes [encrypted account storage preparation](../docs/ENCRYPTION.md). Encrypted accounts require a separate phrase and synchronize while the interface is open and unlocked. Old server records are retained. Published preview binaries must be rebuilt to include these changes.
+Android 0.4.1 and the updated Windows package support [optional end-to-end encryption](../docs/ENCRYPTION.md) with automatic device keys. New devices require approval from a connected device. Old server records are retained. Encrypted accounts synchronize while the interface is open.
 
 Android bundles the interface and supports offline notes, tasks, Kanban and medication marks after the first online sign-in. See [offline storage and sync](../docs/OFFLINE_SYNC.md).
 

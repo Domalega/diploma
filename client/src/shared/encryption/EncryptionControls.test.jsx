@@ -1,10 +1,41 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import EncryptionControls from "./EncryptionControls";
-import { encryptionSession, lockEncryption } from "./session";
+import { encryptionSession } from "./session";
 import { vaultStatus, syncVault, resolveVault } from "./vault";
+import { EncryptionContext } from "./EncryptionContext";
 jest.mock("./session");
 jest.mock("./vault");
 beforeEach(() => jest.resetAllMocks());
+
+test("a pasted connection link is reviewed before approval", () => {
+  encryptionSession.mockReturnValue({});
+  vaultStatus.mockReturnValue({ conflicts: [] });
+  const connect = jest.fn(() => {
+    throw new Error("invalid");
+  });
+  render(
+    <EncryptionContext.Provider value={{ connect }}>
+      <EncryptionControls />
+    </EncryptionContext.Provider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Connect another device" }));
+  const review = screen.getByRole("button", { name: "Review connection" });
+  expect(review).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Connection link from your other device"), {
+    target: { value: "invalid link" },
+  });
+  fireEvent.click(review);
+  expect(connect).toHaveBeenCalledWith("invalid link");
+  expect(screen.getByRole("alert")).toHaveTextContent("Invalid device connection");
+  connect.mockImplementation(() => {});
+  fireEvent.change(screen.getByLabelText("Connection link from your other device"), {
+    target: { value: " https://example.test/#/calendar?connect=public-request " },
+  });
+  fireEvent.click(review);
+  expect(connect).toHaveBeenLastCalledWith(
+    "https://example.test/#/calendar?connect=public-request",
+  );
+});
 test("settings display conflict versions and apply only the explicitly selected choice", async () => {
   encryptionSession.mockReturnValue({});
   vaultStatus.mockReturnValue({
@@ -22,14 +53,16 @@ test("settings display conflict versions and apply only the explicitly selected 
   expect(resolveVault).toHaveBeenCalledWith("remote");
   await waitFor(() => expect(screen.getByRole("button", { name: "Sync now" })).toBeEnabled());
 });
-test("settings can synchronize and lock an unlocked account", async () => {
+test("settings synchronize with shared button styling and no phrase-based lock", async () => {
   encryptionSession.mockReturnValue({});
   vaultStatus.mockReturnValue({ pending: false, conflicts: [] });
   render(<EncryptionControls />);
   fireEvent.click(screen.getByRole("button", { name: "Sync now" }));
   expect(syncVault).toHaveBeenCalled();
-  const lock = screen.getByRole("button", { name: "Lock data" });
-  await waitFor(() => expect(lock).toBeEnabled());
-  fireEvent.click(lock);
-  expect(lockEncryption).toHaveBeenCalled();
+  await waitFor(() => expect(screen.getByRole("button", { name: "Sync now" })).toBeEnabled());
+  expect(screen.getByRole("button", { name: "Sync now" })).toHaveClass(
+    "btn",
+    "theme-button-outline",
+  );
+  expect(screen.queryByRole("button", { name: "Lock data" })).not.toBeInTheDocument();
 });

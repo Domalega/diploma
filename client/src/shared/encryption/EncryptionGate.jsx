@@ -1,33 +1,60 @@
-import { useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
+import { Button, Form, Alert, Modal } from "react-bootstrap";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { clearToken } from "../api/tokenStorage";
+import CalendarLoading from "../components/CalendarLoading";
 import { encryptionSession, lockEncryption } from "./session";
-import { inspectVault, unlockVault, syncVault, vaultStatus } from "./vault";
+import { syncVault, vaultStatus } from "./vault";
+import {
+  initializeDeviceAccess,
+  enableDeviceEncryption,
+  approveDeviceConnection,
+  parseConnection,
+  rememberLegacyDevice,
+} from "./deviceFlow";
+import { EncryptionContext } from "./EncryptionContext";
 
 export default function EncryptionGate({ children }) {
-  const { t } = useLanguage();
-  const [status, setStatus] = useState(null);
-  const [unlocked, setUnlocked] = useState(!!encryptionSession());
-  const [password, setPassword] = useState("");
-  const [confirmation, setConfirmation] = useState("");
-  const [acknowledged, setAcknowledged] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [state, setState] = useState(vaultStatus);
-  async function load() {
+  const { t } = useLanguage(),
+    location = useLocation(),
+    navigate = useNavigate();
+  const [access, setAccess] = useState({ mode: encryptionSession() ? "ready" : "loading" });
+  const [attempt, setAttempt] = useState(0),
+    [error, setError] = useState("");
+  const [busy, setBusy] = useState(false),
+    [legacyPhrase, setLegacyPhrase] = useState("");
+  const [state, setState] = useState(vaultStatus),
+    [copied, setCopied] = useState(false);
+  const retry = useCallback(() => {
     setError("");
-    try {
-      setStatus(await inspectVault());
-    } catch (e) {
-      setError(e.message);
-    }
-  }
+    setAttempt((v) => v + 1);
+  }, []);
+  useEffect(() => {
+    let active = true;
+    initializeDeviceAccess()
+      .then((value) => {
+        if (active) {
+          setAccess(value);
+          setState(vaultStatus());
+          setError("");
+        }
+      })
+      .catch((e) => {
+        if (active) {
+          setError(e.message);
+          setAccess((v) => ({ ...v, mode: "error" }));
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [attempt]);
   useEffect(() => {
     const locked = () => {
-      setUnlocked(false);
-      setStatus(null);
-      setPassword("");
-      setConfirmation("");
+      setAccess({ mode: "loading" });
+      setLegacyPhrase("");
+      retry();
     };
     const changed = () => setState(vaultStatus());
     window.addEventListener("daymark:lock", locked);
@@ -36,53 +63,58 @@ export default function EncryptionGate({ children }) {
       window.removeEventListener("daymark:lock", locked);
       window.removeEventListener("daymark:vault", changed);
     };
-  }, []);
+  }, [retry]);
   useEffect(() => {
-    if (unlocked) return;
-    let active = true;
-    inspectVault()
-      .then((v) => {
-        if (active) setStatus(v);
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, [unlocked]);
+    if (!["waiting", "legacy"].includes(access.mode)) return;
+    const timer = setInterval(() => {
+      if (!document.hidden) retry();
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [access.mode, retry]);
   useEffect(() => {
-    if (!unlocked) return;
+    if (access.mode !== "ready") return;
     const sync = () => {
       if (!document.hidden) syncVault().catch(() => {});
     };
-    window.addEventListener("online", sync);
-    window.addEventListener("focus", sync);
-    const timer = setInterval(sync, 60000);
     const changed = (event) => {
       if (event.key === "token" || event.key === null) lockEncryption();
     };
+    window.addEventListener("online", sync);
+    window.addEventListener("focus", sync);
     window.addEventListener("storage", changed);
+    const timer = setInterval(sync, 60000);
     return () => {
       clearInterval(timer);
       window.removeEventListener("online", sync);
       window.removeEventListener("focus", sync);
       window.removeEventListener("storage", changed);
     };
-  }, [unlocked]);
-  async function submit(event) {
-    event.preventDefault();
-    if (!status.encrypted && password !== confirmation) {
-      setError("Encryption passphrases do not match.");
-      return;
+  }, [access.mode]);
+  async function enable() {
+    setBusy(true);
+    setError("");
+    setAccess((v) => ({ ...v, mode: "enabling" }));
+    try {
+      setAccess(await enableDeviceEncryption());
+      setState(vaultStatus());
+    } catch (e) {
+      setError(e.message);
+      try {
+        setAccess(await initializeDeviceAccess());
+      } catch {
+        setAccess({ mode: "error" });
+      }
+    } finally {
+      setBusy(false);
     }
+  }
+  async function legacy(event) {
+    event.preventDefault();
     setBusy(true);
     setError("");
     try {
-      await unlockVault(password, status);
-      setPassword("");
-      setConfirmation("");
-      setUnlocked(true);
+      setAccess(await rememberLegacyDevice(legacyPhrase, access.status));
+      setLegacyPhrase("");
       setState(vaultStatus());
     } catch (e) {
       setError(e.message);
@@ -90,137 +122,169 @@ export default function EncryptionGate({ children }) {
       setBusy(false);
     }
   }
-  if (!unlocked)
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(access.link);
+      setCopied(true);
+    } catch {
+      setError("The connection link could not be copied.");
+    }
+  }
+  const request = parseConnection(location.search);
+  const hasRequest = new URLSearchParams(location.search).has("connect");
+  const dismiss = () => navigate(location.pathname, { replace: true });
+  function connect(link) {
+    const url = new URL(link);
+    if (!["http:", "https:"].includes(url.protocol)) throw new Error("Invalid device connection");
+    const search = url.hash.includes("?") ? url.hash.slice(url.hash.indexOf("?")) : url.search;
+    if (!parseConnection(search)) throw new Error("Invalid device connection");
+    navigate(location.pathname + search);
+  }
+  async function approve() {
+    setBusy(true);
+    setError("");
+    try {
+      await approveDeviceConnection(request);
+      dismiss();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (["loading", "enabling"].includes(access.mode)) return <CalendarLoading fullPage />;
+  if (!["plain", "ready"].includes(access.mode))
     return (
       <main className="container py-5" style={{ maxWidth: 600 }}>
-        <h1>{t("Encrypted data")}</h1>
-        {!status ? (
-          <p role="status">{t("Loading encrypted data…")}</p>
-        ) : (
-          <form onSubmit={submit}>
+        <h1>{t("Connect this device")}</h1>
+        {["waiting", "legacy"].includes(access.mode) && (
+          <>
             <p>
               {t(
-                status.encrypted
-                  ? "Enter your encryption passphrase. It is never sent to the server."
-                  : "Create a separate encryption passphrase. Use the same phrase on all your devices.",
+                "Open this connection link on a device that already has access, then approve this device there. No encryption phrase is needed.",
               )}
             </p>
-            {!status.encrypted && (
-              <>
-                <p>
-                  {t(
-                    "Account password recovery cannot recover this phrase. If you lose it, encrypted data cannot be restored.",
-                  )}
-                </p>
-                <p>
-                  {t(
-                    "Existing unencrypted server records will be retained. This preparation does not remove old copies.",
-                  )}
-                </p>
-                <p>
-                  {t(
-                    "Older clients cannot sync after encryption is enabled. Update your other devices first.",
-                  )}
-                </p>
-              </>
-            )}
-            <label className="d-block mb-3">
-              {t("Encryption passphrase")}
-              <input
-                className="form-control"
-                type="password"
-                autoComplete="off"
-                required
-                minLength={status.encrypted ? undefined : 12}
-                maxLength={1024}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={busy}
-              />
-            </label>
-            {!status.encrypted && (
-              <>
-                <label className="d-block mb-3">
-                  {t("Confirm encryption passphrase")}
-                  <input
-                    className="form-control"
-                    type="password"
-                    autoComplete="off"
-                    required
-                    value={confirmation}
-                    onChange={(e) => setConfirmation(e.target.value)}
-                    disabled={busy}
-                  />
-                </label>
-                <label className="d-block mb-3">
-                  <input
-                    type="checkbox"
-                    checked={acknowledged}
-                    onChange={(e) => setAcknowledged(e.target.checked)}
-                    required
-                  />{" "}
-                  {t("I have saved my phrase and understand the recovery limits.")}
-                </label>
-              </>
-            )}
-            <button
-              className="theme-button"
-              disabled={busy || (!status.encrypted && !acknowledged)}
+            <p>{t("Device code: {code}", { code: access.code })}</p>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              readOnly
+              aria-label={t("Device connection link")}
+              value={access.link || ""}
+            />
+            <Button
+              variant="outline-secondary"
+              className="theme-button-outline mt-3"
+              onClick={copy}
             >
-              {t(busy ? "Please wait…" : status.encrypted ? "Unlock data" : "Prepare encryption")}
-            </button>
-          </form>
+              {t(copied ? "Link copied" : "Copy connection link")}
+            </Button>
+            <p className="mt-3">{t("Waiting for confirmation on your connected device…")}</p>
+          </>
+        )}
+        {access.mode === "legacy" && (
+          <details className="mt-3">
+            <summary>{t("Access from the previous version")}</summary>
+            <p>
+              {t(
+                "This account used a phrase in an older version. Enter it once to save access on this device. New encryption uses automatic device keys.",
+              )}
+            </p>
+            <Form onSubmit={legacy}>
+              <Form.Group controlId="legacy-encryption-phrase">
+                <Form.Label>{t("Previous encryption phrase")}</Form.Label>
+                <Form.Control
+                  type="password"
+                  autoComplete="off"
+                  required
+                  value={legacyPhrase}
+                  onChange={(e) => setLegacyPhrase(e.target.value)}
+                />
+              </Form.Group>
+              <Button type="submit" className="theme-button mt-3" disabled={busy}>
+                {t("Restore device access")}
+              </Button>
+            </Form>
+          </details>
         )}
         {error && (
-          <p className="mt-3" role="alert">
+          <Alert variant="danger" className="mt-3">
             {t(error)}
-          </p>
+          </Alert>
         )}
         <div className="d-flex gap-3 mt-3">
-          <button type="button" disabled={busy} onClick={load}>
+          <Button
+            variant="outline-secondary"
+            className="theme-button-outline"
+            disabled={busy}
+            onClick={retry}
+          >
             {t("Retry")}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="outline-secondary"
+            className="theme-button-outline"
             disabled={busy}
             onClick={() => {
               clearToken();
-              window.location.reload();
+              navigate("/login", { replace: true });
             }}
           >
             {t("Sign out")}
-          </button>
+          </Button>
         </div>
       </main>
     );
   return (
-    <>
-      {(state?.legacyRetained || state?.pending || state?.error || !!state?.conflicts.length) && (
-        <div className="p-2 text-center border-bottom" aria-label={t("Encrypted data")}>
-          {state?.pending && (
-            <p className="mb-0" role="status">
-              {t("Encrypted changes are saved locally. Sync is pending.")}
-            </p>
+    <EncryptionContext.Provider value={{ mode: access.mode, enable, connect, retry, busy, error }}>
+      {(state?.pending || state?.error || !!state?.conflicts?.length) &&
+        access.mode === "ready" && (
+          <div className="p-2 text-center border-bottom" role="status">
+            {t(state.error || "Encrypted changes are saved locally. Sync is pending.")}{" "}
+            {t("Open Settings to synchronize or resolve conflicts.")}
+          </div>
+        )}
+      <Fragment key={access.mode}>{children}</Fragment>
+      <Modal
+        show={hasRequest}
+        onHide={busy ? undefined : dismiss}
+        centered
+        className="planner-modal"
+        aria-labelledby="device-approval-title"
+      >
+        <Modal.Header closeButton={!busy}>
+          <Modal.Title id="device-approval-title">{t("Approve another device")}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            {t(
+              "Approve only a connection link opened from your own other device. It will be able to read your encrypted account data.",
+            )}
+          </p>
+          {request && <p>{t("Device code: {code}", { code: request.id.slice(0, 8) })}</p>}
+          {(!request || access.mode !== "ready") && (
+            <Alert variant="warning">{t("Open this link on an already connected device.")}</Alert>
           )}
-          {state?.legacyRetained && (
-            <p className="mb-0" role="status">
-              {t("Old unencrypted server copies are retained. Full migration is pending.")}
-            </p>
-          )}
-          {state?.error && (
-            <p className="mb-0" role="status">
-              {t(state.error)}
-            </p>
-          )}
-          {!!state?.conflicts.length && (
-            <div role="alert">
-              <p>{t("These items changed on both devices")}</p>
-              <p>{t("Open Settings to synchronize or resolve conflicts.")}</p>
-            </div>
-          )}
-        </div>
-      )}
-      {children}
-    </>
+          {error && <Alert variant="danger">{t(error)}</Alert>}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-secondary"
+            className="theme-button-outline"
+            disabled={busy}
+            onClick={dismiss}
+          >
+            {t("Cancel")}
+          </Button>
+          <Button
+            className="theme-button"
+            disabled={busy || !request || access.mode !== "ready"}
+            onClick={approve}
+          >
+            {t("Approve device")}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </EncryptionContext.Provider>
   );
 }

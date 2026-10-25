@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
-  <ItemGroup><Compile Include="../Daymark/Schedule.cs" Link="Schedule.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../Daymark/Schedule.cs" Link="Schedule.cs" /><Compile Include="../Daymark/DeviceKeyProtection.cs" Link="DeviceKeyProtection.cs" /><PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" /></ItemGroup>
 </Project>

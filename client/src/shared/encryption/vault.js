@@ -1,4 +1,4 @@
-import { deriveKey, newSalt, open, seal } from "./crypto";
+import { deriveKey, newSalt, open, seal, contentKey } from "./crypto";
 import {
   encryptionSession,
   setEncryptionSession,
@@ -40,10 +40,10 @@ function guard(s) {
   if (!s || s !== encryptionSession() || s.owner !== owner())
     throw new Error("Unlock your encrypted data first.");
 }
-async function network(method = "GET", body) {
+export async function vaultNetwork(method = "GET", body, path = "/vault") {
   const token = localStorage.getItem("token");
-  if (isOfflineApp()) return offlineNative("request", { path: "/vault", method, body, token });
-  const response = await fetch(SOURCE + "/vault", {
+  if (isOfflineApp()) return offlineNative("request", { path, method, body, token });
+  const response = await fetch(SOURCE + path, {
     method,
     cache: "no-store",
     headers: {
@@ -59,6 +59,10 @@ async function network(method = "GET", body) {
     });
   return data;
 }
+const network = vaultNetwork;
+export const deviceScope = () => `${SOURCE}:${owner()}`;
+export const deviceContext = (device, keyId) =>
+  context(owner(), `device:${keyId}:${device.id}:${device.publicKey.x}:${device.publicKey.y}`);
 export async function inspectVault() {
   try {
     return await network();
@@ -72,7 +76,9 @@ export async function inspectVault() {
 }
 async function persist(s, doc) {
   guard(s);
-  const saved = JSON.stringify(await seal(s.key, s.salt, doc, context(s.owner, "local")));
+  const saved = JSON.stringify(
+    await seal(s.key, s.salt, doc, context(s.owner, "local"), s.version || 1),
+  );
   await commitLocal(
     s.owner,
     s.stored,
@@ -188,7 +194,13 @@ async function synchronize(s) {
   if (s.doc.conflicts?.length) throw new Error("These items changed on both devices");
   if (dirty(s)) {
     validateDocument(s.doc.current);
-    const envelope = await seal(s.key, s.salt, s.doc.current, context(s.owner, "remote"));
+    const envelope = await seal(
+      s.key,
+      s.salt,
+      s.doc.current,
+      context(s.owner, "remote"),
+      s.version || 1,
+    );
     guard(s);
     const reply = await network("PUT", { revision: s.doc.revision, envelope });
     guard(s);
@@ -285,6 +297,11 @@ export async function unlockVault(passphrase, status) {
     }
   }
   opening();
+  return activate(s, status);
+}
+async function activate(s, status) {
+  validateDocument(s.doc.base);
+  if (!s.doc.conflicts?.length) validateDocument(s.doc.current);
   setEncryptionSession(s);
   try {
     await persist(s, s.doc);
@@ -304,6 +321,106 @@ export async function unlockVault(passphrase, status) {
     throw error;
   }
   return s;
+}
+export async function bootstrapDeviceVault(raw, salt, device, status) {
+  const id = owner(),
+    epoch = encryptionEpoch();
+  const opening = () => {
+    if (!id || owner() !== id || encryptionEpoch() !== epoch)
+      throw new Error("Unlock your encrypted data first.");
+  };
+  if (status.encrypted) throw new Error("Data changed. Reload before enabling encryption.");
+  if (isOfflineApp()) {
+    await offlineNative("prepareVault", { token: localStorage.getItem("token") });
+    status = await network();
+    opening();
+    if (status.encrypted) throw new Error("Data changed. Reload before enabling encryption.");
+  }
+  const key = await contentKey(raw),
+    stored = localStorage.getItem(storageKey(id));
+  if (stored) {
+    const recovery = await open(key, JSON.parse(stored), context(id, "local"));
+    if (recovery.revision !== 0 || !equal(recovery.base, recovery.current))
+      throw new Error("The server has no encrypted document. Your local copy is retained.");
+  }
+  const current = { state: status.legacy.state, history: status.legacy.history || {} };
+  validateDocument(current);
+  const envelope = await seal(key, salt, current, context(id, "remote"), 2);
+  if (!equal(await open(key, envelope, context(id, "remote")), current))
+    throw new Error("Invalid encrypted document");
+  const doc = { revision: 0, base: current, current, generation: 0, legacyRetained: true };
+  opening();
+  const reply = await network("PUT", { revision: 0, digest: status.digest, envelope, device });
+  opening();
+  return activate(
+    {
+      owner: id,
+      key,
+      salt,
+      stored,
+      doc: { ...doc, revision: reply.revision, legacyRetained: reply.legacyRetained },
+      version: 2,
+      error: "",
+    },
+    { encrypted: true, envelope, revision: reply.revision },
+  );
+}
+export async function activateDeviceVault(raw, status) {
+  const id = owner(),
+    epoch = encryptionEpoch();
+  if (!id || !status.encrypted) throw new Error("Unlock your encrypted data first.");
+  const key = await contentKey(raw),
+    stored = localStorage.getItem(storageKey(id));
+  let doc;
+  if (stored) {
+    doc = await open(key, JSON.parse(stored), context(id, "local"));
+    if (doc.revision === 0 && status.offline)
+      throw new Error("Connect to finish enabling encryption.");
+  } else {
+    if (status.offline) throw new Error("Connect once to download your encrypted data.");
+    const current = await open(key, status.envelope, context(id, "remote"));
+    validateDocument(current);
+    doc = {
+      revision: status.revision,
+      base: current,
+      current,
+      generation: 0,
+      legacyRetained: status.legacyRetained,
+    };
+    if (isOfflineApp()) {
+      const legacy = await offlineNative("legacyVault", { token: localStorage.getItem("token") });
+      if (legacy.state && !equal(legacy.base, legacy.state)) {
+        const local = { state: legacy.state, history: legacy.history || {} };
+        validateDocument(local);
+        const merged = combine({ state: legacy.base, history: local.history }, local, current);
+        try {
+          validateDocument(merged.current);
+          validateNewIntakes(current, merged.current);
+        } catch {
+          merged.conflicts = [
+            ...new Set([...Object.keys(local.state), ...Object.keys(current.state)]),
+          ].filter((k) => !equal(local.state[k], current.state[k]));
+        }
+        doc.current = merged.current;
+        doc.conflicts = merged.conflicts;
+        doc.conflictLocal = local;
+      }
+    }
+  }
+  if (owner() !== id || encryptionEpoch() !== epoch)
+    throw new Error("Unlock your encrypted data first.");
+  return activate(
+    {
+      owner: id,
+      key,
+      salt: status.envelope.salt,
+      version: status.envelope.version,
+      stored,
+      doc,
+      error: "",
+    },
+    status,
+  );
 }
 export const vaultStatus = () => {
   const s = encryptionSession();

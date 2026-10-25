@@ -39,6 +39,14 @@ final class OfflineBridge {
         if (action.equals("sync")) { SyncWorker.schedule(context, true); return store.status(); }
         JSONObject doc = store.authorized(payload.optString("token", null));
         String owner = doc.getString("owner");
+        if (action.equals("protectDeviceKey") || action.equals("unprotectDeviceKey")) {
+            String data = payload.getString("data"), prefix = "daymark-device-key-v1:";
+            if (data.length() > 4096) throw new IllegalArgumentException("Invalid device key");
+            if (action.equals("protectDeviceKey")) return new JSONObject().put("data", SyncCredentials.encrypt(prefix + data));
+            String clear = SyncCredentials.decrypt(data);
+            if (!clear.startsWith(prefix)) throw new IllegalArgumentException("Invalid device key");
+            return new JSONObject().put("data", clear.substring(prefix.length()));
+        }
         if (action.equals("legacyVault")) {
             if (doc.optBoolean("encrypted") || !doc.has("state")) return new JSONObject();
             return new JSONObject().put("base", doc.getJSONObject("base")).put("state", doc.getJSONObject("state")).put("history", doc.optJSONObject("history"));

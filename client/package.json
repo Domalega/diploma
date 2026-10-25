@@ -15,7 +15,8 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
-    "eslint": "^8.57.1"
+    "eslint": "^8.57.1",
+    "fake-indexeddb": "6.2.6"
   },
   "scripts": {
     "start": "react-scripts start",

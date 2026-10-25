@@ -1,5 +1,6 @@
 using Daymark;
 using System.Text.Json;
+using System.Security.Cryptography;
 var raw = """
 {"version":1,"owner":"1","marks":{},"rules":[{"id":"med:1:am","kind":"medication","startDate":"2026-10-01","endDate":null,"time":"08:00","weekdays":[1,3,5],"title":"Reminder","body":"Example"}]}
 """;
@@ -27,3 +28,12 @@ Check(!Schedule.Merge(p, other).Marks.ContainsKey("2099-01-01"), "Accounts remai
 var berlin = TimeZoneInfo.FindSystemTimeZoneById("Europe/Berlin");
 Check(Schedule.At(new DateOnly(2026, 10, 25), "08:00", berlin).Offset == TimeSpan.FromHours(1), "DST uses the device's local wall time");
 Console.WriteLine("All native scheduling checks passed.");
+if (OperatingSystem.IsWindows())
+{
+    string privateKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(138));
+    var protectedKey = JsonSerializer.SerializeToElement(DeviceKeyProtection.Transform(JsonSerializer.SerializeToElement(new { data = privateKey }), true));
+    Check(protectedKey.GetProperty("data").GetString() != privateKey, "Device private keys are protected by DPAPI");
+    var restored = JsonSerializer.SerializeToElement(DeviceKeyProtection.Transform(protectedKey, false));
+    Check(restored.GetProperty("data").GetString() == privateKey, "Device key protection round trip");
+    Console.WriteLine("Native device-key protection checks passed.");
+}

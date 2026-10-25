@@ -1,77 +1,97 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import EncryptionGate from "./EncryptionGate";
-import { inspectVault, unlockVault, vaultStatus } from "./vault";
+import EncryptionControls from "./EncryptionControls";
+import {
+  initializeDeviceAccess,
+  enableDeviceEncryption,
+  approveDeviceConnection,
+  parseConnection,
+} from "./deviceFlow";
+import { vaultStatus } from "./vault";
 import { encryptionSession } from "./session";
+jest.mock("./deviceFlow");
 jest.mock("./vault");
 jest.mock("./session", () => ({ encryptionSession: jest.fn(), lockEncryption: jest.fn() }));
 beforeEach(() => {
   jest.resetAllMocks();
   encryptionSession.mockReturnValue(null);
-  vaultStatus.mockReturnValue({ pending: false, conflicts: [], legacyRetained: true });
+  vaultStatus.mockReturnValue({ pending: false, conflicts: [], legacyRetained: false });
 });
-test("the locked gate never renders calendar contents and unlocks only after successful decryption", async () => {
-  inspectVault.mockResolvedValue({ encrypted: true, envelope: {} });
-  unlockVault
-    .mockRejectedValueOnce(new Error("Incorrect encryption passphrase or damaged data."))
-    .mockResolvedValueOnce({});
+const open = (entry = "/calendar") =>
   render(
-    <EncryptionGate>
-      <p>Private calendar content</p>
-    </EncryptionGate>,
+    <MemoryRouter initialEntries={[entry]}>
+      <EncryptionGate>
+        <p>Private calendar content</p>
+        <EncryptionControls />
+      </EncryptionGate>
+    </MemoryRouter>,
   );
-  expect(screen.queryByText("Private calendar content")).not.toBeInTheDocument();
-  const field = await screen.findByLabelText("Encryption passphrase");
-  fireEvent.change(field, { target: { value: "wrong phrase" } });
-  fireEvent.click(screen.getByRole("button", { name: "Unlock data" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect");
-  expect(screen.queryByText("Private calendar content")).not.toBeInTheDocument();
-  fireEvent.change(field, { target: { value: "correct encryption phrase" } });
-  fireEvent.click(screen.getByRole("button", { name: "Unlock data" }));
+test("ordinary accounts open normally and encryption is a separate optional settings action without a phrase", async () => {
+  initializeDeviceAccess.mockResolvedValue({ mode: "plain", status: { encrypted: false } });
+  enableDeviceEncryption.mockImplementation(async () => {
+    encryptionSession.mockReturnValue({});
+    return { mode: "ready", status: { encrypted: true } };
+  });
+  open();
   expect(await screen.findByText("Private calendar content")).toBeInTheDocument();
-  expect(
-    screen.getByText("Old unencrypted server copies are retained. Full migration is pending."),
-  ).toBeInTheDocument();
-  fireEvent(window, new Event("daymark:lock"));
-  expect(screen.queryByText("Private calendar content")).not.toBeInTheDocument();
-  expect(await screen.findByLabelText("Encryption passphrase")).toBeInTheDocument();
-});
-test("setup requires confirmation and explains the retained originals and recovery limits", async () => {
-  inspectVault.mockResolvedValue({ encrypted: false });
-  render(
-    <EncryptionGate>
-      <p>Private calendar content</p>
-    </EncryptionGate>,
+  expect(screen.queryByLabelText("Encryption passphrase")).not.toBeInTheDocument();
+  expect(enableDeviceEncryption).not.toHaveBeenCalled();
+  const button = screen.getByRole("button", { name: "Enable encryption" });
+  expect(button).toHaveClass("btn", "theme-button");
+  fireEvent.click(button);
+  expect(await screen.findByRole("button", { name: "Sync now" })).toHaveClass(
+    "btn",
+    "theme-button-outline",
   );
-  const create = await screen.findByRole("button", { name: "Prepare encryption" });
-  expect(create).toBeDisabled();
-  expect(
-    screen.getByText(/Existing unencrypted server records will be retained/),
-  ).toBeInTheDocument();
-  expect(
-    screen.getByText(/Account password recovery cannot recover this phrase/),
-  ).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText("Encryption passphrase"), {
-    target: { value: "a new encryption phrase" },
-  });
-  fireEvent.change(screen.getByLabelText("Confirm encryption passphrase"), {
-    target: { value: "different phrase" },
-  });
-  fireEvent.click(screen.getByRole("checkbox"));
-  fireEvent.click(create);
-  expect(await screen.findByRole("alert")).toHaveTextContent("do not match");
-  expect(unlockVault).not.toHaveBeenCalled();
+  expect(enableDeviceEncryption).toHaveBeenCalledTimes(1);
 });
-test("server errors keep content locked and expose a working retry", async () => {
-  inspectVault
+test("an unapproved device cannot display encrypted contents and does not ask for a new phrase", async () => {
+  initializeDeviceAccess.mockResolvedValue({
+    mode: "waiting",
+    link: "https://example.test/#/calendar?connect=public-key",
+    code: "abcd1234",
+  });
+  open();
+  expect(await screen.findByText("Connect this device")).toBeInTheDocument();
+  expect(screen.queryByText("Private calendar content")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Encryption passphrase")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Copy connection link" })).toHaveClass(
+    "btn",
+    "theme-button-outline",
+  );
+  expect(screen.getByRole("button", { name: "Retry" })).toHaveClass("btn", "theme-button-outline");
+  expect(screen.getByLabelText("Device connection link")).toHaveAttribute("readonly");
+});
+test("connected devices open automatically without any user input", async () => {
+  encryptionSession.mockReturnValue({});
+  initializeDeviceAccess.mockResolvedValue({ mode: "ready", status: { encrypted: true } });
+  open();
+  expect(await screen.findByText("Private calendar content")).toBeInTheDocument();
+  expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Lock data" })).not.toBeInTheDocument();
+});
+test("a connection link does not share the key until the owner explicitly approves the device", async () => {
+  encryptionSession.mockReturnValue({});
+  initializeDeviceAccess.mockResolvedValue({ mode: "ready", status: { encrypted: true } });
+  const request = { owner: "7", id: "12345678-device", publicKey: {} };
+  parseConnection.mockReturnValue(request);
+  approveDeviceConnection.mockResolvedValue({});
+  open("/calendar?connect=public-key");
+  const approve = await screen.findByRole("button", { name: "Approve device" });
+  expect(approveDeviceConnection).not.toHaveBeenCalled();
+  expect(approve).toHaveClass("btn", "theme-button");
+  fireEvent.click(approve);
+  await waitFor(() => expect(approveDeviceConnection).toHaveBeenCalledWith(request));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+});
+test("a failed access check exposes a styled retry and retains the protection boundary", async () => {
+  initializeDeviceAccess
     .mockRejectedValueOnce(new Error("Server unavailable"))
-    .mockResolvedValueOnce({ encrypted: true });
-  render(
-    <EncryptionGate>
-      <p>Private calendar content</p>
-    </EncryptionGate>,
-  );
+    .mockResolvedValueOnce({ mode: "plain" });
+  open();
   expect(await screen.findByRole("alert")).toHaveTextContent("Server unavailable");
-  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-  expect(await screen.findByLabelText("Encryption passphrase")).toBeInTheDocument();
   expect(screen.queryByText("Private calendar content")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(await screen.findByText("Private calendar content")).toBeInTheDocument();
 });
