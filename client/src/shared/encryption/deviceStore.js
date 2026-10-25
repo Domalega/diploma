@@ -56,13 +56,14 @@ export async function privateDeviceKey(device) {
     ["deriveBits"],
   );
 }
-export async function getDevice(scope) {
+export async function getDevice(scope, renew = false) {
   if (!window.crypto?.subtle) throw new Error("Encryption requires HTTPS and an updated browser.");
   if (!navigator.locks?.request)
     throw new Error("Update your browser to use encrypted local storage.");
   return navigator.locks.request("daymark-device:" + scope, async () => {
     const saved = await readDevice(scope);
-    if (saved) return saved;
+    if (saved && !renew) return saved;
+    if (saved) await saveDevice(scope + ":backup:" + saved.id, saved);
     const native = isNativeApp() || isOfflineApp();
     const keys = await window.crypto.subtle.generateKey(
       { name: "ECDH", namedCurve: "P-256" },

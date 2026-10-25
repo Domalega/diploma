@@ -27,6 +27,7 @@ export default function EncryptionControls() {
   const [error, setError] = useState("");
   const [connecting, setConnecting] = useState(false),
     [link, setLink] = useState("");
+  const [disabling, setDisabling] = useState(false);
   useEffect(() => {
     const changed = () => setState(vaultStatus());
     window.addEventListener("daymark:vault", changed);
@@ -64,6 +65,17 @@ export default function EncryptionControls() {
             )}
           </p>
           <div className="d-flex flex-wrap gap-2">
+            <Button
+              variant="outline-secondary"
+              className="theme-button-outline"
+              disabled={busy || encryption.busy}
+              onClick={() => {
+                setError("");
+                setDisabling(true);
+              }}
+            >
+              {t("Disable encryption")}
+            </Button>
             <Button
               variant="outline-secondary"
               className="theme-button-outline"
@@ -146,6 +158,47 @@ export default function EncryptionControls() {
           )}
         </p>
       </details>
+      <Modal
+        show={disabling}
+        onHide={busy ? undefined : () => setDisabling(false)}
+        centered
+        className="planner-modal"
+        aria-labelledby="disable-encryption-title"
+      >
+        <Modal.Header closeButton={!busy}>
+          <Modal.Title id="disable-encryption-title">{t("Disable encryption?")}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            {t(
+              "Your current data will be stored without end-to-end encryption. An encrypted backup will be kept.",
+            )}
+          </p>
+          {error && <p role="alert">{t(error)}</p>}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-secondary"
+            className="theme-button-outline"
+            disabled={busy}
+            onClick={() => setDisabling(false)}
+          >
+            {t("Cancel")}
+          </Button>
+          <Button
+            className="theme-button"
+            disabled={busy || encryption.busy}
+            onClick={() =>
+              action(async () => {
+                await encryption.disable();
+                setDisabling(false);
+              })
+            }
+          >
+            {t("Disable encryption")}
+          </Button>
+        </Modal.Footer>
+      </Modal>
       <Modal
         show={connecting}
         onHide={() => setConnecting(false)}

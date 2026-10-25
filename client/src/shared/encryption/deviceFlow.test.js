@@ -9,7 +9,15 @@ import {
   rememberLegacyDevice,
 } from "./deviceFlow";
 import { readDevice } from "./deviceStore";
-import { inspectVault, unlockVault, encryptedRequest, deviceScope, deviceContext } from "./vault";
+import {
+  inspectVault,
+  unlockVault,
+  encryptedRequest,
+  deviceScope,
+  deviceContext,
+  disableVault,
+  syncVault,
+} from "./vault";
 import { lockEncryption, encryptionSession, setEncryptionSession } from "./session";
 import { unwrapContentKey } from "./crypto";
 const token = `header.${btoa(JSON.stringify({ id: 7 }))}.signature`;
@@ -76,6 +84,19 @@ beforeEach(() => {
     const path = new URL(url).pathname;
     const ok = (data) => ({ ok: true, json: async () => data });
     const error = (status, message) => ({ ok: false, status, json: async () => ({ message }) });
+    if (path === "/api/vault/disable") {
+      remote = {
+        encrypted: false,
+        legacy: body.document,
+        digest: "restored",
+        disabled: { salt: body.salt, revision: body.revision, id: body.operationId },
+      };
+      return ok({ encrypted: false });
+    }
+    if (path === "/api/sync" && !remote.encrypted) {
+      remote.legacy = { state: body.local, history: remote.legacy.history };
+      return ok({ ...remote.legacy, conflicts: [] });
+    }
     if (path === "/api/vault/devices" && options.method === "POST") {
       if (!devices.has(body.id)) devices.set(body.id, { ...body, wrappedKey: null });
       return ok(devices.get(body.id));
@@ -220,4 +241,69 @@ test("lost bootstrap replies recover using only the persistent device key", asyn
   await expect(enableDeviceEncryption()).rejects.toThrow(/Reply lost/);
   expect(remote.encrypted).toBe(true);
   expect((await initializeDeviceAccess()).mode).toBe("ready");
+});
+
+test("disabling uploads pending edits, keeps ciphertext backups and permits a fresh automatic key", async () => {
+  await enableDeviceEncryption();
+  const first = await readDevice(deviceScope());
+  online = false;
+  await note();
+  online = true;
+  await disableVault();
+  expect(encryptionSession()).toBeNull();
+  expect(remote.encrypted).toBe(false);
+  expect(JSON.stringify(remote.legacy)).toContain("Private automatic-key note");
+  expect((await initializeDeviceAccess()).mode).toBe("plain");
+  const backups = [...localStorage.values].filter(([k]) => k.includes(":backup:"));
+  expect(backups.length).toBe(1);
+  expect(backups[0][1]).not.toContain("Private automatic-key note");
+  await enableDeviceEncryption();
+  const second = await readDevice(deviceScope());
+  expect(second.id).not.toBe(first.id);
+  expect(second.keyId).not.toBe(first.keyId);
+  expect(remote.encrypted).toBe(true);
+  expect((await encryptedRequest("/userDate/get", { token }))[0].comment).toBe(
+    "Private automatic-key note",
+  );
+});
+test("disabling requires a connection and recovers a committed change whose reply was lost", async () => {
+  await enableDeviceEncryption();
+  online = false;
+  await expect(disableVault()).rejects.toThrow(/Offline/);
+  expect(encryptionSession()).not.toBeNull();
+  online = true;
+  const original = global.fetch;
+  global.fetch = jest.fn(async (...args) => {
+    const result = await original(...args);
+    if (new URL(args[0]).pathname === "/api/vault/disable")
+      throw new TypeError("Lost disable reply");
+    return result;
+  });
+  await disableVault();
+  expect(encryptionSession()).toBeNull();
+  expect(remote.encrypted).toBe(false);
+});
+test("an offline connected device merges pending edits after another device disables encryption", async () => {
+  await enableDeviceEncryption();
+  await note();
+  const a = snapshotDevice();
+  newDevice();
+  const pending = await initializeDeviceAccess(),
+    b = snapshotDevice();
+  const request = parseConnection(new URL(pending.link).search);
+  switchTo(a);
+  await approveDeviceConnection(request);
+  switchTo(b);
+  await initializeDeviceAccess();
+  online = false;
+  await note();
+  const offlineDevice = snapshotDevice();
+  online = true;
+  switchTo(a);
+  await disableVault();
+  switchTo(offlineDevice);
+  await syncVault();
+  expect(encryptionSession()).toBeNull();
+  expect(Object.keys(remote.legacy.state).filter((k) => k.startsWith("note/")).length).toBe(2);
+  expect((await initializeDeviceAccess()).mode).toBe("plain");
 });

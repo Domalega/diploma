@@ -5,7 +5,7 @@ import { useLanguage } from "../i18n/LanguageProvider";
 import { clearToken } from "../api/tokenStorage";
 import CalendarLoading from "../components/CalendarLoading";
 import { encryptionSession, lockEncryption } from "./session";
-import { syncVault, vaultStatus } from "./vault";
+import { syncVault, vaultStatus, disableVault } from "./vault";
 import {
   initializeDeviceAccess,
   enableDeviceEncryption,
@@ -77,7 +77,12 @@ export default function EncryptionGate({ children }) {
       if (!document.hidden) syncVault().catch(() => {});
     };
     const changed = (event) => {
-      if (event.key === "token" || event.key === null) lockEncryption();
+      if (
+        event.key === "token" ||
+        event.key === null ||
+        (event.key?.startsWith("daymark.encrypted.v1:") && event.newValue === null)
+      )
+        lockEncryption();
     };
     window.addEventListener("online", sync);
     window.addEventListener("focus", sync);
@@ -118,6 +123,18 @@ export default function EncryptionGate({ children }) {
       setState(vaultStatus());
     } catch (e) {
       setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function disable() {
+    setBusy(true);
+    setError("");
+    try {
+      await disableVault();
+    } catch (e) {
+      setError(e.message);
+      throw e;
     } finally {
       setBusy(false);
     }
@@ -236,7 +253,9 @@ export default function EncryptionGate({ children }) {
       </main>
     );
   return (
-    <EncryptionContext.Provider value={{ mode: access.mode, enable, connect, retry, busy, error }}>
+    <EncryptionContext.Provider
+      value={{ mode: access.mode, enable, disable, connect, retry, busy, error }}
+    >
       {(state?.pending || state?.error || !!state?.conflicts?.length) &&
         access.mode === "ready" && (
           <div className="p-2 text-center border-bottom" role="status">

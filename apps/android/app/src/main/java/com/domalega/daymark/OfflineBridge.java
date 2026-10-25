@@ -51,6 +51,22 @@ final class OfflineBridge {
             if (doc.optBoolean("encrypted") || !doc.has("state")) return new JSONObject();
             return new JSONObject().put("base", doc.getJSONObject("base")).put("state", doc.getJSONObject("state")).put("history", doc.optJSONObject("history"));
         }
+        if (action.equals("unsealVault")) {
+            if (payload.optBoolean("prepare")) return new JSONObject().put("ready", true);
+            if (!doc.optBoolean("encrypted") && !doc.optBoolean("vaultRemote")) return new JSONObject().put("ready", true);
+            JSONObject remote = OfflineHttp.call("/vault", "GET", null, payload.getString("token"));
+            if (remote.optBoolean("encrypted") || !remote.has("disabled")) throw new IllegalStateException("Encryption is still enabled on the server.");
+            JSONObject legacy = remote.getJSONObject("legacy");
+            JSONObject saved = store.update(owner, (current) -> {
+                if (current.has("state")) current.put("vaultLegacyBackup", new JSONObject().put("state", current.getJSONObject("state")).put("base", current.optJSONObject("base")).put("history", current.optJSONObject("history")));
+                current.put("state", legacy.getJSONObject("state")).put("base", legacy.getJSONObject("state")).put("history", legacy.optJSONObject("history"));
+                current.put("encrypted", false).put("vaultRemote", false).put("generation", current.getLong("generation") + 1).put("syncRevision", current.optLong("syncRevision") + 1).put("error", "");
+                current.remove("flight"); current.remove("conflicts"); current.remove("conflictRemote");
+            });
+            DeviceSyncPlan.refresh(context, saved);
+            SyncWorker.schedule(context, true);
+            return new JSONObject().put("ready", true);
+        }
         if (action.equals("prepareVault")) {
             OfflineSync.run(context);
             JSONObject latest = store.authorized(payload.optString("token", null));

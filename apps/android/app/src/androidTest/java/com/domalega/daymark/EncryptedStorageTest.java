@@ -11,6 +11,24 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class EncryptedStorageTest {
+    @Test public void disablingPreparationAndOrdinaryRetriesNeverOverwritePendingNativeData() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        OfflineStore store = OfflineStore.get(context);
+        String owner = "disable-encryption-test", token = "disable-test-token";
+        try {
+            store.activate(owner, token);
+            store.update(owner, (doc) -> doc.put("privateText", "Pending ordinary change"));
+            OfflineBridge.handle(context, "unsealVault", new JSONObject().put("token", token));
+            assertEquals("Pending ordinary change", store.read(owner).getString("privateText"));
+            store.update(owner, (doc) -> doc.put("encrypted", true));
+            OfflineBridge.handle(context, "unsealVault", new JSONObject().put("token", token).put("prepare", true));
+            assertTrue(store.read(owner).getBoolean("encrypted"));
+            assertTrue(OfflineHttp.supportedPath("/vault/disable"));
+        } finally {
+            store.logout();
+            store.getWritableDatabase().delete("accounts", "owner=?", new String[]{owner});
+        }
+    }
     @Test public void deviceKeysUsePurposeBoundKeystoreProtection() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         OfflineStore store = OfflineStore.get(context);

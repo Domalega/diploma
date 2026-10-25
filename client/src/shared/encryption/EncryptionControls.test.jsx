@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import EncryptionControls from "./EncryptionControls";
 import { encryptionSession } from "./session";
 import { vaultStatus, syncVault, resolveVault } from "./vault";
@@ -6,6 +6,31 @@ import { EncryptionContext } from "./EncryptionContext";
 jest.mock("./session");
 jest.mock("./vault");
 beforeEach(() => jest.resetAllMocks());
+test("disabling requires explicit confirmation and keeps errors available for retry", async () => {
+  encryptionSession.mockReturnValue({});
+  vaultStatus.mockReturnValue({ conflicts: [] });
+  const disable = jest.fn().mockRejectedValueOnce(new Error("Offline")).mockResolvedValueOnce();
+  render(
+    <EncryptionContext.Provider value={{ disable }}>
+      <EncryptionControls />
+    </EncryptionContext.Provider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Disable encryption" }));
+  expect(disable).not.toHaveBeenCalled();
+  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel" }));
+  expect(disable).not.toHaveBeenCalled();
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  fireEvent.click(screen.getByRole("button", { name: "Disable encryption" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", { name: "Disable encryption" }),
+  );
+  expect(await screen.findByRole("alert")).toHaveTextContent("Offline");
+  fireEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", { name: "Disable encryption" }),
+  );
+  await waitFor(() => expect(disable).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+});
 
 test("a pasted connection link is reviewed before approval", () => {
   encryptionSession.mockReturnValue({});

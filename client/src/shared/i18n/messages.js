@@ -9,6 +9,16 @@ export const en = {
   },
 };
 export const ru = {
+  "Disable encryption": "Выключить шифрование",
+  "Disable encryption?": "Выключить шифрование?",
+  "Your current data will be stored without end-to-end encryption. An encrypted backup will be kept.":
+    "Текущие данные будут храниться без сквозного шифрования. Зашифрованная резервная копия сохранится.",
+  "Update the installed Daymark app before disabling encryption.":
+    "Обновите приложение Daymark перед выключением шифрования.",
+  "Encryption was enabled again. Reload this device.":
+    "Шифрование включено заново. Перезагрузите приложение на этом устройстве.",
+  "Unsynced changes from an earlier encryption period are retained on this device.":
+    "На этом устройстве сохранены несинхронизированные изменения от предыдущего включения шифрования.",
   "Connect another device": "Подключить другое устройство",
   "Connection link from your other device": "Ссылка с другого устройства",
   "Review connection": "Проверить подключение",

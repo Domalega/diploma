@@ -146,8 +146,12 @@ async function synchronize(s) {
   guard(s);
   const remote = await network();
   guard(s);
-  if (!remote.encrypted || remote.envelope.salt !== s.salt)
-    throw new Error("Invalid encrypted document");
+  if (!remote.encrypted && remote.disabled) return synchronizePlain(s, remote);
+  if (remote.encrypted && remote.envelope.salt !== s.salt) {
+    lockEncryption();
+    throw new Error("Encryption was enabled again. Reload this device.");
+  }
+  if (!remote.encrypted) throw new Error("Invalid encrypted document");
   if (remote.revision < s.doc.revision)
     throw new Error("The server returned an older encrypted document.");
   if (remote.revision !== s.doc.revision) {
@@ -450,6 +454,152 @@ export function syncVault() {
       notify();
       throw error;
     }
+  });
+}
+async function synchronizePlain(s, remote) {
+  const clear = { state: remote.legacy.state, history: remote.legacy.history || {} };
+  validateDocument(clear);
+  const merged = combine(s.doc.base, s.doc.current, clear);
+  const conflictLocal = clone(s.doc.conflictLocal || s.doc.current);
+  for (const k of s.doc.conflicts || []) {
+    if (s.doc.current.state[k] === undefined) delete merged.current.state[k];
+    else merged.current.state[k] = s.doc.current.state[k];
+  }
+  merged.conflicts = [...new Set([...(s.doc.conflicts || []), ...merged.conflicts])];
+  try {
+    validateDocument(merged.current);
+    validateNewIntakes(clear, merged.current);
+  } catch {
+    merged.conflicts = [
+      ...new Set([
+        ...merged.conflicts,
+        ...Object.keys(merged.current.state),
+        ...Object.keys(clear.state),
+      ]),
+    ].filter((key) => !equal(merged.current.state[key], clear.state[key]));
+  }
+  await persist(s, {
+    ...s.doc,
+    base: clear,
+    current: merged.current,
+    conflicts: merged.conflicts,
+    conflictLocal,
+    generation: s.doc.generation + 1,
+  });
+  if (merged.conflicts.length) throw new Error("These items changed on both devices");
+  if (dirty(s)) {
+    const reply = await network(
+      "POST",
+      {
+        version: 1,
+        operationId: window.crypto.randomUUID(),
+        base: clear.state,
+        local: merged.current.state,
+      },
+      "/sync",
+    );
+    guard(s);
+    if (reply.conflicts?.length) {
+      await persist(s, {
+        ...s.doc,
+        base: { state: reply.state, history: reply.history || {} },
+        conflicts: reply.conflicts,
+        conflictLocal,
+      });
+      throw new Error("These items changed on both devices");
+    }
+    const current = { state: reply.state, history: reply.history || {} };
+    await persist(s, { ...s.doc, base: current, current });
+  }
+  if (isOfflineApp()) await offlineNative("unsealVault", { token: localStorage.getItem("token") });
+  guard(s);
+  await navigator.locks.request(storageKey(s.owner), () => {
+    guard(s);
+    if (localStorage.getItem(storageKey(s.owner)) !== s.stored)
+      throw new Error("Local data changed in another tab. Lock and unlock again.");
+    localStorage.setItem(storageKey(s.owner) + ":backup:" + s.salt, s.stored);
+    localStorage.removeItem(storageKey(s.owner));
+  });
+  clearBrowserCache();
+  lockEncryption();
+  notify();
+}
+export async function resumePlainVault(raw, status) {
+  const id = owner(),
+    stored = localStorage.getItem(storageKey(id));
+  if (!stored) {
+    if (isOfflineApp())
+      await offlineNative("unsealVault", { token: localStorage.getItem("token") });
+    return;
+  }
+  const key = await contentKey(raw),
+    envelope = JSON.parse(stored);
+  const doc = await open(key, envelope, context(id, "local"));
+  const s = {
+    owner: id,
+    key,
+    salt: envelope.salt,
+    version: envelope.version,
+    stored,
+    doc,
+    error: "",
+  };
+  setEncryptionSession(s);
+  try {
+    await synchronizePlain(s, status);
+  } catch (error) {
+    s.error = error.message;
+    notify();
+    throw error;
+  }
+}
+export async function archivePreviousVault(raw) {
+  const id = owner(),
+    stored = localStorage.getItem(storageKey(id));
+  if (!stored) return;
+  const key = await contentKey(raw),
+    envelope = JSON.parse(stored);
+  const doc = await open(key, envelope, context(id, "local"));
+  if (!equal(doc.base, doc.current) || doc.conflicts?.length)
+    throw new Error(
+      "Unsynced changes from an earlier encryption period are retained on this device.",
+    );
+  await navigator.locks.request(storageKey(id), () => {
+    if (owner() !== id || localStorage.getItem(storageKey(id)) !== stored)
+      throw new Error("Local data changed in another tab. Lock and unlock again.");
+    localStorage.setItem(storageKey(id) + ":backup:" + envelope.salt, stored);
+    localStorage.removeItem(storageKey(id));
+  });
+}
+export function disableVault() {
+  const scheduled = encryptionSession();
+  return serial(async () => {
+    const s = scheduled;
+    guard(s);
+    if (isOfflineApp()) {
+      try {
+        await offlineNative("unsealVault", { token: localStorage.getItem("token"), prepare: true });
+      } catch {
+        throw new Error("Update the installed Daymark app before disabling encryption.");
+      }
+    }
+    await synchronize(s);
+    if (!encryptionSession()) return;
+    guard(s);
+    const command = {
+      operationId: window.crypto.randomUUID(),
+      revision: s.doc.revision,
+      salt: s.salt,
+      document: s.doc.current,
+    };
+    try {
+      await network("POST", command, "/vault/disable");
+    } catch (error) {
+      const status = await network().catch(() => null);
+      if (status?.encrypted !== false || status.disabled?.salt !== s.salt) throw error;
+    }
+    guard(s);
+    await synchronize(s);
   });
 }
 export function resolveVault(choice) {

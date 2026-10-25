@@ -18,8 +18,10 @@ import {
   deviceContext,
   bootstrapDeviceVault,
   activateDeviceVault,
+  resumePlainVault,
+  archivePreviousVault,
 } from "./vault";
-import { encryptionEpoch } from "./session";
+import { encryptionEpoch, encryptionSession } from "./session";
 const owner = () => tokenOwner(localStorage.getItem("token"));
 function flowGuard() {
   const id = owner(),
@@ -85,9 +87,44 @@ export async function initializeDeviceAccess() {
   guard();
   const status = await inspectVault();
   guard();
-  if (!status.encrypted) return { mode: "plain", status };
-  const scope = deviceScope(),
-    device = await getDevice(scope);
+  if (!status.encrypted) {
+    if (status.disabled) {
+      const saved = await readDevice(deviceScope());
+      guard();
+      if (saved?.wrappedKey) {
+        const raw = await unwrapContentKey(
+          saved.wrappedKey,
+          await privateDeviceKey(saved),
+          deviceContext(saved, saved.keyId),
+        );
+        try {
+          await resumePlainVault(raw, status);
+        } catch (error) {
+          if (encryptionSession()?.doc.conflicts?.length) return { mode: "ready", status };
+          throw error;
+        } finally {
+          raw.fill(0);
+        }
+      } else if (isOfflineApp()) await resumePlainVault(null, status);
+    }
+    return { mode: "plain", status };
+  }
+  const scope = deviceScope();
+  let device = await getDevice(scope);
+  if (device.keyId && device.keyId !== status.envelope.salt) {
+    const raw = await unwrapContentKey(
+      device.wrappedKey,
+      await privateDeviceKey(device),
+      deviceContext(device, device.keyId),
+    );
+    try {
+      await archivePreviousVault(raw);
+    } finally {
+      raw.fill(0);
+    }
+    guard();
+    device = await getDevice(scope, true);
+  }
   guard();
   let saved = device;
   if (!status.offline) {
@@ -122,12 +159,14 @@ export async function initializeDeviceAccess() {
 export async function enableDeviceEncryption() {
   const guard = flowGuard();
   guard();
-  const scope = deviceScope(),
-    device = await getDevice(scope);
-  guard();
   const status = await inspectVault();
   guard();
   if (status.encrypted) return initializeDeviceAccess();
+  const scope = deviceScope(),
+    saved = await readDevice(scope);
+  guard();
+  const device = await getDevice(scope, !!(status.disabled && saved?.wrappedKey));
+  guard();
   await register(device);
   guard();
   const keyId = device.keyId || newSalt();

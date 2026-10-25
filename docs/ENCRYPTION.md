@@ -27,6 +27,14 @@ Keep at least one connected device. If every device key is lost through device l
 
 Accounts that enabled the earlier phrase-based format retain their existing data. A connected device can authorize another device using the same flow. If no device has remembered the key yet, **Access from the previous version** accepts the old phrase once, verifies it and saves device access. This compatibility path does not ask for a new phrase or rewrite the encrypted document.
 
+## Disable encryption
+
+On a connected device, choose **Settings → End-to-end encryption → Disable encryption** and confirm. An internet connection is required. The client synchronizes and resolves conflicts before submitting the current decrypted document. The server checks the encrypted revision and restores ordinary records in one transaction. Failed validation or a stale revision leaves encryption enabled.
+
+The last encrypted document and the previous ordinary snapshot remain in an account-scoped deactivation archive. Local ciphertext and the corresponding device keys are retained as backups; existing activity is preserved and missing events are added without replacing the history. Other connected clients merge pending changes into the ordinary snapshot or ask to resolve conflicts. Enabling again creates a fresh content key and device registration. Unsynchronized changes from an earlier encryption period are retained and reported instead of silently discarded.
+
+Android 0.4.2 or newer restores its native ordinary snapshot and background synchronization after disabling. Older Android apps must be updated first. Native disk storage still uses operating-system protection; disabling concerns end-to-end encryption and ordinary server storage.
+
 ## Storage and synchronization
 
 Notes, dates, times, to-dos, Kanban columns/tasks/activity, medication schedules and intake history are inside the encrypted document. Email, authentication/reset state, public device keys, device type, record sizes and request timing remain visible to the server. Account tokens and appearance preferences are outside content encryption.
