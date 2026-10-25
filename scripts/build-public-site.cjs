@@ -106,6 +106,7 @@ function buildPublicSite({ buildDir, siteUrl = DEFAULT_SITE_URL, publicUrl = "" 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#fcfcf9">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="google-site-verification" content="dkR3pNpD3m7CAKVu8TPUt6-Ca5N1jE8SiTHRYO7eBeU" />
 <title>${escape(data.title)}</title>
 <meta name="description" content="${escape(data.description)}">
 <link rel="canonical" href="${escape(url)}">
