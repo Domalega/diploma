@@ -28,6 +28,7 @@ jobs:
             server/package-lock.json
       - run: npm run setup
       - run: npm test
+      - run: node --test scripts/build-public-site.test.cjs
       - run: npm run lint
       - name: Validate deployment configuration
         if: vars.REACT_APP_API_URL != ''
@@ -44,6 +45,7 @@ jobs:
           CI: "true"
           PUBLIC_URL: /diploma
           REACT_APP_ROUTER: hash
+          DAYMARK_SITE_URL: https://domalega.github.io/diploma/
           REACT_APP_API_URL: ${{ vars.REACT_APP_API_URL || 'http://localhost:5000/api' }}
       - uses: actions/upload-pages-artifact@v4
         if: github.ref == 'refs/heads/redesign' && github.event_name != 'pull_request' && vars.REACT_APP_API_URL != ''
