@@ -10,6 +10,7 @@ const TodoList = require("./TodoList");
 const SyncReceipt = require("./SyncReceipt");
 const SyncNoteKey = require("./SyncNoteKey");
 const EncryptedVault = require("./EncryptedVault");
+const VaultDevice = require("./VaultDevice");
 
 User.hasMany(UserDate);
 UserDate.belongsTo(User);
@@ -31,7 +32,7 @@ KanbanTask.hasMany(KanbanEvent, { foreignKey: "taskId", onDelete: "CASCADE" });
 KanbanEvent.belongsTo(KanbanTask, { foreignKey: "taskId" });
 User.hasOne(TodoList, { foreignKey: "userId", onDelete: "CASCADE" });
 TodoList.belongsTo(User, { foreignKey: "userId" });
-for (const model of [SyncReceipt, SyncNoteKey, EncryptedVault]) {
+for (const model of [SyncReceipt, SyncNoteKey, EncryptedVault, VaultDevice]) {
   User.hasMany(model, { foreignKey: "userId", onDelete: "CASCADE" });
   model.belongsTo(User, { foreignKey: "userId" });
 }
@@ -50,4 +51,5 @@ module.exports = {
   SyncReceipt,
   SyncNoteKey,
   EncryptedVault,
+  VaultDevice,
 };

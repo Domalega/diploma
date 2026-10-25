@@ -18,8 +18,10 @@ function validate(envelope) {
   if (
     !envelope ||
     Object.keys(envelope).sort().join(",") !== "ciphertext,iv,kdf,salt,version" ||
-    envelope.version !== 1 ||
-    envelope.kdf !== "PBKDF2-SHA256-600000" ||
+    !(
+      (envelope.version === 1 && envelope.kdf === "PBKDF2-SHA256-600000") ||
+      (envelope.version === 2 && envelope.kdf === "DEVICE-KEY")
+    ) ||
     !base64(envelope.salt, 24, 24) ||
     Buffer.from(envelope.salt, "base64").length !== 16 ||
     !base64(envelope.iv, 16, 16) ||
@@ -58,6 +60,12 @@ const save = (userId, body) =>
         const legacy = await snapshot(userId, transaction);
         if (body.revision !== 0 || body.digest !== digest(legacy))
           throw ApiError.conflict("Data changed. Reload before enabling encryption.");
+        if (body.envelope.version === 2)
+          await require("./vaultDeviceService").approveInTransaction(
+            userId,
+            body.device,
+            transaction,
+          );
         // Keep the existing tables intact until a separately approved cleanup.
         const legacyRetained = (
           await Promise.all(
@@ -82,6 +90,8 @@ const save = (userId, body) =>
         throw ApiError.conflict("Encrypted data changed on another device. Sync and try again.");
       if (body.envelope.salt !== vault.envelope.salt)
         throw ApiError.badRequest("The encryption salt cannot be changed");
+      if (body.envelope.version !== vault.envelope.version)
+        throw ApiError.badRequest("The encryption format cannot be changed");
       await vault.update(
         { revision: vault.revision + 1, envelope: body.envelope },
         { transaction },
