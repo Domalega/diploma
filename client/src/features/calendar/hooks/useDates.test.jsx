@@ -2,6 +2,11 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import useDates from "./useDates";
 import * as api from "../api/datesApi";
+import {
+  cacheSession,
+  readCachedResource,
+  saveCachedResource,
+} from "../../../shared/api/browserCache";
 
 jest.mock("../api/datesApi");
 const note = { id: 1, date: "2026-10-19", time: null, comment: "Original" };
@@ -14,8 +19,30 @@ const deferred = () => {
   return { promise, resolve };
 };
 beforeEach(() => {
+  localStorage.clear();
   jest.resetAllMocks();
   api.getAllDates.mockResolvedValue([note]);
+});
+
+test("saved notes appear immediately while the server is pending and survive an outage", async () => {
+  localStorage.setItem("token", `header.${btoa(JSON.stringify({ id: 7 }))}.signature`);
+  saveCachedResource("dates", [note], cacheSession());
+  let reject;
+  api.getAllDates.mockReturnValue(
+    new Promise((resolve, fail) => {
+      reject = fail;
+    }),
+  );
+  const { result } = renderHook(useDates, { wrapper });
+  expect(result.current.loading).toBe(false);
+  expect(result.current.dates).toEqual([note]);
+  await act(async () => reject(new Error("Offline")));
+  expect(result.current.error).toBe("Offline");
+  expect(result.current.dates).toEqual([note]);
+  await act(async () => result.current.update(note.id, { comment: "Saved" }));
+  expect(readCachedResource("dates")[0].comment).toBe("Saved");
+  await act(async () => result.current.remove(note.id));
+  expect(readCachedResource("dates")).toEqual([]);
 });
 
 test.each(["update", "remove"])("an old read cannot undo a successful %s", async (action) => {

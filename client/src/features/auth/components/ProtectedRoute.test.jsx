@@ -2,6 +2,11 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import { check } from "../api/authApi";
+import {
+  cacheSession,
+  hasCachedCalendar,
+  saveCachedResource,
+} from "../../../shared/api/browserCache";
 
 jest.mock("../api/authApi");
 beforeEach(() => {
@@ -83,4 +88,46 @@ test("an expired session returns to sign-in", async () => {
   renderRoute();
   expect(await screen.findByText("Login page")).toBeInTheDocument();
   expect(localStorage.getItem("token")).toBeNull();
+});
+
+function seedCalendar() {
+  localStorage.setItem("token", `header.${btoa(JSON.stringify({ id: 7 }))}.signature`);
+  saveCachedResource("dates", [], cacheSession());
+}
+
+test("a saved calendar opens before authentication finishes and stays visible on network failure", async () => {
+  seedCalendar();
+  let fail;
+  check.mockReturnValue(
+    new Promise((resolve, reject) => {
+      fail = reject;
+    }),
+  );
+  renderRoute();
+  expect(screen.getByText("Protected calendar")).toBeInTheDocument();
+  expect(screen.queryByText("Opening your calendar…")).not.toBeInTheDocument();
+  await act(async () => fail(new Error("Offline")));
+  expect(screen.getByText("Protected calendar")).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent("Showing saved data");
+  expect(hasCachedCalendar()).toBe(true);
+});
+
+test("a rejected background session removes its saved copy and returns to sign-in", async () => {
+  seedCalendar();
+  check.mockRejectedValue({ status: 401 });
+  renderRoute();
+  expect(screen.getByText("Protected calendar")).toBeInTheDocument();
+  expect(await screen.findByText("Login page")).toBeInTheDocument();
+  expect(hasCachedCalendar()).toBe(false);
+});
+
+test("sign-out in another tab immediately hides the saved calendar", async () => {
+  seedCalendar();
+  check.mockReturnValue(new Promise(() => {}));
+  renderRoute();
+  act(() => {
+    localStorage.removeItem("token");
+    window.dispatchEvent(new StorageEvent("storage", { key: "token" }));
+  });
+  expect(await screen.findByText("Login page")).toBeInTheDocument();
 });

@@ -5,6 +5,7 @@ export const emptyList = { enabled: false, revision: 0, tasks: [] };
 export default function useTodoList() {
   const { data: list, ...state } = useRevisionedResource({
     initial: emptyList,
+    cacheKey: "todos",
     read: getList,
     write: changeList,
     conflictMessage: "The to-do list changed. Reload it before saving.",

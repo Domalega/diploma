@@ -2,6 +2,8 @@
 
 A personal calendar for notes, tasks and reminders. Includes user accounts, search, a month view and a notes list. Optional panels add a to-do list, Kanban board and medication tracker.
 
+The web client keeps an account-specific copy of loaded data in the browser and refreshes it in the background. Repeat visits show saved data immediately; saving changes requires a server connection. Signing out clears the local copy.
+
 [Live demo](https://domalega.github.io/diploma/) · [Android and Windows clients](apps/README.md)
 
 ## Tech stack

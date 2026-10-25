@@ -4,6 +4,7 @@ import AuthPage from "./AuthPage";
 import { useLocation } from "react-router-dom";
 import { ThemeProvider } from "../../../shared/theme/ThemeProvider";
 import * as authApi from "../api/authApi";
+import { cacheSession, saveCachedResource } from "../../../shared/api/browserCache";
 
 jest.mock("../api/authApi");
 beforeEach(() => {
@@ -57,6 +58,14 @@ test("a temporary outage preserves the saved login and offers retry", async () =
   expect(localStorage.getItem("token")).toBe("saved-session");
   fireEvent.click(screen.getByRole("button", { name: "Retry" }));
   expect(await screen.findByText("Calendar opened")).toBeInTheDocument();
+});
+
+test("a saved calendar goes straight to its route for background authentication", async () => {
+  localStorage.setItem("token", `header.${btoa(JSON.stringify({ id: 7 }))}.signature`);
+  saveCachedResource("dates", [], cacheSession());
+  renderPage("/login", false);
+  expect(await screen.findByText("Calendar opened")).toBeInTheDocument();
+  expect(authApi.check).not.toHaveBeenCalled();
 });
 
 test("an expired session is removed and shows the sign-in form", async () => {

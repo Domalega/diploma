@@ -3,10 +3,21 @@ import { useNavigate } from "react-router-dom";
 import * as datesApi from "../api/datesApi";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import useSyncRefresh from "../../../shared/offline/useSyncRefresh";
+import {
+  cacheSession,
+  readCachedResource,
+  saveCachedResource,
+} from "../../../shared/api/browserCache";
 
 export default function useDates() {
-  const [dates, setDates] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cache] = useState(() => {
+    const session = cacheSession();
+    return { session, data: readCachedResource("dates", session) };
+  });
+  const [dates, setDates] = useState(() => cache.data ?? []);
+  const currentDates = useRef(dates);
+  const hasData = useRef(cache.data !== undefined);
+  const [loading, setLoading] = useState(!hasData.current);
   const [error, setError] = useState("");
   const controller = useRef(null);
   const epoch = useRef(0);
@@ -14,6 +25,15 @@ export default function useDates() {
   const refreshAfterWrite = useRef(false);
   const alive = useRef(true);
   const navigate = useNavigate();
+  const acceptDates = useCallback(
+    (data) => {
+      currentDates.current = data;
+      hasData.current = true;
+      setDates(data);
+      saveCachedResource("dates", data, cache.session);
+    },
+    [cache],
+  );
   const handleError = useCallback(
     (error) => {
       if (error.status === 401) navigate(LOGIN_ROUTE, { replace: true });
@@ -30,17 +50,17 @@ export default function useDates() {
     const abort = new AbortController();
     controller.current = abort;
     const requestId = ++epoch.current;
-    setLoading(true);
+    setLoading(!hasData.current);
     setError("");
     try {
       const data = await datesApi.getAllDates(abort.signal);
-      if (alive.current && !abort.signal.aborted && requestId === epoch.current) setDates(data);
+      if (alive.current && !abort.signal.aborted && requestId === epoch.current) acceptDates(data);
     } catch (error) {
       if (alive.current && !abort.signal.aborted && requestId === epoch.current) handleError(error);
     } finally {
       if (alive.current && requestId === epoch.current) setLoading(false);
     }
-  }, [handleError]);
+  }, [handleError, acceptDates]);
   useSyncRefresh(reload);
   useEffect(() => {
     alive.current = true;
@@ -57,9 +77,9 @@ export default function useDates() {
     controller.current?.abort();
     setLoading(false);
     try {
-      await action();
+      const result = await action();
       if (alive.current) {
-        apply();
+        apply(result);
         setError("");
       }
     } catch (error) {
@@ -76,7 +96,8 @@ export default function useDates() {
   const create = (date, comment, time) =>
     mutate(
       () => datesApi.createDate(date, comment, time),
-      () => {
+      (result) => {
+        if (result?.note) acceptDates([...currentDates.current, result.note]);
         refreshAfterWrite.current = true;
       },
     );
@@ -84,14 +105,16 @@ export default function useDates() {
     mutate(
       () => datesApi.deleteDate(id),
       () => {
-        setDates((items) => items.filter((item) => item.id !== id));
+        acceptDates(currentDates.current.filter((item) => item.id !== id));
       },
     );
   const update = (id, changes) =>
     mutate(
       () => datesApi.updateDate(id, changes),
       () => {
-        setDates((items) => items.map((item) => (item.id === id ? { ...item, ...changes } : item)));
+        acceptDates(
+          currentDates.current.map((item) => (item.id === id ? { ...item, ...changes } : item)),
+        );
       },
     );
   return { dates, loading, error, reload, create, update, remove };

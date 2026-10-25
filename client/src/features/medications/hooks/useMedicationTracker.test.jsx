@@ -3,8 +3,16 @@ import { MemoryRouter } from "react-router-dom";
 import useMedicationTracker from "./useMedicationTracker";
 import * as api from "../api/medicationApi";
 import { emptyPlan } from "../utils/schedule";
+import {
+  cacheSession,
+  readCachedResource,
+  saveCachedResource,
+} from "../../../shared/api/browserCache";
 jest.mock("../api/medicationApi");
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  localStorage.clear();
+  jest.resetAllMocks();
+});
 function Probe({ date = "2026-10-14", today = "2026-10-14" }) {
   const tracker = useMedicationTracker(date, today);
   return (
@@ -113,4 +121,34 @@ test("failed intake writes preserve marks and a successful write sends the sched
     taken: true,
     revision: 4,
   });
+});
+
+test("cached schedule and marks open immediately and selecting another cached day stays ready", async () => {
+  localStorage.setItem("token", `header.${btoa(JSON.stringify({ id: 7 }))}.signature`);
+  const session = cacheSession();
+  const plan = { ...emptyPlan, enabled: true, revision: 4 };
+  const records = [{ medicationId: "a", slotId: "morning", date: "2026-10-14" }];
+  saveCachedResource("medication-plan", plan, session);
+  saveCachedResource("intakes:2026-10-14", records, session);
+  saveCachedResource("intakes:2026-10-15", [], session);
+  api.getPlan.mockReturnValue(new Promise(() => {}));
+  api.markCell.mockResolvedValue({ records: [] });
+  const view = render(
+    <MemoryRouter>
+      <Probe />
+    </MemoryRouter>,
+  );
+  expect(screen.getByTestId("plan")).toHaveTextContent("on:4");
+  expect(screen.getByTestId("loading")).toHaveTextContent("false");
+  expect(screen.getByTestId("count")).toHaveTextContent("1");
+  fireEvent.click(screen.getByText("Mark"));
+  await waitFor(() => expect(screen.getByTestId("count")).toHaveTextContent("0"));
+  expect(readCachedResource("intakes:2026-10-14")).toEqual([]);
+  view.rerender(
+    <MemoryRouter>
+      <Probe date="2026-10-15" />
+    </MemoryRouter>,
+  );
+  expect(screen.getByTestId("loading")).toHaveTextContent("false");
+  expect(screen.getByTestId("count")).toHaveTextContent("0");
 });

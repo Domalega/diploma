@@ -63,6 +63,8 @@ export const ru = {
   "Show {date} in calendar": "Показать в календаре: {date}",
   "To-do list for selected day": "Список дел на выбранный день",
   "Phone synchronization": "Обмен данными телефона",
+  "Showing saved data. Unable to refresh from the server.":
+    "Показаны сохранённые данные. Не удалось обновить их с сервера.",
   "Preparing data for offline use…": "Подготавливаем данные для работы без сети…",
   "Data is saved on this phone": "Данные сохранены на телефоне",
   "{count} changes saved on this phone": "На телефоне сохранено изменений: {count}",

@@ -13,6 +13,7 @@ import {
 } from "../api/authApi";
 import { getToken, setToken, clearToken } from "../../../shared/api/tokenStorage";
 import CalendarLoading from "../../../shared/components/CalendarLoading";
+import { hasCachedCalendar } from "../../../shared/api/browserCache";
 import {
   LOGIN_ROUTE,
   REGISTRATION_ROUTE,
@@ -55,6 +56,10 @@ export default function AuthPage() {
     const token = getToken();
     if (!token) {
       setRestoring(false);
+      return;
+    }
+    if (hasCachedCalendar()) {
+      navigate(CALENDAR_ROUTE, { replace: true });
       return;
     }
     const controller = new AbortController();

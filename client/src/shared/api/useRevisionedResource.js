@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LOGIN_ROUTE } from "../config/routes";
 import useSyncRefresh from "../offline/useSyncRefresh";
+import { cacheSession, readCachedResource, saveCachedResource } from "./browserCache";
 
 export default function useRevisionedResource({
   initial,
@@ -9,9 +10,15 @@ export default function useRevisionedResource({
   write,
   conflictMessage,
   busyMessage,
+  cacheKey,
 }) {
-  const [data, setData] = useState(initial);
-  const [loading, setLoading] = useState(true);
+  const [cache] = useState(() => {
+    const session = cacheSession();
+    return { session, data: readCachedResource(cacheKey, session) };
+  });
+  const [data, setData] = useState(() => cache.data ?? initial);
+  const hasData = useRef(cache.data !== undefined);
+  const [loading, setLoading] = useState(!hasData.current);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(false);
@@ -41,20 +48,22 @@ export default function useRevisionedResource({
     const abort = new AbortController();
     controller.current = abort;
     const requestId = ++epoch.current;
-    setLoading(true);
+    setLoading(!hasData.current);
     setError("");
     try {
       const saved = await read(abort.signal);
       if (!alive.current || abort.signal.aborted || requestId !== epoch.current) return;
       current.current = saved;
+      hasData.current = true;
       setData(saved);
+      saveCachedResource(cacheKey, saved, cache.session);
       setConflict(false);
     } catch (error) {
       if (alive.current && !abort.signal.aborted && requestId === epoch.current) handleError(error);
     } finally {
       if (alive.current && requestId === epoch.current) setLoading(false);
     }
-  }, [read, handleError]);
+  }, [read, handleError, cacheKey, cache]);
   useSyncRefresh(reload);
   useEffect(() => {
     alive.current = true;
@@ -76,6 +85,7 @@ export default function useRevisionedResource({
       if (alive.current) {
         current.current = saved;
         setData(saved);
+        saveCachedResource(cacheKey, saved, cache.session);
       }
       return saved;
     } catch (error) {

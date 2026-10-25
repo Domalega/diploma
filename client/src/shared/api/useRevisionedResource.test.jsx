@@ -1,6 +1,9 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import useRevisionedResource from "./useRevisionedResource";
+import { cacheSession, readCachedResource, saveCachedResource } from "./browserCache";
+
+beforeEach(() => localStorage.clear());
 
 const wrapper = ({ children }) => <MemoryRouter>{children}</MemoryRouter>;
 const conflictMessage = "Changed. Reload before saving.";
@@ -37,6 +40,34 @@ test("writes use the latest revision and concurrent commands are rejected", asyn
   });
   await act(async () => result.current.send({ type: "add" }));
   expect(config.write).toHaveBeenLastCalledWith({ type: "add", revision: 4 });
+});
+
+test("cached tasks remain interactive during refresh and a late read cannot undo a save", async () => {
+  localStorage.setItem("token", `header.${btoa(JSON.stringify({ id: 7 }))}.signature`);
+  const saved = { enabled: true, revision: 3, tasks: [{ id: "cached" }] };
+  saveCachedResource("todos", saved, cacheSession());
+  let finish;
+  const config = {
+    initial: { revision: 0, tasks: [] },
+    cacheKey: "todos",
+    read: jest.fn(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    ),
+    write: jest.fn().mockResolvedValue({ ...saved, revision: 4, tasks: [] }),
+    conflictMessage,
+    busyMessage: "Reload first",
+  };
+  const { result } = renderHook(() => useRevisionedResource(config), { wrapper });
+  expect(result.current.loading).toBe(false);
+  expect(result.current.data).toEqual(saved);
+  await act(async () => result.current.send({ type: "remove" }));
+  expect(config.write).toHaveBeenCalledWith({ type: "remove", revision: 3 });
+  await act(async () => finish(saved));
+  expect(result.current.data.tasks).toEqual([]);
+  expect(readCachedResource("todos").revision).toBe(4);
 });
 
 test("stale revision conflicts preserve data and block saving until a successful reload", async () => {

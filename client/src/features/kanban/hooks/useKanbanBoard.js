@@ -5,6 +5,7 @@ export const emptyBoard = { enabled: false, revision: 0, columns: [], tasks: [] 
 export default function useKanbanBoard() {
   const { data: board, ...state } = useRevisionedResource({
     initial: emptyBoard,
+    cacheKey: "kanban",
     read: getBoard,
     write: changeBoard,
     conflictMessage: "The board changed. Reload it before saving.",
