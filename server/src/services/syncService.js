@@ -192,7 +192,7 @@ function validate(state) {
       bad("This column has reached its work-in-progress limit");
   }
 }
-async function apply(userId, before, after, transaction) {
+async function apply(userId, before, after, transaction, restoring = false) {
   const options = { transaction };
   let boardChanged = !equal(before.board, after.board),
     todosChanged = !equal(before.todos, after.todos);
@@ -232,21 +232,22 @@ async function apply(userId, before, after, transaction) {
               : previous.columnId !== value.columnId || previous.position !== value.position
                 ? "moved"
                 : "edited";
-        await KanbanEvent.create(
-          {
-            userId,
-            taskId: id,
-            kind: eventKind,
-            details: {
-              from: previous?.columnId,
-              to: value.columnId,
-              title: value.title,
-              date: value.date,
-              source: "offline",
+        if (!restoring)
+          await KanbanEvent.create(
+            {
+              userId,
+              taskId: id,
+              kind: eventKind,
+              details: {
+                from: previous?.columnId,
+                to: value.columnId,
+                title: value.title,
+                date: value.date,
+                source: "offline",
+              },
             },
-          },
-          options,
-        );
+            options,
+          );
       }
     }
     if (kind === "intake") {
@@ -258,6 +259,7 @@ async function apply(userId, before, after, transaction) {
         const slot = after.medications.slots.find((s) => s.id === value.slotId);
         // Existing historical marks survive a schedule change. New marks must be due.
         if (
+          !restoring &&
           !previous &&
           (!after.medications.enabled ||
             !row ||
@@ -380,4 +382,58 @@ async function exchange(userId, command) {
     return { ...(await snapshot(userId, transaction, includeHistory)), conflicts: [] };
   });
 }
-module.exports = { getSnapshot, exchange, validate, snapshot };
+async function restoreDocument(userId, before, document, transaction) {
+  if (!object(document) || !object(document.history) || JSON.stringify(document).length > 1800000)
+    bad();
+  validate(document.state);
+  const state = JSON.parse(JSON.stringify(document.state));
+  Object.entries(state)
+    .filter(([k]) => k.startsWith("todo/"))
+    .sort(([a, x], [b, y]) => x.position - y.position || a.localeCompare(b))
+    .forEach(([, value], position) => {
+      value.position = position;
+    });
+  const events = [];
+  for (const [taskId, history] of Object.entries(document.history)) {
+    if (!state["task/" + taskId] || !Array.isArray(history)) bad();
+    for (const event of history) {
+      if (
+        !object(event) ||
+        !["created", "edited", "moved", "completed", "reopened"].includes(event.kind) ||
+        !object(event.details) ||
+        !timestamp(event.createdAt)
+      )
+        bad();
+      events.push({
+        userId,
+        taskId,
+        kind: event.kind,
+        details: event.details,
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.createdAt),
+      });
+    }
+  }
+  await apply(userId, before, state, transaction, true);
+  const eventKey = (v) =>
+    canonical({
+      taskId: v.taskId,
+      kind: v.kind,
+      details: v.details,
+      createdAt: new Date(v.createdAt).toISOString(),
+    });
+  const existing = new Set(
+    (await KanbanEvent.findAll({ where: { userId }, transaction })).map(eventKey),
+  );
+  events.sort((a, b) => a.createdAt - b.createdAt);
+  for (const event of events) {
+    const key = eventKey(event);
+    if (existing.has(key)) continue;
+    await KanbanEvent.create(event, { transaction });
+    existing.add(key);
+  }
+  const restored = await snapshot(userId, transaction);
+  if (!equal(restored.state, state))
+    throw ApiError.conflict("The restored data did not match. Encryption remains enabled.");
+}
+module.exports = { getSnapshot, exchange, validate, snapshot, restoreDocument };

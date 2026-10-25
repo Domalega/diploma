@@ -1,6 +1,7 @@
 const { createHash } = require("node:crypto");
 const models = require("../models");
-const { EncryptedVault } = models;
+const { EncryptedVault, VaultDeactivation } = models;
+const activeVault = require("./activeVault");
 const userWrite = require("./userWrite");
 const { snapshot } = require("./syncService");
 const { canonical } = require("./syncMerge");
@@ -34,7 +35,7 @@ const read = (userId) =>
   userWrite(
     userId,
     async (transaction) => {
-      const vault = await EncryptedVault.findByPk(userId, { transaction });
+      const vault = await activeVault(userId, transaction);
       if (vault)
         return {
           encrypted: true,
@@ -43,7 +44,19 @@ const read = (userId) =>
           envelope: vault.envelope,
         };
       const legacy = await snapshot(userId, transaction);
-      return { encrypted: false, legacy, digest: digest(legacy) };
+      const disabled = await VaultDeactivation.findOne({
+        where: { userId },
+        order: [["createdAt", "DESC"]],
+        transaction,
+      });
+      return {
+        encrypted: false,
+        legacy,
+        digest: digest(legacy),
+        ...(disabled
+          ? { disabled: { salt: disabled.salt, revision: disabled.revision, id: disabled.id } }
+          : {}),
+      };
     },
     { encrypted: true },
   );
@@ -55,7 +68,7 @@ const save = (userId, body) =>
       validate(body?.envelope);
       if (!Number.isSafeInteger(body.revision) || body.revision < 0 || body.revision >= 2147483647)
         throw ApiError.badRequest("Invalid encrypted revision");
-      const vault = await EncryptedVault.findByPk(userId, { transaction });
+      const vault = await activeVault(userId, transaction);
       if (!vault) {
         const legacy = await snapshot(userId, transaction);
         if (body.revision !== 0 || body.digest !== digest(legacy))
@@ -80,11 +93,17 @@ const save = (userId, body) =>
             ].map((name) => models[name].count({ where: { userId }, transaction })),
           )
         ).some((count) => count > 0);
-        await EncryptedVault.create(
-          { userId, revision: 1, envelope: body.envelope, legacyRetained: !!legacyRetained },
-          { transaction },
-        );
-        return { revision: 1, legacyRetained: !!legacyRetained };
+        const previous = await EncryptedVault.findByPk(userId, { transaction });
+        const revision = previous ? previous.revision + 1 : 1;
+        const values = {
+          userId,
+          revision,
+          envelope: body.envelope,
+          legacyRetained: !!legacyRetained,
+        };
+        if (previous) await previous.update(values, { transaction });
+        else await EncryptedVault.create(values, { transaction });
+        return { revision, legacyRetained: !!legacyRetained };
       }
       if (body.revision !== vault.revision)
         throw ApiError.conflict("Encrypted data changed on another device. Sync and try again.");
@@ -100,4 +119,51 @@ const save = (userId, body) =>
     },
     { encrypted: true },
   );
-module.exports = { read, save };
+const disable = (userId, body) =>
+  userWrite(
+    userId,
+    async (transaction) => {
+      const { isUUID } = require("./validation");
+      if (
+        !isUUID(body?.operationId) ||
+        !Number.isSafeInteger(body.revision) ||
+        body.revision < 1 ||
+        typeof body.salt !== "string"
+      )
+        throw ApiError.badRequest("Invalid encryption change");
+      const commandDigest = digest({
+        revision: body.revision,
+        salt: body.salt,
+        document: body.document,
+      });
+      const receipt = await VaultDeactivation.findByPk(body.operationId, { transaction });
+      if (receipt) {
+        if (receipt.userId !== userId || receipt.digest !== commandDigest)
+          throw ApiError.conflict("The encryption change does not match the original request");
+        if (await activeVault(userId, transaction))
+          throw ApiError.conflict("Encryption was enabled again. Reload this device.");
+        return { encrypted: false };
+      }
+      const vault = await activeVault(userId, transaction);
+      if (!vault || vault.revision !== body.revision || vault.envelope.salt !== body.salt)
+        throw ApiError.conflict("Encrypted data changed on another device. Sync and try again.");
+      const sync = require("./syncService");
+      const legacy = await snapshot(userId, transaction);
+      await VaultDeactivation.create(
+        {
+          id: body.operationId,
+          userId,
+          revision: vault.revision,
+          salt: vault.envelope.salt,
+          envelope: vault.envelope,
+          legacy,
+          digest: commandDigest,
+        },
+        { transaction },
+      );
+      await sync.restoreDocument(userId, legacy.state, body.document, transaction);
+      return { encrypted: false };
+    },
+    { encrypted: true },
+  );
+module.exports = { read, save, disable };

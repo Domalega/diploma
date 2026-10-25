@@ -1,7 +1,7 @@
 const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const { once } = require("node:events");
-const { randomBytes } = require("node:crypto");
+const { randomBytes, randomUUID } = require("node:crypto");
 Object.assign(process.env, {
   DB_DIALECT: "sqlite",
   SQLITE_STORAGE: ":memory:",
@@ -11,7 +11,7 @@ Object.assign(process.env, {
 });
 const app = require("../src/app");
 const db = require("../src/config/database");
-const { User, UserDate, EncryptedVault } = require("../src/models");
+const { User, UserDate, EncryptedVault, VaultDeactivation, KanbanEvent } = require("../src/models");
 const { generateToken } = require("../src/services/tokenService");
 const userWrite = require("../src/services/userWrite");
 const { requestReset } = require("../src/services/passwordResetService");
@@ -154,4 +154,116 @@ test("account password recovery remains available without modifying encrypted co
     assert.doesNotMatch(error.message, /Unlock/),
   );
   assert.deepEqual((await call("/vault")).data, saved);
+});
+
+let disableCommand;
+test("disabling restores current content and historical intakes atomically while retaining both backups", async () => {
+  const saved = (await call("/vault")).data;
+  const legacy = await userWrite(
+    id,
+    (tx) => require("../src/services/syncService").snapshot(id, tx),
+    { encrypted: true },
+  );
+  const document = { state: structuredClone(legacy.state), history: {} };
+  const noteKey = Object.keys(document.state).find((k) => k.startsWith("note/"));
+  document.state[noteKey].comment = "Latest decrypted note";
+  const taskId = randomUUID();
+  document.state["task/" + taskId] = {
+    title: "Encrypted-era task",
+    description: "",
+    columnId: "todo",
+    position: 0,
+    date: null,
+    startedAt: null,
+    completedAt: null,
+  };
+  document.history[taskId] = [
+    {
+      id: randomUUID(),
+      kind: "created",
+      details: { title: "Encrypted-era task" },
+      createdAt: "2026-10-25T12:00:00.000Z",
+    },
+  ];
+  const medicationId = randomUUID(),
+    slotId = randomUUID();
+  document.state[`intake/2026-10-25/${medicationId}/${slotId}`] = {
+    date: "2026-10-25",
+    medicationId,
+    slotId,
+    takenAt: "2026-10-25T12:00:00.000Z",
+    nameSnapshot: "Historical medicine",
+    detailSnapshot: "",
+    timeSnapshot: "12:00",
+    slotLabelSnapshot: "",
+  };
+  disableCommand = {
+    operationId: randomUUID(),
+    revision: saved.revision,
+    salt: saved.envelope.salt,
+    document,
+  };
+  assert.equal(
+    (
+      await call(
+        "/vault/disable",
+        { ...disableCommand, revision: saved.revision - 1 },
+        token,
+        "POST",
+      )
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await call(
+        "/vault/disable",
+        {
+          ...disableCommand,
+          document: { state: document.state, history: { [taskId]: [{ kind: "invalid" }] } },
+        },
+        token,
+        "POST",
+      )
+    ).status,
+    400,
+  );
+  assert.equal(await VaultDeactivation.count(), 0);
+  assert.deepEqual((await call("/vault")).data, saved);
+  assert.equal((await call("/vault/disable", disableCommand, token, "POST")).status, 200);
+  const restored = await call("/sync");
+  assert.equal(restored.status, 200);
+  assert.deepEqual(restored.data.state, document.state);
+  assert.equal(restored.data.history[taskId][0].kind, "created");
+  assert.equal(await KanbanEvent.count({ where: { userId: id, taskId } }), 1);
+  const backup = await VaultDeactivation.findByPk(disableCommand.operationId);
+  assert.deepEqual(backup.envelope, saved.envelope);
+  assert.deepEqual(backup.legacy, legacy);
+  assert.deepEqual((await EncryptedVault.findByPk(id)).envelope, saved.envelope);
+  assert.equal((await call("/vault")).data.encrypted, false);
+});
+test("disable receipts reject substitution and another account and safely retry after ordinary edits", async () => {
+  assert.equal((await call("/vault/disable", disableCommand, null, "POST")).status, 401);
+  assert.equal((await call("/vault/disable", disableCommand, other, "POST")).status, 409);
+  assert.equal((await call("/vault/disable", disableCommand, token, "POST")).status, 200);
+  assert.equal(
+    (await call("/vault/disable", { ...disableCommand, document: {} }, token, "POST")).status,
+    409,
+  );
+  assert.equal(await VaultDeactivation.count(), 1);
+});
+test("encryption can be enabled again without reusing a prior revision or deleting its backup", async () => {
+  const ordinary = (await call("/vault")).data;
+  assert.equal(
+    (await call("/vault", { revision: disableCommand.revision, envelope: envelope() })).status,
+    409,
+  );
+  assert.equal(
+    (await call("/vault", { revision: 0, digest: ordinary.digest, envelope: envelope() })).status,
+    200,
+  );
+  assert.ok((await call("/vault")).data.revision > disableCommand.revision);
+  assert.equal((await call("/sync")).status, 409);
+  assert.equal((await call("/vault/disable", disableCommand, token, "POST")).status, 409);
+  assert.equal(await VaultDeactivation.count(), 1);
 });

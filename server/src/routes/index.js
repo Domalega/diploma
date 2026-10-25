@@ -8,8 +8,7 @@ router.use(
   require("../middleware/authMiddleware"),
   async (req, res, next) => {
     try {
-      const { EncryptedVault } = require("../models");
-      if (await EncryptedVault.findByPk(req.user.id))
+      if (await require("../services/activeVault")(req.user.id))
         return next(
           require("../errors/ApiError").conflict(
             "Unlock your encrypted data in an updated Daymark client.",

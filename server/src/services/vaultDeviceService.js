@@ -1,4 +1,4 @@
-const { VaultDevice, EncryptedVault } = require("../models");
+const { VaultDevice } = require("../models");
 const { isUUID } = require("./validation");
 const { equal } = require("./syncMerge");
 const userWrite = require("./userWrite");
@@ -106,7 +106,7 @@ const approve = (userId, body) =>
   userWrite(
     userId,
     async (transaction) => {
-      if (!(await EncryptedVault.findByPk(userId, { transaction })))
+      if (!(await require("./activeVault")(userId, transaction)))
         throw ApiError.conflict(
           "Enable encryption on your first device before connecting another.",
         );

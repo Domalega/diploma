@@ -6,10 +6,10 @@ let sqliteTail = Promise.resolve();
 function userWrite(userId, action, { encrypted = false } = {}) {
   const run = () =>
     database.transaction(async (transaction) => {
-      const { User, EncryptedVault } = require("../models");
+      const { User } = require("../models");
       const user = await User.findByPk(userId, { transaction, lock: transaction.LOCK.UPDATE });
       if (!user) throw ApiError.unauthorized();
-      if (!encrypted && (await EncryptedVault.findByPk(userId, { transaction })))
+      if (!encrypted && (await require("./activeVault")(userId, transaction)))
         throw ApiError.conflict("Unlock your encrypted data in an updated Daymark client.");
       return action(transaction);
     });

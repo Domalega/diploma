@@ -10,6 +10,10 @@ router.use((req, res, next) => {
   next();
 });
 router.post(
+  "/disable",
+  handle((req) => service.disable(req.user.id, req.body)),
+);
+router.post(
   "/devices",
   handle((req) => devices.register(req.user.id, req.body)),
 );
