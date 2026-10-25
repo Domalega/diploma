@@ -10,6 +10,7 @@ app.disable("x-powered-by");
 if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
 app.use(cors({ origin: clientOrigins.length ? clientOrigins : true }));
 app.use("/api/sync", express.json({ limit: "4mb" }));
+app.use("/api/vault", express.json({ limit: "6mb" }));
 app.use(express.json({ limit: "64kb" }));
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api", router);

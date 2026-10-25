@@ -2,6 +2,25 @@ const { Router } = require("express");
 const router = Router();
 
 router.use("/user", require("./userRoutes"));
+router.use("/vault", require("./vaultRoutes"));
+router.use(
+  ["/userDate", "/medications", "/kanban", "/todos", "/sync"],
+  require("../middleware/authMiddleware"),
+  async (req, res, next) => {
+    try {
+      const { EncryptedVault } = require("../models");
+      if (await EncryptedVault.findByPk(req.user.id))
+        return next(
+          require("../errors/ApiError").conflict(
+            "Unlock your encrypted data in an updated Daymark client.",
+          ),
+        );
+      next();
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 router.use("/userDate", require("./userDateRoutes"));
 router.use("/medications", require("./medicationRoutes"));
 router.use("/kanban", require("./kanbanRoutes"));

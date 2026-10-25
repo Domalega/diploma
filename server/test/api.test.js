@@ -17,12 +17,13 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = require("../src/app");
 const sequelize = require("../src/config/database");
-const { User, UserDate, AccountSecurity } = require("../src/models");
+const { User, UserDate, AccountSecurity, EncryptedVault } = require("../src/models");
 const { generateToken } = require("../src/services/tokenService");
 const testTransaction = { LOCK: { UPDATE: "UPDATE" } };
 
 beforeEach((t) => {
   t.mock.method(AccountSecurity, "findByPk", async () => null);
+  t.mock.method(EncryptedVault, "findByPk", async () => null);
   t.mock.method(User, "findByPk", async (id, options) =>
     options?.transaction ? { id } : User.findOne(),
   );

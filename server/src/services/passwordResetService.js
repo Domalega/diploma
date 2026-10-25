@@ -14,26 +14,30 @@ async function requestReset(email) {
   const user = await User.findOne({ where: { email } });
   if (!user) return;
   const token = randomBytes(32).toString("hex");
-  const created = await userWrite(user.id, async (transaction) => {
-    await AccountSecurity.findOrCreate({ where: { userId: user.id }, transaction });
-    const security = await AccountSecurity.findByPk(user.id, {
-      transaction,
-      lock: transaction.LOCK.UPDATE,
-    });
-    const now = Date.now();
-    // Same response during cooldown, including for unknown accounts.
-    if (security.resetRequestedAt && now - security.resetRequestedAt.getTime() < 60_000)
-      return false;
-    await security.update(
-      {
-        resetTokenHash: digest(token),
-        resetExpiresAt: new Date(now + 15 * 60_000),
-        resetRequestedAt: new Date(now),
-      },
-      { transaction },
-    );
-    return true;
-  });
+  const created = await userWrite(
+    user.id,
+    async (transaction) => {
+      await AccountSecurity.findOrCreate({ where: { userId: user.id }, transaction });
+      const security = await AccountSecurity.findByPk(user.id, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      const now = Date.now();
+      // Same response during cooldown, including for unknown accounts.
+      if (security.resetRequestedAt && now - security.resetRequestedAt.getTime() < 60_000)
+        return false;
+      await security.update(
+        {
+          resetTokenHash: digest(token),
+          resetExpiresAt: new Date(now + 15 * 60_000),
+          resetRequestedAt: new Date(now),
+        },
+        { transaction },
+      );
+      return true;
+    },
+    { encrypted: true },
+  );
   if (created) await mailService.sendReset(user.email, token);
 }
 
@@ -44,25 +48,33 @@ async function resetPassword(token, password) {
   });
   if (!existing) throw invalidLink();
   const hash = await bcrypt.hash(password, 10);
-  const user = await userWrite(existing.userId, async (transaction) => {
-    const security = await AccountSecurity.findByPk(existing.userId, {
-      transaction,
-      lock: transaction.LOCK.UPDATE,
-    });
-    if (!security || security.resetTokenHash !== tokenHash || security.resetExpiresAt <= new Date())
-      throw invalidLink();
-    const account = await User.findByPk(security.userId, {
-      transaction,
-      lock: transaction.LOCK.UPDATE,
-    });
-    if (!account) throw invalidLink();
-    await account.update({ password: hash }, { transaction });
-    await security.update(
-      { sessionVersion: security.sessionVersion + 1, resetTokenHash: null, resetExpiresAt: null },
-      { transaction },
-    );
-    return account;
-  });
+  const user = await userWrite(
+    existing.userId,
+    async (transaction) => {
+      const security = await AccountSecurity.findByPk(existing.userId, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (
+        !security ||
+        security.resetTokenHash !== tokenHash ||
+        security.resetExpiresAt <= new Date()
+      )
+        throw invalidLink();
+      const account = await User.findByPk(security.userId, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!account) throw invalidLink();
+      await account.update({ password: hash }, { transaction });
+      await security.update(
+        { sessionVersion: security.sessionVersion + 1, resetTokenHash: null, resetExpiresAt: null },
+        { transaction },
+      );
+      return account;
+    },
+    { encrypted: true },
+  );
   // A notification failure must not undo a completed password change.
   mailService
     .sendResetConfirmation(user.email)

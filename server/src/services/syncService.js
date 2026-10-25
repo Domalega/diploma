@@ -380,4 +380,4 @@ async function exchange(userId, command) {
     return { ...(await snapshot(userId, transaction, includeHistory)), conflicts: [] };
   });
 }
-module.exports = { getSnapshot, exchange, validate };
+module.exports = { getSnapshot, exchange, validate, snapshot };
