@@ -15,6 +15,9 @@ export const ru = {
   "If the link opens in another browser, paste the automatically generated connection link here. You will confirm the device on the next screen.":
     "Если ссылка открывается в другом браузере, вставьте автоматически созданную ссылку здесь. Подключение нужно будет подтвердить на следующем экране.",
   "End-to-end encryption": "Сквозное шифрование",
+  "No extra password. You approve access for other devices.":
+    "Без дополнительного пароля. Доступ для других устройств подтверждаете вы.",
+  "About encryption": "О шифровании",
   "Off. Your calendar works normally without encryption.":
     "Выключено. Календарь работает в обычном режиме.",
   "Create an automatic key on this device. Connect other devices by approving their connection link. No phrase or extra password is needed.":

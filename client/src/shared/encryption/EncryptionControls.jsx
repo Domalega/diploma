@@ -49,27 +49,8 @@ export default function EncryptionControls() {
       <h2>{t("End-to-end encryption")}</h2>
       {!encryptionSession() ? (
         <>
-          <p>{t("Off. Your calendar works normally without encryption.")}</p>
-          <p>
-            {t(
-              "Create an automatic key on this device. Connect other devices by approving their connection link. No phrase or extra password is needed.",
-            )}
-          </p>
-          <p>
-            {t(
-              "Keep at least one connected device. Losing all device keys makes encrypted data inaccessible.",
-            )}
-          </p>
-          <p>
-            {t(
-              "Older clients cannot sync after encryption is enabled. Update your other devices first.",
-            )}
-          </p>
-          <p>
-            {t(
-              "Existing unencrypted server records will be retained. This preparation does not remove old copies.",
-            )}
-          </p>
+          <p>{t("Disabled")}</p>
+          <p>{t("No extra password. You approve access for other devices.")}</p>
           {encryption.error && <p role="alert">{t(encryption.error)}</p>}
           <Button className="theme-button" disabled={encryption.busy} onClick={encryption.enable}>
             {t("Enable encryption")}
@@ -77,16 +58,9 @@ export default function EncryptionControls() {
         </>
       ) : (
         <>
-          <p>
-            {t(
-              "On. This device opens encrypted data automatically. Approve connection links only from your own other devices.",
-            )}
-          </p>
           <p role="status">
             {t(
-              state?.pending
-                ? "Encrypted changes are saved locally. Sync is pending."
-                : "Encrypted data",
+              state?.pending ? "Encrypted changes are saved locally. Sync is pending." : "Enabled",
             )}
           </p>
           <div className="d-flex flex-wrap gap-2">
@@ -152,11 +126,26 @@ export default function EncryptionControls() {
               </div>
             </div>
           )}
-          {state?.legacyRetained && (
-            <p>{t("Old unencrypted server copies are retained. Full migration is pending.")}</p>
-          )}
         </>
       )}
+      <details className="mt-3">
+        <summary>{t("About encryption")}</summary>
+        <p className="mt-2">
+          {t(
+            "Keep at least one connected device. Losing all device keys makes encrypted data inaccessible.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Older clients cannot sync after encryption is enabled. Update your other devices first.",
+          )}
+        </p>
+        <p>
+          {t(
+            "Existing unencrypted server records will be retained. This preparation does not remove old copies.",
+          )}
+        </p>
+      </details>
       <Modal
         show={connecting}
         onHide={() => setConnecting(false)}
