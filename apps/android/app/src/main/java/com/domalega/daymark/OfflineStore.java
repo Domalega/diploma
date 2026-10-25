@@ -17,15 +17,37 @@ final class OfflineStore extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE metadata (name TEXT PRIMARY KEY, value TEXT NOT NULL)");
     }
     @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { throw new IllegalStateException("Unknown offline database version"); }
+    @Override public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        // Preserve every account document while upgrading its storage representation.
+        db.beginTransaction();
+        try (Cursor cursor = db.rawQuery("SELECT owner, document FROM accounts", null)) {
+            while (cursor.moveToNext()) {
+                String raw = cursor.getString(1);
+                if (!raw.startsWith("{")) continue;
+                ContentValues values = new ContentValues();
+                values.put("document", SyncCredentials.encrypt(raw));
+                db.update("accounts", values, "owner=?", new String[]{cursor.getString(0)});
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception error) { throw new IllegalStateException("Unable to encrypt local account storage", error); }
+        finally { db.endTransaction(); }
+    }
     synchronized String active() {
         try (Cursor c = getReadableDatabase().rawQuery("SELECT value FROM metadata WHERE name='active'", null)) { return c.moveToFirst() ? c.getString(0) : null; }
     }
     synchronized JSONObject read(String owner) throws JSONException {
         if (owner == null) return null;
-        try (Cursor c = getReadableDatabase().rawQuery("SELECT document FROM accounts WHERE owner=?", new String[]{owner})) { return c.moveToFirst() ? new JSONObject(c.getString(0)) : null; }
+        try (Cursor c = getReadableDatabase().rawQuery("SELECT document FROM accounts WHERE owner=?", new String[]{owner})) {
+            if (!c.moveToFirst()) return null;
+            try { return new JSONObject(SyncCredentials.decrypt(c.getString(0))); }
+            catch (Exception error) { throw new JSONException("Unable to decrypt local account storage"); }
+        }
     }
     private void save(String owner, JSONObject document) {
-        ContentValues values = new ContentValues(); values.put("owner", owner); values.put("document", document.toString());
+        ContentValues values = new ContentValues(); values.put("owner", owner);
+        try { values.put("document", SyncCredentials.encrypt(document.toString())); }
+        catch (Exception error) { throw new IllegalStateException("Unable to encrypt local account storage", error); }
         getWritableDatabase().replaceOrThrow("accounts", null, values);
     }
     interface Change { void apply(JSONObject document) throws Exception; }

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "../features/auth/pages/AuthPage";
 import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import CalendarPage from "../features/calendar/pages/CalendarPage";
+import EncryptionGate from "../shared/encryption/EncryptionGate";
 import {
   LOGIN_ROUTE,
   REGISTRATION_ROUTE,
@@ -21,7 +22,9 @@ export default function AppRouter() {
         path={CALENDAR_ROUTE}
         element={
           <ProtectedRoute>
-            <CalendarPage />
+            <EncryptionGate>
+              <CalendarPage />
+            </EncryptionGate>
           </ProtectedRoute>
         }
       />

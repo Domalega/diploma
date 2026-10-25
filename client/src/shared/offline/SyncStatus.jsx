@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { LOGIN_ROUTE } from "../config/routes";
 import { isOfflineApp } from "./bridge";
+import { encryptionSession } from "../encryption/session";
 import { FiRefreshCw } from "react-icons/fi";
 import "./SyncStatus.css";
 
@@ -35,7 +36,7 @@ export default function SyncStatus({ sync }) {
   const { t, locale } = useLanguage();
   const navigate = useNavigate();
   const { state, busy, error, action } = sync;
-  if (!isOfflineApp()) return null;
+  if (!isOfflineApp() || encryptionSession()) return null;
   const conflicts = state?.conflicts || [];
   return (
     <section className="sync-status" aria-label={t("Phone synchronization")}>

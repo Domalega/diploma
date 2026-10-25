@@ -1,4 +1,5 @@
 import { isOfflineApp } from "../offline/bridge";
+import { encryptionSession } from "../encryption/session";
 
 const CACHE_KEY = "daymark.web-data.v1";
 const SOURCE = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
@@ -31,6 +32,7 @@ export function clearBrowserCache() {
 }
 
 export function cacheSession() {
+  if (encryptionSession()) return null;
   if (isOfflineApp()) return null;
   try {
     const owner = tokenOwner(localStorage.getItem("token"));
@@ -47,6 +49,7 @@ export function cacheSession() {
 }
 
 function currentDocument(session) {
+  if (encryptionSession()) return null;
   if (!session || tokenOwner(localStorage.getItem("token")) !== session.owner) return null;
   const saved = document();
   return saved?.owner === session.owner && saved.session === session.session ? saved : null;
@@ -85,7 +88,15 @@ export function saveCachedResource(key, data, session) {
   }
 }
 
-export const hasCachedCalendar = () => readCachedResource("dates") !== undefined;
+export const hasCachedCalendar = () => {
+  if (readCachedResource("dates") !== undefined) return true;
+  try {
+    const owner = tokenOwner(localStorage.getItem("token"));
+    return !!owner && !!localStorage.getItem(`daymark.encrypted.v1:${SOURCE}:${owner}`);
+  } catch {
+    return false;
+  }
+};
 
 export function removeCachedResources(prefix, session) {
   try {

@@ -2,7 +2,7 @@
 
 A personal calendar for notes, tasks and reminders. Includes user accounts, search, a month view and a notes list. Optional panels add a to-do list, Kanban board and medication tracker.
 
-The web client keeps an account-specific copy of loaded data in the browser and refreshes it in the background. Repeat visits show saved data immediately; saving changes requires a server connection. Signing out clears the local copy.
+The client can prepare an encrypted account document using a separate passphrase. New content and its local copy are encrypted; offline changes sync while the interface is open and unlocked. Existing unencrypted server records are retained during this preparation. See [encryption and migration limits](docs/ENCRYPTION.md).
 
 [Live demo](https://domalega.github.io/diploma/) · [Android and Windows clients](apps/README.md)
 
@@ -50,6 +50,7 @@ Run `npm test`, `npm run lint` and `npm run build` from the project root. Native
 
 ## Documentation
 
+- [Encrypted storage preparation](docs/ENCRYPTION.md)
 - [Device clients and builds](apps/README.md)
 - [Android offline storage and sync](docs/OFFLINE_SYNC.md)
 - [Android updates and migration](docs/ANDROID_UPDATES.md)

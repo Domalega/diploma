@@ -6,6 +6,12 @@ import { ThemeProvider } from "../shared/theme/ThemeProvider";
 
 jest.mock("../features/auth/api/authApi");
 jest.mock("../features/calendar/pages/CalendarPage", () => () => <p>Calendar opened</p>);
+jest.mock(
+  "../shared/encryption/EncryptionGate",
+  () =>
+    ({ children }) =>
+      children,
+);
 
 beforeEach(() => {
   localStorage.clear();

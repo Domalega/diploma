@@ -114,7 +114,7 @@ public class MainActivity extends Activity {
         WebViewCompat.addWebMessageListener(web, "DaymarkOffline", Collections.singleton("https://appassets.androidplatform.net"), (view, message, origin, mainFrame, reply) -> {
             if (!mainFrame || !trusted(view.getUrl())) return;
             String raw = message.getData();
-            if (raw == null || raw.length() > 4_500_000) return;
+            if (raw == null || raw.length() > 7_500_000) return;
             offlineExecutor.execute(() -> {
                 JSONObject request;
                 try { request = new JSONObject(raw); } catch (JSONException ignored) { return; }

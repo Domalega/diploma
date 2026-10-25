@@ -17,6 +17,7 @@ final class DeviceSyncPlan {
         }
     }
     private static void refreshPlan(Context context, JSONObject document) throws Exception {
+        if (document != null && document.optBoolean("encrypted")) return;
         JSONObject old = ReminderService.read(context);
         if (old == null || document == null || !document.has("state") || !old.optString("owner").equals(document.getString("owner"))) return;
         JSONObject state = document.getJSONObject("state"), plan = state.getJSONObject("medications"), marks = new JSONObject();
@@ -53,7 +54,7 @@ final class DeviceSyncPlan {
         JSONObject fresh = new JSONObject().put("version", 1).put("owner", document.getString("owner")).put("locale", old.optString("locale", "en"))
             .put("notesEnabled", notes).put("marksComplete", true).put("rules", rules).put("onOpen", open).put("marks", marks);
         Schedule.validate(fresh);
-        if (!ReminderService.store(context).edit().putString("plan", fresh.toString()).commit()) throw new IllegalStateException("Unable to save reminders");
+        if (!ReminderService.store(context).edit().putString("plan", SyncCredentials.encrypt(fresh.toString())).commit()) throw new IllegalStateException("Unable to save reminders");
         ReminderService.reschedule(context);
     }
 }

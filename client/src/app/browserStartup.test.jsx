@@ -7,6 +7,13 @@ import { todayKey } from "../features/calendar/utils/calendarDates";
 import { emptyPlan } from "../features/medications/utils/schedule";
 import { emptyList } from "../features/todos/hooks/useTodoList";
 import { emptyBoard } from "../features/kanban/hooks/useKanbanBoard";
+// Exercise the legacy cache adapter in isolation; EncryptionGate has separate coverage.
+jest.mock(
+  "../shared/encryption/EncryptionGate",
+  () =>
+    ({ children }) =>
+      children,
+);
 
 afterEach(() => {
   delete global.fetch;

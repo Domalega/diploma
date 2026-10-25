@@ -1,5 +1,7 @@
 # Android offline storage and sync
 
+For accounts using the encrypted document, [encrypted storage](ENCRYPTION.md) replaces the legacy exchange described below. Synchronization requires the interface to be open and unlocked; pending ciphertext remains available after closing it. Existing server records are preserved. Native account documents and reminder plans use Android Keystore encryption.
+
 Android bundles the interface and keeps each account's notes, tasks, board and medication data in app-private SQLite storage. The first sign-in requires an internet connection. Later edits work offline and sync when connected, when the app opens, manually through Settings, and approximately hourly in the background. Android may delay background work.
 
 Independent edits merge automatically. Concurrent changes to the same item, including deletion versus editing, require an explicit phone/server choice. Local changes remain available until the conflict is resolved. Signing out stops the account's background work and removes its credentials; its pending data is retained for the next sign-in to the same account. Uninstalling or clearing app storage removes that data.

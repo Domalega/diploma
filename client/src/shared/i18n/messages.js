@@ -9,6 +9,60 @@ export const en = {
   },
 };
 export const ru = {
+  "Older clients cannot sync after encryption is enabled. Update your other devices first.":
+    "После включения шифрования старые приложения не смогут синхронизироваться. Сначала обновите остальные устройства.",
+  "Encrypted data": "Зашифрованные данные",
+  "Update your browser to use encrypted local storage.":
+    "Обновите браузер или Android System WebView для безопасного хранения зашифрованных данных.",
+  "Open Settings to synchronize or resolve conflicts.":
+    "Откройте настройки для синхронизации или выбора версий при конфликте.",
+  Local: "Локально",
+  "The server has no encrypted document. Your local copy is retained.":
+    "На сервере нет зашифрованного документа. Локальная копия сохранена.",
+  "Loading encrypted data…": "Загружаем зашифрованные данные…",
+  "Enter your encryption passphrase. It is never sent to the server.":
+    "Введите парольную фразу шифрования. Она не отправляется на сервер.",
+  "Create a separate encryption passphrase. Use the same phrase on all your devices.":
+    "Создайте отдельную парольную фразу шифрования. Используйте её на всех своих устройствах.",
+  "Account password recovery cannot recover this phrase. If you lose it, encrypted data cannot be restored.":
+    "Сброс пароля аккаунта не восстановит эту фразу. Если вы её потеряете, восстановить зашифрованные данные будет невозможно.",
+  "Existing unencrypted server records will be retained. This preparation does not remove old copies.":
+    "Прежние открытые записи на сервере будут сохранены. Подготовка шифрования не удаляет старые копии.",
+  "Encryption passphrase": "Парольная фраза шифрования",
+  "Confirm encryption passphrase": "Повторите парольную фразу",
+  "I have saved my phrase and understand the recovery limits.":
+    "Я сохранил фразу и понимаю ограничения восстановления.",
+  "Unlock data": "Разблокировать данные",
+  "Lock data": "Заблокировать данные",
+  "Prepare encryption": "Подготовить шифрование",
+  "Encryption passphrases do not match.": "Парольные фразы не совпадают.",
+  "Use at least 12 characters for your encryption passphrase.":
+    "Парольная фраза должна содержать не менее 12 символов.",
+  "Incorrect encryption passphrase or damaged data.":
+    "Неверная парольная фраза или повреждённые данные.",
+  "Encryption requires HTTPS and an updated browser.":
+    "Для шифрования нужны HTTPS и актуальный браузер.",
+  "Encrypted changes are saved locally. Sync is pending.":
+    "Изменения сохранены локально в зашифрованном виде. Ожидается синхронизация.",
+  "Old unencrypted server copies are retained. Full migration is pending.":
+    "Старые открытые копии сохранены на сервере. Полный перенос ещё не выполнен.",
+  "Keep local versions": "Оставить локальные версии",
+  "Unlock your encrypted data first.": "Сначала разблокируйте зашифрованные данные.",
+  "Unlock your encrypted data in an updated Daymark client.":
+    "Разблокируйте зашифрованные данные в обновлённом приложении Daymark.",
+  "Invalid encrypted document": "Некорректный зашифрованный документ",
+  "Connect once to download your encrypted data.":
+    "Подключитесь к интернету, чтобы загрузить зашифрованные данные.",
+  "Data changed. Reload before enabling encryption.":
+    "Данные изменились. Обновите страницу перед включением шифрования.",
+  "Local data changed in another tab. Lock and unlock again.":
+    "Локальные данные изменились в другой вкладке. Заблокируйте и снова разблокируйте данные.",
+  "The server returned an older encrypted document.":
+    "Сервер вернул устаревшую зашифрованную копию.",
+  "Encrypted data changed on another device. Sync and try again.":
+    "Зашифрованные данные изменились на другом устройстве. Выполните синхронизацию и повторите действие.",
+  "Sync and resolve local changes before enabling encryption.":
+    "Перед включением шифрования синхронизируйте локальные изменения и разрешите конфликты.",
   "Color palette": "Цвет оформления",
   Green: "Зелёный",
   Blue: "Синий",

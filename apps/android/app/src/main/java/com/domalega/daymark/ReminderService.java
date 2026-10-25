@@ -14,7 +14,17 @@ public final class ReminderService {
     static final String CHANNEL = "daymark-reminders";
     static android.content.SharedPreferences store(Context c) { return c.getSharedPreferences("reminders", Context.MODE_PRIVATE); }
     static JSONObject read(Context c) {
-        try { return new JSONObject(store(c).getString("plan", "")); } catch (JSONException e) { return null; }
+        String raw = store(c).getString("plan", "");
+        if (raw.isEmpty()) return null;
+        try {
+            if (raw.startsWith("{")) {
+                JSONObject legacy = new JSONObject(raw);
+                if (!store(c).edit().putString("plan", SyncCredentials.encrypt(raw)).commit())
+                    throw new IllegalStateException("Unable to encrypt reminders");
+                return legacy;
+            }
+            return new JSONObject(SyncCredentials.decrypt(raw));
+        } catch (Exception e) { throw new IllegalStateException("Unable to decrypt reminders", e); }
     }
     static boolean allowed(Context c) {
         return c.getSystemService(NotificationManager.class).areNotificationsEnabled() &&
@@ -53,7 +63,10 @@ public final class ReminderService {
         JSONObject old = read(c);
         Schedule.merge(old, plan);
         String savedAt = Instant.now().toString();
-        if (!store(c).edit().putString("plan", plan.toString()).putString("savedAt", savedAt).commit()) throw new JSONException("Unable to save reminders");
+        String encrypted;
+        try { encrypted = SyncCredentials.encrypt(plan.toString()); }
+        catch (Exception error) { throw new JSONException("Unable to encrypt reminders"); }
+        if (!store(c).edit().putString("plan", encrypted).putString("savedAt", savedAt).commit()) throw new JSONException("Unable to save reminders");
         reschedule(c);
         JSONArray onOpen = plan.optJSONArray("onOpen");
         String today = LocalDate.now().toString();

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getToken } from "../api/tokenStorage";
 import { isOfflineApp, offlineNative } from "./bridge";
+import { encryptionSession } from "../encryption/session";
 
 // The owner stays mounted while the settings drawer is closed, so background
 // exchanges still refresh the calendar and other dashboard tiles.
@@ -24,7 +25,7 @@ export default function useOfflineSyncStatus() {
     }
   }, []);
   useEffect(() => {
-    if (!isOfflineApp()) return;
+    if (!isOfflineApp() || encryptionSession()) return;
     active.current = true;
     refresh();
     const poll = setInterval(() => {

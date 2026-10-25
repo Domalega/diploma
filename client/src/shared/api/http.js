@@ -1,6 +1,8 @@
 import { clearToken, getToken } from "./tokenStorage";
 import { isOfflineApp } from "../offline/bridge";
 import { offlineRequest } from "../offline/transport";
+import { encryptionSession } from "../encryption/session";
+import { encryptedRequest } from "../encryption/vault";
 
 const BASE_URL = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
 
@@ -13,6 +15,8 @@ export class ApiError extends Error {
 }
 
 export async function request(path, { method = "GET", body, token, signal } = {}) {
+  if (!path.startsWith("/user/") && encryptionSession())
+    return encryptedRequest(path, { method, body, token, signal });
   if (isOfflineApp()) return offlineRequest(path, { method, body, token, signal });
   const headers = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";

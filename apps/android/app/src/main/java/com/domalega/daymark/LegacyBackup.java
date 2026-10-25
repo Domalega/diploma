@@ -35,7 +35,7 @@ final class LegacyBackup {
                     for (String key : new String[]{"owner", "base", "state", "history", "generation", "syncRevision", "lastSync", "flight", "conflictRemote", "conflicts"})
                         if (source.has(key)) document.put(key, source.get(key));
                     document.put("authRequired", true);
-                    ContentValues values = new ContentValues(); values.put("owner", owner); values.put("document", document.toString());
+                    ContentValues values = new ContentValues(); values.put("owner", owner); values.put("document", SyncCredentials.encrypt(document.toString()));
                     db.insertOrThrow("accounts", null, values);
                 }
                 db.setTransactionSuccessful(); return accounts.length();

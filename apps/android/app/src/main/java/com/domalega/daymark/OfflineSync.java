@@ -13,7 +13,7 @@ final class OfflineSync {
         OfflineStore store = OfflineStore.get(context);
         String owner = store.active();
         JSONObject initial = store.read(owner);
-        if (initial == null || !initial.has("credential") || initial.optJSONArray("conflicts") != null) return;
+        if (initial == null || initial.optBoolean("encrypted") || initial.optBoolean("vaultRemote") || !initial.has("credential") || initial.optJSONArray("conflicts") != null) return;
         String session = initial.getString("session");
         try {
             String oldToken = SyncCredentials.decrypt(initial.getString("credential"));

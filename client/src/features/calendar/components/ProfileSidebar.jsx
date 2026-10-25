@@ -11,6 +11,7 @@ import { LOGIN_ROUTE } from "../../../shared/config/routes";
 import { AppUpdateSettings } from "../../../shared/updates/AppUpdates";
 import SyncStatus from "../../../shared/offline/SyncStatus";
 import useOfflineSyncStatus from "../../../shared/offline/useOfflineSyncStatus";
+import EncryptionControls from "../../../shared/encryption/EncryptionControls";
 export default function ProfileSidebar({
   notifications = { supported: false },
   medications,
@@ -312,6 +313,7 @@ export default function ProfileSidebar({
             )}
           </section>
           <div className="account-footer">
+            <EncryptionControls />
             <SyncStatus sync={sync} />
             <Button
               variant="outline-secondary"

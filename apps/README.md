@@ -1,5 +1,7 @@
 # Daymark device clients
 
+The source includes [encrypted account storage preparation](../docs/ENCRYPTION.md). Encrypted accounts require a separate phrase and synchronize while the interface is open and unlocked. Old server records are retained. Published preview binaries must be rebuilt to include these changes.
+
 Android bundles the interface and supports offline notes, tasks, Kanban and medication marks after the first online sign-in. See [offline storage and sync](../docs/OFFLINE_SYNC.md).
 
 Windows opens the hosted website; editing requires internet access. Both clients save timed note and medication reminders on the device, so alerts can run with the app closed.
@@ -21,7 +23,7 @@ Android restores alarms after reboot, app update and clock changes. Force-stop, 
 
 Windows schedules eight days ahead. A local task refills the schedule hourly and at sign-in while the user is signed in. Clock changes apply on the next refill or app activation. Neither platform can deliver while powered off; Windows may drop alerts during long sleep periods. Focus/Do Not Disturb settings still apply.
 
-Android uses private storage with backup disabled and Keystore encryption for sync credentials. Windows encrypts reminder snapshots with the user's DPAPI key. Reminder snapshots contain no account tokens. Native messaging is restricted to the Android bundled interface or the Windows Daymark page.
+Android uses private storage with backup disabled and Keystore encryption for account documents, reminder plans and sync credentials. Windows encrypts reminder snapshots with the user's DPAPI key. Reminder snapshots contain no account tokens. Native messaging is restricted to the Android bundled interface or the Windows Daymark page.
 
 ## Build
 

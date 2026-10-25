@@ -16,7 +16,7 @@ final class OfflineHttp {
         boolean user = path.startsWith("/user/") && !path.contains("?") && !path.contains("#") && !path.contains("..");
         boolean sync = path.equals("/sync") || path.equals("/sync?history=none");
         boolean history = path.matches("/kanban/tasks/[0-9a-fA-F-]{36}/history\\?limit=(?:[1-9]|[1-9][0-9]|100)(?:&before=[1-9][0-9]*)?");
-        return user || sync || history;
+        return user || sync || history || path.equals("/vault");
     }
     static JSONObject call(String path, String method, JSONObject body, String token) throws Exception {
         if (!supportedPath(path)) throw new Failure(400, "Unsupported network request");

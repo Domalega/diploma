@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { isOfflineApp } from "./bridge";
+import { encryptionSession } from "../encryption/session";
 export default function useSyncRefresh(reload) {
   useEffect(() => {
     const refresh = () => {
@@ -8,7 +9,7 @@ export default function useSyncRefresh(reload) {
     const visibleRefresh = () => {
       if (document.visibilityState === "visible") refresh();
     };
-    const browser = !isOfflineApp();
+    const browser = !isOfflineApp() || !!encryptionSession();
     window.addEventListener("daymark:sync", refresh);
     if (browser) {
       window.addEventListener("online", refresh);

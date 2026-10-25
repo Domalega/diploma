@@ -14,7 +14,7 @@ final class OfflineBridge {
             if (path.equals("/user/auth") && token != null) {
                 try {
                     JSONObject cached = store.authorized(token);
-                    if (cached.has("state")) { SyncWorker.schedule(context, true); return new JSONObject().put("token", SyncCredentials.decrypt(cached.getString("credential"))); }
+                    if (cached.has("state") || cached.optBoolean("encrypted")) { if (!cached.optBoolean("encrypted")) SyncWorker.schedule(context, true); return new JSONObject().put("token", SyncCredentials.decrypt(cached.getString("credential"))); }
                 } catch (OfflineHttp.Failure ignored) { }
             }
             JSONObject result = OfflineHttp.call(path, method, payload.optJSONObject("body"), token);
@@ -22,8 +22,15 @@ final class OfflineBridge {
                 String verified = result.getString("token"), owner = OfflineSync.owner(verified);
                 if (!owner.equals(store.active())) ReminderService.clear(context);
                 store.activate(owner, verified);
-                try { OfflineSync.run(context); } catch (Exception ignored) { /* Preserve a successful sign-in if initial download must be retried. */ }
-                SyncWorker.schedule(context, true);
+                boolean encrypted = store.read(owner).optBoolean("encrypted");
+                try {
+                    encrypted = OfflineHttp.call("/vault", "GET", null, verified).optBoolean("encrypted");
+                    if (encrypted) store.update(owner, (doc) -> doc.put("vaultRemote", true));
+                } catch (Exception ignored) { /* Keep existing local data if status cannot be refreshed. */ }
+                if (!encrypted) {
+                    try { OfflineSync.run(context); } catch (Exception ignored) { /* Preserve a successful sign-in if initial download must be retried. */ }
+                    SyncWorker.schedule(context, true);
+                } else SyncWorker.cancel(context);
             }
             return result;
         }
@@ -32,6 +39,26 @@ final class OfflineBridge {
         if (action.equals("sync")) { SyncWorker.schedule(context, true); return store.status(); }
         JSONObject doc = store.authorized(payload.optString("token", null));
         String owner = doc.getString("owner");
+        if (action.equals("legacyVault")) {
+            if (doc.optBoolean("encrypted") || !doc.has("state")) return new JSONObject();
+            return new JSONObject().put("base", doc.getJSONObject("base")).put("state", doc.getJSONObject("state")).put("history", doc.optJSONObject("history"));
+        }
+        if (action.equals("prepareVault")) {
+            OfflineSync.run(context);
+            JSONObject latest = store.authorized(payload.optString("token", null));
+            if (latest.has("conflicts") || !latest.has("state") ||
+                SyncMerge.changes(latest.getJSONObject("base"), latest.getJSONObject("state")) != 0)
+                throw new IllegalStateException("Sync and resolve local changes before enabling encryption.");
+            return new JSONObject();
+        }
+        if (action.equals("sealVault")) {
+            if (!OfflineHttp.call("/vault", "GET", null, payload.getString("token")).optBoolean("encrypted"))
+                throw new IllegalStateException("Encrypted data has not reached the server.");
+            store.update(owner, (current) -> current.put("encrypted", true));
+            SyncWorker.cancel(context);
+            return new JSONObject();
+        }
+        if (doc.optBoolean("encrypted")) throw new IllegalStateException("Unlock your encrypted data in an updated Daymark client.");
         if (action.equals("read")) {
             if (!doc.has("state")) { OfflineSync.run(context); doc = store.authorized(payload.optString("token", null)); }
             return payload.has("path") ? OfflineRead.project(doc, payload.getString("path")) : OfflineStore.publicDocument(doc);
