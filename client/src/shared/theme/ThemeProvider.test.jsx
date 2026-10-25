@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Routes, Route, Link } from "react-router-dom";
 import { ThemeProvider, useTheme, THEME_STORAGE_KEY } from "./ThemeProvider";
 import ThemeSwitcher from "./ThemeSwitcher";
+import ColorSwitcher from "./ColorSwitcher";
+import { COLOR_PALETTES, COLOR_STORAGE_KEY } from "./palettes";
 import AuthLayout from "../../features/auth/components/AuthLayout";
 import NavBar from "../../features/calendar/components/NavBar";
 
@@ -203,4 +205,94 @@ test("listeners are removed when the provider unmounts", () => {
   expect(listeners.size).toBe(1);
   view.unmount();
   expect(listeners.size).toBe(0);
+});
+
+function colorControls() {
+  return render(
+    <ThemeProvider>
+      <Probe />
+      <ColorSwitcher />
+    </ThemeProvider>,
+  );
+}
+
+test.each(COLOR_PALETTES)(
+  "$label works with light, dark and system mode and survives reopening",
+  ({ value, label }) => {
+    const view = colorControls();
+    if (value === "green") fireEvent.click(screen.getByRole("radio", { name: "Blue" }));
+    fireEvent.click(screen.getByRole("radio", { name: label }));
+    expect(document.documentElement.dataset.color).toBe(value);
+    expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBe(value);
+    select("light");
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.dataset.color).toBe(value);
+    select("dark");
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.dataset.color).toBe(value);
+    select("system");
+    systemChange(false);
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.dataset.color).toBe(value);
+    view.unmount();
+    colorControls();
+    expect(screen.getByRole("radio", { name: label })).toBeChecked();
+    expect(document.documentElement.dataset.color).toBe(value);
+  },
+);
+
+test("palette changes synchronize across tabs, ignore other storage and reset safely", () => {
+  colorControls();
+  const change = (value, storageArea = localStorage) =>
+    act(() =>
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: COLOR_STORAGE_KEY,
+          newValue: value,
+          storageArea,
+        }),
+      ),
+    );
+  change("blue");
+  expect(screen.getByRole("radio", { name: "Blue" })).toBeChecked();
+  change("purple", sessionStorage);
+  expect(screen.getByRole("radio", { name: "Blue" })).toBeChecked();
+  change("invalid");
+  expect(screen.getByRole("radio", { name: "Green" })).toBeChecked();
+  change("monochrome");
+  act(() =>
+    window.dispatchEvent(new StorageEvent("storage", { key: null, storageArea: localStorage })),
+  );
+  expect(screen.getByRole("radio", { name: "Green" })).toBeChecked();
+});
+
+test("the settings palette updates the calendar and remains selected after closing settings", async () => {
+  render(
+    <ThemeProvider>
+      <MemoryRouter>
+        <NavBar dates={[]} />
+      </MemoryRouter>
+    </ThemeProvider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+  const dialog = await screen.findByRole("dialog");
+  const colors = within(dialog).getByRole("group", { name: "Color palette" });
+  expect(within(colors).getAllByRole("radio")).toHaveLength(COLOR_PALETTES.length);
+  fireEvent.click(within(colors).getByRole("radio", { name: "Black & white" }));
+  expect(document.documentElement.dataset.color).toBe("monochrome");
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+  fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+  expect(await screen.findByRole("radio", { name: "Black & white" })).toBeChecked();
+});
+
+test("restricted storage still permits switching palettes", () => {
+  jest.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+    throw new Error("Blocked");
+  });
+  jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new Error("Blocked");
+  });
+  colorControls();
+  fireEvent.click(screen.getByRole("radio", { name: "Purple" }));
+  expect(document.documentElement.dataset.color).toBe("purple");
 });

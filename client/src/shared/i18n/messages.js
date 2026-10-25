@@ -9,6 +9,13 @@ export const en = {
   },
 };
 export const ru = {
+  "Color palette": "Цвет оформления",
+  Green: "Зелёный",
+  Blue: "Синий",
+  Purple: "Фиолетовый",
+  Pink: "Розовый",
+  Orange: "Оранжевый",
+  "Black & white": "Чёрно-белый",
   "Delete task {title}": "Удалить задачу {title}",
   "Delete this task?": "Удалить эту задачу?",
   "Delete task": "Удалить задачу",

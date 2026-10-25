@@ -34,9 +34,14 @@
   --event-bg: #356a52;
   --event-text: #ffffff;
   --logo-filter: none;
+  --brand-bg: #244b3d;
+  --brand-outline: #f5f2e6;
+  --brand-check: #d8bc78;
   --bs-body-bg: var(--page);
   --bs-body-color: var(--text);
   --bs-border-color: var(--border);
+  --bs-link-color: var(--accent);
+  --bs-link-hover-color: var(--accent-em);
 }
 
 :root[data-theme="dark"] {
@@ -75,6 +80,90 @@
   --event-bg: #93be9f;
   --event-text: #17291d;
   --logo-filter: invert(1);
+  --brand-bg: #c3d9bd;
+  --brand-outline: #203d31;
+  --brand-check: #785823;
+}
+
+:root[data-color="blue"] {
+  --color-hue: 220;
+}
+:root[data-color="purple"] {
+  --color-hue: 275;
+}
+:root[data-color="rose"] {
+  --color-hue: 335;
+}
+:root[data-color="orange"] {
+  --color-hue: 28;
+}
+:root[data-color="monochrome"] {
+  --color-hue: 0;
+  --color-chroma: 0;
+}
+
+/* Each color has its own surfaces, text, controls and focus states in both modes. */
+:root[data-color]:not([data-color="green"]) {
+  --page: hsl(var(--color-hue) calc(20% * var(--color-chroma, 1)) 98%);
+  --surface: #ffffff;
+  --surface-alt: hsl(var(--color-hue) calc(28% * var(--color-chroma, 1)) 94%);
+  --surface-subtle: hsl(var(--color-hue) calc(24% * var(--color-chroma, 1)) 93%);
+  --preview: hsl(var(--color-hue) calc(24% * var(--color-chroma, 1)) 97%);
+  --text: hsl(var(--color-hue) calc(28% * var(--color-chroma, 1)) 19%);
+  --muted: hsl(var(--color-hue) calc(14% * var(--color-chroma, 1)) 39%);
+  --placeholder: var(--muted);
+  --accent: hsl(var(--color-hue) calc(44% * var(--color-chroma, 1)) 34%);
+  --accent-soft: hsl(var(--color-hue) calc(36% * var(--color-chroma, 1)) 93%);
+  --accent-em: hsl(var(--color-hue) calc(32% * var(--color-chroma, 1)) 37%);
+  --primary-bg: hsl(var(--color-hue) calc(35% * var(--color-chroma, 1)) 22%);
+  --primary-text: #ffffff;
+  --primary-muted: hsl(var(--color-hue) calc(24% * var(--color-chroma, 1)) 82%);
+  --primary-hover: hsl(var(--color-hue) calc(37% * var(--color-chroma, 1)) 30%);
+  --border: hsl(var(--color-hue) calc(20% * var(--color-chroma, 1)) 86%);
+  --border-strong: hsl(var(--color-hue) calc(16% * var(--color-chroma, 1)) 49%);
+  --focus: hsl(var(--color-hue) calc(38% * var(--color-chroma, 1)) 48%);
+  --focus-border: var(--accent);
+  --focus-shadow: hsl(var(--color-hue) calc(44% * var(--color-chroma, 1)) 34% / 0.16);
+  --shadow: hsl(var(--color-hue) calc(28% * var(--color-chroma, 1)) 19% / 0.05);
+  --preview-shadow: var(--primary-bg);
+  --decoration: hsl(var(--color-hue) calc(34% * var(--color-chroma, 1)) 72%);
+  --today-bg: hsl(var(--color-hue) calc(36% * var(--color-chroma, 1)) 91%);
+  --outside-bg: hsl(var(--color-hue) calc(16% * var(--color-chroma, 1)) 95%);
+  --event-bg: var(--accent);
+  --event-text: #ffffff;
+  --brand-bg: var(--primary-bg);
+  --brand-outline: var(--primary-text);
+  --brand-check: var(--primary-muted);
+}
+
+:root[data-color]:not([data-color="green"])[data-theme="dark"] {
+  --page: hsl(var(--color-hue) calc(24% * var(--color-chroma, 1)) 8%);
+  --surface: hsl(var(--color-hue) calc(22% * var(--color-chroma, 1)) 12%);
+  --surface-alt: hsl(var(--color-hue) calc(28% * var(--color-chroma, 1)) 14%);
+  --surface-subtle: hsl(var(--color-hue) calc(25% * var(--color-chroma, 1)) 17%);
+  --preview: hsl(var(--color-hue) calc(23% * var(--color-chroma, 1)) 16%);
+  --text: hsl(var(--color-hue) calc(28% * var(--color-chroma, 1)) 92%);
+  --muted: hsl(var(--color-hue) calc(19% * var(--color-chroma, 1)) 71%);
+  --placeholder: hsl(var(--color-hue) calc(18% * var(--color-chroma, 1)) 65%);
+  --accent: hsl(var(--color-hue) calc(58% * var(--color-chroma, 1)) 79%);
+  --accent-soft: hsl(var(--color-hue) calc(28% * var(--color-chroma, 1)) 20%);
+  --accent-em: hsl(var(--color-hue) calc(48% * var(--color-chroma, 1)) 81%);
+  --primary-bg: hsl(var(--color-hue) calc(55% * var(--color-chroma, 1)) 82%);
+  --primary-text: hsl(var(--color-hue) calc(32% * var(--color-chroma, 1)) 15%);
+  --primary-muted: hsl(var(--color-hue) calc(26% * var(--color-chroma, 1)) 28%);
+  --primary-hover: hsl(var(--color-hue) calc(57% * var(--color-chroma, 1)) 87%);
+  --border: hsl(var(--color-hue) calc(21% * var(--color-chroma, 1)) 26%);
+  --border-strong: hsl(var(--color-hue) calc(18% * var(--color-chroma, 1)) 50%);
+  --focus: var(--accent);
+  --focus-border: var(--accent);
+  --focus-shadow: hsl(var(--color-hue) calc(58% * var(--color-chroma, 1)) 79% / 0.16);
+  --shadow: #00000033;
+  --preview-shadow: #000000;
+  --decoration: hsl(var(--color-hue) calc(40% * var(--color-chroma, 1)) 73%);
+  --today-bg: hsl(var(--color-hue) calc(28% * var(--color-chroma, 1)) 21%);
+  --outside-bg: hsl(var(--color-hue) calc(23% * var(--color-chroma, 1)) 10%);
+  --event-bg: hsl(var(--color-hue) calc(44% * var(--color-chroma, 1)) 72%);
+  --event-text: var(--primary-text);
 }
 
 :root body {
@@ -102,6 +191,93 @@
   margin: 0;
   padding: 0;
   border: 0;
+}
+.color-switcher {
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.color-switcher legend {
+  float: none;
+  width: auto;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+.color-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.color-option {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+}
+.color-option input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  z-index: 1;
+  cursor: pointer;
+}
+.color-option-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 10px 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.color-swatch {
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--swatch);
+}
+.color-swatch svg {
+  position: absolute;
+  right: -5px;
+  bottom: -3px;
+  width: 17px;
+  height: 17px;
+  padding: 2px;
+  border-radius: 50%;
+  color: var(--primary-text);
+  background: var(--primary-bg);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.color-option input:checked + .color-option-content {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+.color-option:hover .color-option-content {
+  border-color: var(--accent);
+}
+.color-option input:focus-visible + .color-option-content {
+  outline: 3px solid var(--focus-border);
+  outline-offset: 2px;
+}
+@media (forced-colors: active) {
+  .color-option input:checked + .color-option-content {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
 }
 .theme-slider {
   display: grid;

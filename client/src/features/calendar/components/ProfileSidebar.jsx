@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button, Offcanvas } from "react-bootstrap";
 import { FiSettings, FiLogOut, FiBell, FiSun, FiZap } from "react-icons/fi";
 import ThemeSwitcher from "../../../shared/theme/ThemeSwitcher";
+import ColorSwitcher from "../../../shared/theme/ColorSwitcher";
 import LanguageSwitcher from "../../../shared/i18n/LanguageSwitcher";
 import { clearToken } from "../../../shared/api/tokenStorage";
 import { LOGIN_ROUTE } from "../../../shared/config/routes";
@@ -61,6 +62,7 @@ export default function ProfileSidebar({
               {" " + t("Appearance")}
             </h2>
             <ThemeSwitcher />
+            <ColorSwitcher />
             {panelHeaders && (
               <label className="notification-toggle mt-3">
                 <input

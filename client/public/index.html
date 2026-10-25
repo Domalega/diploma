@@ -10,9 +10,15 @@
       // Apply the preference before rendering the page to avoid a light-theme flash.
       (function () {
         var preference = "system";
+        var color = "green";
         try {
           var saved = localStorage.getItem("calendar.theme");
           if (["light", "dark", "system"].indexOf(saved) !== -1) preference = saved;
+          var savedColor = localStorage.getItem("calendar.color");
+          if (
+            ["green", "blue", "purple", "rose", "orange", "monochrome"].indexOf(savedColor) !== -1
+          )
+            color = savedColor;
         } catch (error) {}
         var dark =
           preference === "dark" ||
@@ -22,6 +28,7 @@
         var theme = dark ? "dark" : "light";
         document.documentElement.dataset.theme = theme;
         document.documentElement.dataset.themePreference = preference;
+        document.documentElement.dataset.color = color;
         document.documentElement.style.colorScheme = theme;
         document
           .querySelector("#daymark-icon")
