@@ -5,9 +5,10 @@ import { useLanguage } from "../i18n/LanguageProvider";
 import { clearToken } from "../api/tokenStorage";
 import CalendarLoading from "../components/CalendarLoading";
 import { encryptionSession, lockEncryption } from "./session";
-import { syncVault, vaultStatus, disableVault } from "./vault";
+import { syncVault, disableVault } from "./vault";
 import {
   initializeDeviceAccess,
+  restoreDeviceAccess,
   enableDeviceEncryption,
   approveDeviceConnection,
   parseConnection,
@@ -24,26 +25,36 @@ export default function EncryptionGate({ children }) {
     [error, setError] = useState("");
   const [busy, setBusy] = useState(false),
     [legacyPhrase, setLegacyPhrase] = useState("");
-  const [state, setState] = useState(vaultStatus),
-    [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false);
   const retry = useCallback(() => {
     setError("");
     setAttempt((v) => v + 1);
   }, []);
   useEffect(() => {
     let active = true;
-    initializeDeviceAccess()
+    let restored = false;
+    async function initialize() {
+      // A missing key or damaged copy still goes through the normal server recovery flow.
+      const local = await restoreDeviceAccess().catch(() => null);
+      if (!active) return;
+      if (local) {
+        restored = true;
+        setAccess(local);
+        if (local.mode === "ready") return;
+      }
+      return initializeDeviceAccess();
+    }
+    initialize()
       .then((value) => {
-        if (active) {
+        if (active && value) {
           setAccess(value);
-          setState(vaultStatus());
           setError("");
         }
       })
       .catch((e) => {
         if (active) {
           setError(e.message);
-          setAccess((v) => ({ ...v, mode: "error" }));
+          if (!restored || e.status === 401) setAccess((v) => ({ ...v, mode: "error" }));
         }
       });
     return () => {
@@ -56,12 +67,9 @@ export default function EncryptionGate({ children }) {
       setLegacyPhrase("");
       retry();
     };
-    const changed = () => setState(vaultStatus());
     window.addEventListener("daymark:lock", locked);
-    window.addEventListener("daymark:vault", changed);
     return () => {
       window.removeEventListener("daymark:lock", locked);
-      window.removeEventListener("daymark:vault", changed);
     };
   }, [retry]);
   useEffect(() => {
@@ -88,6 +96,7 @@ export default function EncryptionGate({ children }) {
     window.addEventListener("focus", sync);
     window.addEventListener("storage", changed);
     const timer = setInterval(sync, 60000);
+    sync();
     return () => {
       clearInterval(timer);
       window.removeEventListener("online", sync);
@@ -101,7 +110,6 @@ export default function EncryptionGate({ children }) {
     setAccess((v) => ({ ...v, mode: "enabling" }));
     try {
       setAccess(await enableDeviceEncryption());
-      setState(vaultStatus());
     } catch (e) {
       setError(e.message);
       try {
@@ -120,7 +128,6 @@ export default function EncryptionGate({ children }) {
     try {
       setAccess(await rememberLegacyDevice(legacyPhrase, access.status));
       setLegacyPhrase("");
-      setState(vaultStatus());
     } catch (e) {
       setError(e.message);
     } finally {
@@ -256,13 +263,6 @@ export default function EncryptionGate({ children }) {
     <EncryptionContext.Provider
       value={{ mode: access.mode, enable, disable, connect, retry, busy, error }}
     >
-      {(state?.pending || state?.error || !!state?.conflicts?.length) &&
-        access.mode === "ready" && (
-          <div className="p-2 text-center border-bottom" role="status">
-            {t(state.error || "Encrypted changes are saved locally. Sync is pending.")}{" "}
-            {t("Open Settings to synchronize or resolve conflicts.")}
-          </div>
-        )}
       <Fragment key={access.mode}>{children}</Fragment>
       <Modal
         show={hasRequest}

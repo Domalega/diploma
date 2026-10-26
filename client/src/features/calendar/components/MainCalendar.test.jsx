@@ -31,6 +31,7 @@ test("arrow keys cross month boundaries with focus retained and Enter can select
         month={month}
         dates={[]}
         selectedDate="2026-10-31"
+        today="2026-10-01"
         onSelect={select}
         onMonthChange={(date) => setMonth(monthStart(date))}
       />

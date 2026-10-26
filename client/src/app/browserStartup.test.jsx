@@ -7,13 +7,6 @@ import { todayKey } from "../features/calendar/utils/calendarDates";
 import { emptyPlan } from "../features/medications/utils/schedule";
 import { emptyList } from "../features/todos/hooks/useTodoList";
 import { emptyBoard } from "../features/kanban/hooks/useKanbanBoard";
-// Exercise the legacy cache adapter in isolation; EncryptionGate has separate coverage.
-jest.mock(
-  "../shared/encryption/EncryptionGate",
-  () =>
-    ({ children }) =>
-      children,
-);
 
 afterEach(() => {
   delete global.fetch;
@@ -39,23 +32,25 @@ test("the complete web screen renders saved data while auth and all API reads ar
       </MemoryRouter>
     </ThemeProvider>,
   );
-  expect(screen.getByRole("table", { name: "Monthly calendar" })).toBeInTheDocument();
+  expect(await screen.findByRole("table", { name: "Monthly calendar" })).toBeInTheDocument();
   expect(screen.getAllByText(note.comment).length).toBeGreaterThan(0);
   expect(screen.queryByText("Opening your calendar…")).not.toBeInTheDocument();
-  expect(fetch).toHaveBeenCalledTimes(5);
+  expect(fetch).toHaveBeenCalledTimes(6);
 
   const refreshed = { ...note, comment: "Updated on another device" };
   await act(async () => {
     for (const [url, reply] of replies) {
       const data = url.endsWith("/user/auth")
         ? { token }
-        : url.endsWith("/userDate/get")
-          ? [refreshed]
-          : url.endsWith("/todos")
-            ? emptyList
-            : url.endsWith("/kanban")
-              ? emptyBoard
-              : emptyPlan;
+        : url.endsWith("/vault")
+          ? { encrypted: false }
+          : url.endsWith("/userDate/get")
+            ? [refreshed]
+            : url.endsWith("/todos")
+              ? emptyList
+              : url.endsWith("/kanban")
+                ? emptyBoard
+                : emptyPlan;
       reply({ ok: true, status: 200, json: async () => data });
     }
   });

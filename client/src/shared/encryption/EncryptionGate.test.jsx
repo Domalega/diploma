@@ -1,14 +1,15 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import EncryptionGate from "./EncryptionGate";
 import EncryptionControls from "./EncryptionControls";
 import {
   initializeDeviceAccess,
+  restoreDeviceAccess,
   enableDeviceEncryption,
   approveDeviceConnection,
   parseConnection,
 } from "./deviceFlow";
-import { vaultStatus } from "./vault";
+import { vaultStatus, syncVault } from "./vault";
 import { encryptionSession } from "./session";
 jest.mock("./deviceFlow");
 jest.mock("./vault");
@@ -16,6 +17,8 @@ jest.mock("./session", () => ({ encryptionSession: jest.fn(), lockEncryption: je
 beforeEach(() => {
   jest.resetAllMocks();
   encryptionSession.mockReturnValue(null);
+  restoreDeviceAccess.mockResolvedValue(null);
+  syncVault.mockResolvedValue(undefined);
   vaultStatus.mockReturnValue({ pending: false, conflicts: [], legacyRetained: false });
 });
 const open = (entry = "/calendar") =>
@@ -46,6 +49,29 @@ test("ordinary accounts open normally and encryption is a separate optional sett
   );
   expect(enableDeviceEncryption).toHaveBeenCalledTimes(1);
 });
+test("saved ordinary data stays visible while the encryption check stalls or fails", async () => {
+  restoreDeviceAccess.mockResolvedValue({ mode: "plain" });
+  let fail;
+  initializeDeviceAccess.mockReturnValue(new Promise((resolve, reject) => (fail = reject)));
+  open();
+  expect(await screen.findByText("Private calendar content")).toBeInTheDocument();
+  expect(screen.queryByText("Opening your calendar…")).not.toBeInTheDocument();
+  await act(async () => fail(new TypeError("Offline")));
+  expect(screen.getByText("Private calendar content")).toBeInTheDocument();
+});
+
+test("a restored encrypted document opens while background synchronization is stalled", async () => {
+  restoreDeviceAccess.mockImplementation(async () => {
+    encryptionSession.mockReturnValue({});
+    return { mode: "ready" };
+  });
+  syncVault.mockReturnValue(new Promise(() => {}));
+  open();
+  expect(await screen.findByText("Private calendar content")).toBeInTheDocument();
+  expect(initializeDeviceAccess).not.toHaveBeenCalled();
+  expect(syncVault).toHaveBeenCalledTimes(1);
+});
+
 test("an unapproved device cannot display encrypted contents and does not ask for a new phrase", async () => {
   initializeDeviceAccess.mockResolvedValue({
     mode: "waiting",
@@ -67,6 +93,7 @@ test("connected devices open automatically without any user input", async () => 
   encryptionSession.mockReturnValue({});
   initializeDeviceAccess.mockResolvedValue({ mode: "ready", status: { encrypted: true } });
   open();
+  await waitFor(() => expect(initializeDeviceAccess).toHaveBeenCalled());
   expect(await screen.findByText("Private calendar content")).toBeInTheDocument();
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Lock data" })).not.toBeInTheDocument();
@@ -78,6 +105,7 @@ test("a connection link does not share the key until the owner explicitly approv
   parseConnection.mockReturnValue(request);
   approveDeviceConnection.mockResolvedValue({});
   open("/calendar?connect=public-key");
+  await waitFor(() => expect(initializeDeviceAccess).toHaveBeenCalled());
   const approve = await screen.findByRole("button", { name: "Approve device" });
   expect(approveDeviceConnection).not.toHaveBeenCalled();
   expect(approve).toHaveClass("btn", "theme-button");

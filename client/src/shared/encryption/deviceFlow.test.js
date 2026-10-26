@@ -3,6 +3,7 @@ import { webcrypto } from "crypto";
 import { IDBFactory } from "fake-indexeddb";
 import {
   initializeDeviceAccess,
+  restoreDeviceAccess,
   enableDeviceEncryption,
   approveDeviceConnection,
   parseConnection,
@@ -173,6 +174,47 @@ test("automatic keys survive reload and logout, are not exportable, and never re
   lockEncryption();
   expect((await initializeDeviceAccess()).mode).toBe("ready");
 });
+test("saved device keys and ciphertext open without any server request, even during a stalled sync", async () => {
+  await enableDeviceEncryption();
+  await note();
+  lockEncryption();
+  const original = global.fetch;
+  let release;
+  global.fetch = jest.fn(() => new Promise((resolve) => (release = resolve)));
+  expect((await restoreDeviceAccess()).mode).toBe("ready");
+  expect(global.fetch).not.toHaveBeenCalled();
+  const syncing = syncVault();
+  await Promise.resolve();
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  try {
+    expect((await encryptedRequest("/userDate/get", { token }))[0].comment).toBe(
+      "Private automatic-key note",
+    );
+  } finally {
+    release(await original("http://localhost:5000/api/vault", { method: "GET" }));
+    await syncing;
+  }
+});
+
+test("local restoration cannot use another account's device key or ciphertext", async () => {
+  await enableDeviceEncryption();
+  await note();
+  lockEncryption();
+  localStorage.setItem("token", `header.${btoa(JSON.stringify({ id: 8 }))}.signature`);
+  global.fetch.mockClear();
+  expect(await restoreDeviceAccess()).toBeNull();
+  expect(encryptionSession()).toBeNull();
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test("an encrypted copy without its device key cannot be opened locally", async () => {
+  await enableDeviceEncryption();
+  lockEncryption();
+  global.indexedDB = new IDBFactory();
+  expect(await restoreDeviceAccess()).toBeNull();
+  expect(encryptionSession()).toBeNull();
+});
+
 test("another device cannot decrypt until its pinned connection link is explicitly approved", async () => {
   await enableDeviceEncryption();
   await note();

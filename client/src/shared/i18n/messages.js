@@ -184,6 +184,8 @@ export const ru = {
   "Task date (today if empty)": "Дата (по умолчанию сегодня)",
   "To-do view": "Показать задачи",
   "All tasks": "Все задачи",
+  "Completed tasks": "Выполненные",
+  "No active tasks.": "Нет текущих дел.",
   "Show {date} in calendar": "Показать в календаре: {date}",
   "To-do list for selected day": "Список дел на выбранный день",
   "Phone synchronization": "Обмен данными телефона",

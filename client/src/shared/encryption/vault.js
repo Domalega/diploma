@@ -63,15 +63,19 @@ const network = vaultNetwork;
 export const deviceScope = () => `${SOURCE}:${owner()}`;
 export const deviceContext = (device, keyId) =>
   context(owner(), `device:${keyId}:${device.id}:${device.publicKey.x}:${device.publicKey.y}`);
+export function localVaultStatus() {
+  const saved = JSON.parse(localStorage.getItem(storageKey(owner())) || "null");
+  return saved ? { encrypted: true, offline: true, envelope: saved } : null;
+}
 export async function inspectVault() {
   try {
     return await network();
   } catch (error) {
     // Authentication/protocol errors must never become an offline success.
     if (error.status) throw error;
-    const saved = JSON.parse(localStorage.getItem(storageKey(owner())) || "null");
+    const saved = localVaultStatus();
     if (!saved) throw error;
-    return { encrypted: true, offline: true, envelope: saved };
+    return saved;
   }
 }
 async function persist(s, doc) {
@@ -624,30 +628,35 @@ export function resolveVault(choice) {
     await synchronize(s);
   });
 }
-export function encryptedRequest(path, { method = "GET", body, signal, token } = {}) {
+export async function encryptedRequest(path, { method = "GET", body, signal, token } = {}) {
   const scheduled = encryptionSession();
+  // Reads use the last committed local document even while synchronization is waiting on the server.
+  if (method === "GET") {
+    const s = scheduled;
+    guard(s);
+    if (tokenOwner(token) !== s.owner) throw new Error("Unauthorized");
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    const match = /^\/kanban\/tasks\/([^/]+)\/history(?:\?(.*))?$/.exec(path);
+    if (match) {
+      const query = new URLSearchParams(match[2]);
+      const history = s.doc.current.history?.[decodeURIComponent(match[1])] || [];
+      const before = query.get("before"),
+        limit = Number(query.get("limit") || 50);
+      const index = before ? history.findIndex((e) => String(e.id) === before) + 1 : 0;
+      const events = history.slice(index, index + limit);
+      return {
+        events: clone(events),
+        nextCursor: events.length === limit ? events.at(-1).id : null,
+      };
+    }
+    return localApi({ owner: s.owner, generation: s.doc.generation, ...s.doc.current }, path)
+      .result;
+  }
   return serial(async () => {
     const s = scheduled;
     guard(s);
     if (tokenOwner(token) !== s.owner) throw new Error("Unauthorized");
     if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-    if (method === "GET") {
-      const match = /^\/kanban\/tasks\/([^/]+)\/history(?:\?(.*))?$/.exec(path);
-      if (match) {
-        const query = new URLSearchParams(match[2]);
-        const history = s.doc.current.history?.[decodeURIComponent(match[1])] || [];
-        const before = query.get("before"),
-          limit = Number(query.get("limit") || 50);
-        const index = before ? history.findIndex((e) => String(e.id) === before) + 1 : 0;
-        const events = history.slice(index, index + limit);
-        return {
-          events: clone(events),
-          nextCursor: events.length === limit ? events.at(-1).id : null,
-        };
-      }
-      return localApi({ owner: s.owner, generation: s.doc.generation, ...s.doc.current }, path)
-        .result;
-    }
     if (s.doc.conflicts?.length) throw new Error("These items changed on both devices");
     const { result, state } = localApi(
       { owner: s.owner, generation: s.doc.generation, ...s.doc.current },

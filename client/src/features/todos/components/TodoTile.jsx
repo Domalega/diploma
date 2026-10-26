@@ -1,8 +1,44 @@
-import { useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 import { useLanguage } from "../../../shared/i18n/LanguageProvider";
 import { formatDay, todayKey } from "../../calendar/utils/calendarDates";
 import "../styles/Todos.css";
+
+function useRecentlyCompleted(tasks) {
+  const previous = useRef(new Map(tasks.map((task) => [task.id, task.completed])));
+  const timers = useRef(new Map());
+  const [recent, setRecent] = useState(() => new Set());
+  useLayoutEffect(() => {
+    const current = new Map(tasks.map((task) => [task.id, task.completed]));
+    timers.current.forEach((timer, id) => {
+      if (!current.get(id)) {
+        clearTimeout(timer);
+        timers.current.delete(id);
+      }
+    });
+    tasks.forEach((task) => {
+      if (task.completed && previous.current.get(task.id) === false) {
+        timers.current.set(
+          task.id,
+          setTimeout(() => {
+            timers.current.delete(task.id);
+            setRecent(new Set(timers.current.keys()));
+          }, 1500),
+        );
+      }
+    });
+    previous.current = current;
+    setRecent(new Set(timers.current.keys()));
+  }, [tasks]);
+  useEffect(() => {
+    const activeTimers = timers.current;
+    return () => {
+      activeTimers.forEach(clearTimeout);
+      activeTimers.clear();
+    };
+  }, []);
+  return recent;
+}
 
 export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectDate }) {
   const { t } = useLanguage();
@@ -10,7 +46,9 @@ export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectD
   const [draft, setDraft] = useState("");
   const [date, setDate] = useState("");
   const [scope, setScope] = useState("all");
+  const [showCompleted, setShowCompleted] = useState(false);
   const [validation, setValidation] = useState("");
+  const recentlyCompleted = useRecentlyCompleted(list.tasks);
   const adding = useRef(false);
   const input = useRef(null);
   const busy = loading || pending || conflict;
@@ -34,6 +72,7 @@ export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectD
     try {
       await send({ type: "add", titles, date: date || todayKey() });
       setDraft("");
+      setShowCompleted(false);
       if (scope === "day" && (date || todayKey()) !== selectedDate) setScope("all");
       input.current?.focus();
     } catch {
@@ -45,6 +84,9 @@ export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectD
   const tasks =
     scope === "day" ? list.tasks.filter((task) => task.date === selectedDate) : list.tasks;
   const completed = tasks.filter((task) => task.completed).length;
+  const visibleTasks = tasks.filter((task) =>
+    showCompleted ? task.completed : !task.completed || recentlyCompleted.has(task.id),
+  );
   return (
     <div className="todo-workspace" aria-busy={loading || pending}>
       <div className="todo-summary" role="status">
@@ -67,6 +109,14 @@ export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectD
         >
           {t("Selected day")}
         </button>
+        <button
+          type="button"
+          className="todo-button"
+          aria-pressed={showCompleted}
+          onClick={() => setShowCompleted((value) => !value)}
+        >
+          {t("Completed tasks")} ({completed})
+        </button>
       </div>
       {(error || validation) && (
         <div className="todo-error" role="alert">
@@ -81,9 +131,9 @@ export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectD
       <div className="todo-items">
         {loading ? (
           <p role="status">{t("Loading to-do list…")}</p>
-        ) : tasks.length ? (
+        ) : visibleTasks.length ? (
           <ul aria-label={t("To-do tasks")}>
-            {tasks.map((task) => (
+            {visibleTasks.map((task) => (
               <TodoRow
                 key={task.id}
                 task={task}
@@ -94,7 +144,15 @@ export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectD
             ))}
           </ul>
         ) : (
-          <p className="todo-empty">{t("Start with one small task.")}</p>
+          <p className="todo-empty">
+            {t(
+              showCompleted
+                ? "No completed tasks yet."
+                : tasks.length
+                  ? "No active tasks."
+                  : "Start with one small task.",
+            )}
+          </p>
         )}
       </div>
       <form

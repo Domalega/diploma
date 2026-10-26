@@ -1,4 +1,4 @@
-import { tokenOwner } from "../api/browserCache";
+import { tokenOwner, readCachedResource } from "../api/browserCache";
 import { isOfflineApp } from "../offline/bridge";
 import { isNativeApp } from "../reminders/nativeBridge";
 import { getDevice, readDevice, saveDevice, privateDeviceKey } from "./deviceStore";
@@ -13,6 +13,7 @@ import {
 } from "./crypto";
 import {
   inspectVault,
+  localVaultStatus,
   vaultNetwork,
   deviceScope,
   deviceContext,
@@ -80,6 +81,30 @@ export function parseConnection(search) {
     return data;
   } catch {
     return null;
+  }
+}
+export async function restoreDeviceAccess() {
+  const guard = flowGuard();
+  guard();
+  if (encryptionSession()) return { mode: "ready" };
+  if (isOfflineApp()) return null;
+  const status = localVaultStatus();
+  if (!status) return readCachedResource("dates") !== undefined ? { mode: "plain" } : null;
+  const saved = await readDevice(deviceScope());
+  guard();
+  if (!saved?.wrappedKey || saved.keyId !== status.envelope.salt) return null;
+  const raw = await unwrapContentKey(
+    saved.wrappedKey,
+    await privateDeviceKey(saved),
+    deviceContext(saved, saved.keyId),
+  );
+  try {
+    guard();
+    await activateDeviceVault(raw, status);
+    guard();
+    return { mode: "ready", status };
+  } finally {
+    raw.fill(0);
   }
 }
 export async function initializeDeviceAccess() {
