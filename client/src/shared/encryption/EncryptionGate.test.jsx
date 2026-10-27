@@ -9,7 +9,7 @@ import {
   approveDeviceConnection,
   parseConnection,
 } from "./deviceFlow";
-import { vaultStatus, syncVault } from "./vault";
+import { vaultStatus, syncVault, isCurrentVaultKey } from "./vault";
 import { encryptionSession } from "./session";
 jest.mock("./deviceFlow");
 jest.mock("./vault");
@@ -20,6 +20,7 @@ beforeEach(() => {
   restoreDeviceAccess.mockResolvedValue(null);
   syncVault.mockResolvedValue(undefined);
   vaultStatus.mockReturnValue({ pending: false, conflicts: [], legacyRetained: false });
+  isCurrentVaultKey.mockImplementation((key) => key === "daymark.encrypted.v1:current-account");
 });
 const open = (entry = "/calendar") =>
   render(
@@ -97,6 +98,40 @@ test("connected devices open automatically without any user input", async () => 
   expect(await screen.findByText("Private calendar content")).toBeInTheDocument();
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Lock data" })).not.toBeInTheDocument();
+});
+
+test("another tab's saved encrypted copy refreshes the open calendar without hiding it", async () => {
+  encryptionSession.mockReturnValue({});
+  initializeDeviceAccess.mockResolvedValue({ mode: "ready", status: { encrypted: true } });
+  open();
+  await screen.findByText("Private calendar content");
+  await waitFor(() => expect(syncVault).toHaveBeenCalledTimes(1));
+  const refreshed = jest.fn();
+  window.addEventListener("daymark:sync", refreshed);
+  try {
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "daymark.encrypted.v1:other-account",
+          newValue: "unrelated copy",
+        }),
+      );
+    });
+    expect(refreshed).not.toHaveBeenCalled();
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "daymark.encrypted.v1:current-account",
+          newValue: "new encrypted copy",
+        }),
+      );
+    });
+    expect(refreshed).toHaveBeenCalledTimes(1);
+    expect(syncVault).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("Private calendar content")).toBeInTheDocument();
+  } finally {
+    window.removeEventListener("daymark:sync", refreshed);
+  }
 });
 test("a connection link does not share the key until the owner explicitly approves the device", async () => {
   encryptionSession.mockReturnValue({});

@@ -120,6 +120,10 @@ export const ru = {
     "Данные изменились. Обновите страницу перед включением шифрования.",
   "Local data changed in another tab. Lock and unlock again.":
     "Локальные данные изменились в другой вкладке. Заблокируйте и снова разблокируйте данные.",
+  "Data is changing in another tab. Try again in a moment.":
+    "Данные обновляются в другой вкладке. Повторите действие через несколько секунд.",
+  "Data was updated in another tab. Please try your change again.":
+    "Данные обновились в другой вкладке. Повторите действие.",
   "The server returned an older encrypted document.":
     "Сервер вернул устаревшую зашифрованную копию.",
   "Encrypted data changed on another device. Sync and try again.":

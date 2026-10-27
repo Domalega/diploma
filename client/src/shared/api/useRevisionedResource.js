@@ -11,6 +11,7 @@ export default function useRevisionedResource({
   conflictMessage,
   busyMessage,
   cacheKey,
+  refreshOnConflict = false,
 }) {
   const [cache] = useState(() => {
     const session = cacheSession();
@@ -90,6 +91,8 @@ export default function useRevisionedResource({
       return saved;
     } catch (error) {
       if (alive.current) handleError(error);
+      if (refreshOnConflict && error.status === 409 && error.message === conflictMessage)
+        refreshAfterWrite.current = true;
       throw error;
     } finally {
       mutating.current = false;

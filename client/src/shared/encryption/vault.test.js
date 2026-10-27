@@ -20,6 +20,7 @@ const phrase = "separate secret encryption phrase";
 const token = `header.${btoa(JSON.stringify({ id: 7 }))}.signature`;
 const storageKey = "daymark.encrypted.v1:http://localhost:5000/api:7";
 const remoteContext = "daymark:v1:http://localhost:5000/api:7:remote";
+const localContext = "daymark:v1:http://localhost:5000/api:7:local";
 const initial = () => ({
   state: {
     todos: { enabled: false },
@@ -171,8 +172,117 @@ test("local storage failures and writes from other tabs cannot falsely report a 
   localStorage.setItem(storageKey, "another tab's document");
   await expect(
     write("/userDate/create", { date: "2026-10-25", comment: "Unsaved" }),
-  ).rejects.toThrow(/another tab/);
-  expect(await read("/userDate/get")).toEqual([]);
+  ).rejects.toThrow("Invalid encrypted document");
+  expect(encryptionSession().doc.current.state).toEqual(initial().state);
+  expect(localStorage.getItem(storageKey)).toBe("another tab's document");
+});
+
+test("a stale tab reads and completes tasks from the latest encrypted local copy automatically", async () => {
+  const first = await unlock();
+  const second = { ...first, doc: JSON.parse(JSON.stringify(first.doc)) };
+  setEncryptionSession(second);
+  online = false;
+  await write("/todos", { type: "enabled", enabled: true });
+  const added = await write("/todos", { type: "add", titles: ["From another tab"] });
+  setEncryptionSession(first);
+  const latest = await read("/todos");
+  expect(latest.tasks).toHaveLength(1);
+  const completed = await write("/todos", {
+    type: "complete",
+    id: added.tasks[0].id,
+    completed: true,
+    revision: latest.revision,
+  });
+  expect(completed.tasks[0]).toMatchObject({ title: "From another tab", completed: true });
+  expect(vaultStatus().pending).toBe(true);
+  const stored = await open(first.key, JSON.parse(localStorage.getItem(storageKey)), localContext);
+  expect(stored.current.state["todo/" + added.tasks[0].id].completed).toBe(true);
+  expect(localStorage.getItem(storageKey)).not.toContain("From another tab");
+});
+
+test("a write racing another tab retries against its committed copy without losing or duplicating data", async () => {
+  const session = await unlock();
+  online = false;
+  await write("/todos", { type: "enabled", enabled: true });
+  const competing = JSON.parse(JSON.stringify(session.doc));
+  const noteId = webcrypto.randomUUID();
+  competing.current.state["note/" + noteId] = {
+    date: "2026-10-26",
+    time: null,
+    comment: "Other tab's note",
+  };
+  competing.generation++;
+  const newer = JSON.stringify(await seal(session.key, session.salt, competing, localContext));
+  const original = navigator.locks.request;
+  let race = true;
+  const lock = jest.spyOn(navigator.locks, "request").mockImplementation((name, action) => {
+    if (race) {
+      race = false;
+      localStorage.setItem(storageKey, newer);
+    }
+    return original(name, action);
+  });
+  try {
+    const result = await write("/todos", { type: "add", titles: ["Save once"] });
+    expect(result.tasks.map((task) => task.title)).toEqual(["Save once"]);
+    expect((await read("/userDate/get"))[0].comment).toBe("Other tab's note");
+  } finally {
+    lock.mockRestore();
+  }
+});
+
+test("editing the same task in two tabs preserves the newer saved title until an explicit retry", async () => {
+  const first = await unlock();
+  online = false;
+  await write("/todos", { type: "enabled", enabled: true });
+  const list = await write("/todos", { type: "add", titles: ["Original"] });
+  const second = { ...first, doc: JSON.parse(JSON.stringify(first.doc)) };
+  setEncryptionSession(second);
+  await write("/todos", { type: "edit", id: list.tasks[0].id, title: "Saved in second tab" });
+  setEncryptionSession(first);
+  const edit = {
+    type: "edit",
+    id: list.tasks[0].id,
+    title: "First tab's draft",
+    revision: list.revision,
+  };
+  await expect(write("/todos", edit)).rejects.toMatchObject({ status: 409 });
+  const latest = await read("/todos");
+  expect(latest.tasks[0].title).toBe("Saved in second tab");
+  const retried = await write("/todos", { ...edit, revision: latest.revision });
+  expect(retried.tasks[0].title).toBe("First tab's draft");
+});
+
+test("damaged ciphertext from another tab is rejected without replacing the valid in-memory copy", async () => {
+  const session = await unlock();
+  const previous = session.doc;
+  const envelope = JSON.parse(session.stored);
+  envelope.ciphertext = (envelope.ciphertext[0] === "A" ? "B" : "A") + envelope.ciphertext.slice(1);
+  const damaged = JSON.stringify(envelope);
+  localStorage.setItem(storageKey, damaged);
+  await expect(read("/todos")).rejects.toThrow(/damaged data/);
+  await expect(write("/todos", { type: "enabled", enabled: true })).rejects.toThrow(/damaged data/);
+  expect(session.doc).toBe(previous);
+  expect(localStorage.getItem(storageKey)).toBe(damaged);
+});
+
+test("locking while a fresh local copy is being decrypted prevents the read from returning private data", async () => {
+  const session = await unlock();
+  localStorage.setItem(
+    storageKey,
+    JSON.stringify(await seal(session.key, session.salt, session.doc, localContext)),
+  );
+  const original = webcrypto.subtle.decrypt;
+  const decrypt = jest.spyOn(webcrypto.subtle, "decrypt").mockImplementation(async (...args) => {
+    const clear = await original.call(webcrypto.subtle, ...args);
+    lockEncryption();
+    return clear;
+  });
+  try {
+    await expect(read("/todos")).rejects.toThrow(/Unlock/);
+  } finally {
+    decrypt.mockRestore();
+  }
 });
 test("tampered ciphertext, wrong phrases and revoked sessions never fall back to plaintext", async () => {
   await unlock();

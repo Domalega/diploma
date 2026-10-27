@@ -88,7 +88,7 @@ test("edit, cancel and delete operate on the chosen task", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Delete to-do Buy milk" }));
   expect(state.send).toHaveBeenCalledWith({ type: "remove", id: "one" });
 });
-test("a conflict keeps drafts and editing locked until reload", () => {
+test("a conflict keeps drafts and editing locked without a reload button in the tile", () => {
   const state = tracker({
     conflict: true,
     error: "The to-do list changed. Reload it before saving.",
@@ -96,8 +96,7 @@ test("a conflict keeps drafts and editing locked until reload", () => {
   render(<TodoTile tracker={state} />);
   expect(screen.getByRole("checkbox")).toBeDisabled();
   expect(screen.getByRole("textbox", { name: "New to-do tasks" })).toHaveAttribute("readonly");
-  fireEvent.click(screen.getByRole("button", { name: "Reload to-do list" }));
-  expect(state.reload).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("button", { name: "Reload to-do list" })).not.toBeInTheDocument();
 });
 
 test("an explicit date is sent for every pasted task; the bottom instruction is removed", async () => {

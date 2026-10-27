@@ -14,6 +14,7 @@ function fixture() {
     write: jest.fn().mockResolvedValue({ revision: 4, tasks: [{ id: "saved" }] }),
     conflictMessage,
     busyMessage: "Reload first",
+    refreshOnConflict: true,
   };
   return { config, ...renderHook(() => useRevisionedResource(config), { wrapper }) };
 }
@@ -70,21 +71,36 @@ test("cached tasks remain interactive during refresh and a late read cannot undo
   expect(readCachedResource("todos").revision).toBe(4);
 });
 
-test("stale revision conflicts preserve data and block saving until a successful reload", async () => {
+test("stale revision conflicts reload automatically and keep saving blocked if that read fails", async () => {
   const { config, result } = fixture();
   await waitFor(() => expect(result.current.loading).toBe(false));
+  config.read.mockRejectedValueOnce(new Error("Offline"));
   config.write.mockRejectedValueOnce(Object.assign(new Error(conflictMessage), { status: 409 }));
   await act(async () => {
     await expect(result.current.send({})).rejects.toThrow(conflictMessage);
   });
   expect(result.current.conflict).toBe(true);
   expect(result.current.data.revision).toBe(3);
+  expect(config.read).toHaveBeenCalledTimes(2);
   await expect(result.current.send({})).rejects.toThrow("Reload first");
-  config.read.mockRejectedValueOnce(new Error("Offline"));
-  await act(async () => result.current.reload());
-  expect(result.current.conflict).toBe(true);
   await act(async () => result.current.reload());
   expect(result.current.conflict).toBe(false);
+});
+
+test("a stale revision refreshes in the background without replaying the rejected command", async () => {
+  const { config, result } = fixture();
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  config.write.mockRejectedValueOnce(Object.assign(new Error(conflictMessage), { status: 409 }));
+  config.read.mockResolvedValueOnce({ revision: 4, tasks: [{ id: "from-another-tab" }] });
+  await act(async () => {
+    await expect(result.current.send({ type: "add" })).rejects.toThrow(conflictMessage);
+  });
+  await waitFor(() => expect(result.current.data.revision).toBe(4));
+  expect(result.current.error).toBe("");
+  expect(result.current.conflict).toBe(false);
+  expect(config.write).toHaveBeenCalledTimes(1);
+  await act(async () => result.current.send({ type: "add" }));
+  expect(config.write).toHaveBeenLastCalledWith({ type: "add", revision: 4 });
 });
 
 test("WIP conflicts allow retry and sync refresh waits for the pending write", async () => {

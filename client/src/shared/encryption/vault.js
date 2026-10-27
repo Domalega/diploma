@@ -28,6 +28,7 @@ const canonical = (v) =>
 const equal = (a, b) => canonical(a) === canonical(b);
 const owner = () => tokenOwner(localStorage.getItem("token"));
 const storageKey = (id) => `daymark.encrypted.v1:${SOURCE}:${id}`;
+export const isCurrentVaultKey = (key) => key === storageKey(owner());
 const context = (id, purpose) => `daymark:v1:${SOURCE}:${id}:${purpose}`;
 const notify = () => window.dispatchEvent(new Event("daymark:vault"));
 let tail = Promise.resolve();
@@ -102,10 +103,52 @@ async function commitLocal(id, expected, saved, check, accept = () => {}) {
   return navigator.locks.request(storageKey(id), () => {
     check();
     if (localStorage.getItem(storageKey(id)) !== expected)
-      throw new Error("Local data changed in another tab. Lock and unlock again.");
+      throw Object.assign(new Error("Data is changing in another tab. Try again in a moment."), {
+        code: "VAULT_LOCAL_CHANGED",
+      });
     localStorage.setItem(storageKey(id), saved);
     accept();
   });
+}
+async function readLocal(s) {
+  guard(s);
+  const stored = localStorage.getItem(storageKey(s.owner));
+  if (stored === s.stored) return { stored, doc: s.doc };
+  let envelope;
+  try {
+    envelope = JSON.parse(stored || "null");
+  } catch {
+    throw new Error("Invalid encrypted document");
+  }
+  if (!envelope || envelope.salt !== s.salt) {
+    lockEncryption();
+    throw new Error("Unlock your encrypted data first.");
+  }
+  const doc = await open(s.key, envelope, context(s.owner, "local"));
+  guard(s);
+  validateDocument(doc?.base);
+  if (!doc.conflicts?.length) validateDocument(doc.current);
+  if (
+    !Number.isSafeInteger(doc.generation) ||
+    !Number.isSafeInteger(doc.revision) ||
+    doc.generation < s.doc.generation ||
+    doc.revision < s.doc.revision
+  )
+    throw new Error("Invalid encrypted document");
+  return { stored, doc };
+}
+async function withFreshLocal(s, action) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const latest = await readLocal(s);
+    guard(s);
+    s.stored = latest.stored;
+    s.doc = latest.doc;
+    try {
+      return await action();
+    } catch (error) {
+      if (error.code !== "VAULT_LOCAL_CHANGED" || attempt === 2) throw error;
+    }
+  }
 }
 const dirty = (s) => !equal(s.doc.current, s.doc.base);
 function historyFor(state, ...documents) {
@@ -147,6 +190,9 @@ function combine(base, local, remote) {
   return { current: { state, history }, conflicts };
 }
 async function synchronize(s) {
+  return withFreshLocal(s, () => synchronizeCurrent(s));
+}
+async function synchronizeCurrent(s) {
   guard(s);
   const remote = await network();
   guard(s);
@@ -636,10 +682,13 @@ export async function encryptedRequest(path, { method = "GET", body, signal, tok
     guard(s);
     if (tokenOwner(token) !== s.owner) throw new Error("Unauthorized");
     if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    const { doc } = await readLocal(s);
+    guard(s);
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
     const match = /^\/kanban\/tasks\/([^/]+)\/history(?:\?(.*))?$/.exec(path);
     if (match) {
       const query = new URLSearchParams(match[2]);
-      const history = s.doc.current.history?.[decodeURIComponent(match[1])] || [];
+      const history = doc.current.history?.[decodeURIComponent(match[1])] || [];
       const before = query.get("before"),
         limit = Number(query.get("limit") || 50);
       const index = before ? history.findIndex((e) => String(e.id) === before) + 1 : 0;
@@ -649,60 +698,16 @@ export async function encryptedRequest(path, { method = "GET", body, signal, tok
         nextCursor: events.length === limit ? events.at(-1).id : null,
       };
     }
-    return localApi({ owner: s.owner, generation: s.doc.generation, ...s.doc.current }, path)
-      .result;
+    return localApi({ owner: s.owner, generation: doc.generation, ...doc.current }, path).result;
   }
   return serial(async () => {
     const s = scheduled;
     guard(s);
     if (tokenOwner(token) !== s.owner) throw new Error("Unauthorized");
-    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-    if (s.doc.conflicts?.length) throw new Error("These items changed on both devices");
-    const { result, state } = localApi(
-      { owner: s.owner, generation: s.doc.generation, ...s.doc.current },
-      path,
-      method,
-      body,
+    const expected = s.doc.current.state;
+    const result = await withFreshLocal(s, () =>
+      changeLocal(s, path, method, body, signal, expected),
     );
-    const doc = clone(s.doc);
-    doc.current.state = state;
-    doc.generation++;
-    // History is part of the encrypted document too; it never reaches the legacy endpoint.
-    for (const k of new Set([...Object.keys(s.doc.current.state), ...Object.keys(state)])) {
-      if (!k.startsWith("task/") || equal(s.doc.current.state[k], state[k])) continue;
-      const id = k.slice(5),
-        previous = s.doc.current.state[k],
-        value = state[k];
-      if (!value) {
-        delete doc.current.history[id];
-        continue;
-      }
-      const kind = !previous
-        ? "created"
-        : !previous.completedAt && value.completedAt
-          ? "completed"
-          : previous.completedAt && !value.completedAt
-            ? "reopened"
-            : previous.columnId !== value.columnId || previous.position !== value.position
-              ? "moved"
-              : "edited";
-      const history = (doc.current.history[id] ||= []);
-      history.unshift({
-        id: window.crypto.randomUUID(),
-        taskId: id,
-        kind,
-        createdAt: new Date().toISOString(),
-        details: {
-          title: value.title,
-          from: previous?.columnId,
-          to: value.columnId,
-          date: value.date,
-        },
-      });
-    }
-    validateDocument(doc.current);
-    validateNewIntakes(s.doc.current, doc.current);
-    await persist(s, doc);
     // Local durability precedes the network. Failures retain pending ciphertext for retry.
     try {
       await synchronize(s);
@@ -712,4 +717,72 @@ export async function encryptedRequest(path, { method = "GET", body, signal, tok
     }
     return result;
   });
+}
+async function changeLocal(s, path, method, body, signal, expected) {
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  if (s.doc.conflicts?.length) throw new Error("These items changed on both devices");
+  const { result, state } = localApi(
+    { owner: s.owner, generation: s.doc.generation, ...s.doc.current },
+    path,
+    method,
+    body,
+  );
+  if (body?.revision !== s.doc.generation) {
+    for (const key of new Set([...Object.keys(s.doc.current.state), ...Object.keys(state)])) {
+      if (
+        !equal(s.doc.current.state[key], state[key]) &&
+        !equal(expected[key], s.doc.current.state[key])
+      )
+        throw Object.assign(
+          new Error(
+            path === "/todos"
+              ? "The to-do list changed. Reload it before saving."
+              : path === "/kanban"
+                ? "The board changed. Reload it before saving."
+                : "Data was updated in another tab. Please try your change again.",
+          ),
+          { status: 409 },
+        );
+    }
+  }
+  const doc = clone(s.doc);
+  doc.current.state = state;
+  doc.generation++;
+  // History is part of the encrypted document too; it never reaches the legacy endpoint.
+  for (const k of new Set([...Object.keys(s.doc.current.state), ...Object.keys(state)])) {
+    if (!k.startsWith("task/") || equal(s.doc.current.state[k], state[k])) continue;
+    const id = k.slice(5),
+      previous = s.doc.current.state[k],
+      value = state[k];
+    if (!value) {
+      delete doc.current.history[id];
+      continue;
+    }
+    const kind = !previous
+      ? "created"
+      : !previous.completedAt && value.completedAt
+        ? "completed"
+        : previous.completedAt && !value.completedAt
+          ? "reopened"
+          : previous.columnId !== value.columnId || previous.position !== value.position
+            ? "moved"
+            : "edited";
+    const history = (doc.current.history[id] ||= []);
+    history.unshift({
+      id: window.crypto.randomUUID(),
+      taskId: id,
+      kind,
+      createdAt: new Date().toISOString(),
+      details: {
+        title: value.title,
+        from: previous?.columnId,
+        to: value.columnId,
+        date: value.date,
+      },
+    });
+  }
+  validateDocument(doc.current);
+  validateNewIntakes(s.doc.current, doc.current);
+  await persist(s, doc);
+  return result;
 }

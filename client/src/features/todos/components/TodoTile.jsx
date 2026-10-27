@@ -42,7 +42,7 @@ function useRecentlyCompleted(tasks) {
 
 export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectDate }) {
   const { t } = useLanguage();
-  const { list, loading, pending, conflict, error, reload, send } = tracker;
+  const { list, loading, pending, conflict, error, send } = tracker;
   const [draft, setDraft] = useState("");
   const [date, setDate] = useState("");
   const [scope, setScope] = useState("all");
@@ -121,11 +121,6 @@ export default function TodoTile({ tracker, selectedDate = todayKey(), onSelectD
       {(error || validation) && (
         <div className="todo-error" role="alert">
           <p>{t(validation || error)}</p>
-          {error && (
-            <button type="button" className="todo-button" disabled={pending} onClick={reload}>
-              {t("Reload to-do list")}
-            </button>
-          )}
         </div>
       )}
       <div className="todo-items">

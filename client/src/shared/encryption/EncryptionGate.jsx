@@ -5,7 +5,7 @@ import { useLanguage } from "../i18n/LanguageProvider";
 import { clearToken } from "../api/tokenStorage";
 import CalendarLoading from "../components/CalendarLoading";
 import { encryptionSession, lockEncryption } from "./session";
-import { syncVault, disableVault } from "./vault";
+import { syncVault, disableVault, isCurrentVaultKey } from "./vault";
 import {
   initializeDeviceAccess,
   restoreDeviceAccess,
@@ -88,9 +88,13 @@ export default function EncryptionGate({ children }) {
       if (
         event.key === "token" ||
         event.key === null ||
-        (event.key?.startsWith("daymark.encrypted.v1:") && event.newValue === null)
+        (isCurrentVaultKey(event.key) && event.newValue === null)
       )
         lockEncryption();
+      else if (isCurrentVaultKey(event.key)) {
+        window.dispatchEvent(new Event("daymark:sync"));
+        sync();
+      }
     };
     window.addEventListener("online", sync);
     window.addEventListener("focus", sync);

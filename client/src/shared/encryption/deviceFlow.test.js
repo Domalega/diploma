@@ -179,14 +179,21 @@ test("saved device keys and ciphertext open without any server request, even dur
   await note();
   lockEncryption();
   const original = global.fetch;
-  let release;
-  global.fetch = jest.fn(() => new Promise((resolve) => (release = resolve)));
+  let release, started;
+  const requested = new Promise((resolve) => (started = resolve));
+  global.fetch = jest.fn(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+        started();
+      }),
+  );
   expect((await restoreDeviceAccess()).mode).toBe("ready");
   expect(global.fetch).not.toHaveBeenCalled();
   const syncing = syncVault();
-  await Promise.resolve();
-  expect(global.fetch).toHaveBeenCalledTimes(1);
   try {
+    await requested;
+    expect(global.fetch).toHaveBeenCalledTimes(1);
     expect((await encryptedRequest("/userDate/get", { token }))[0].comment).toBe(
       "Private automatic-key note",
     );
