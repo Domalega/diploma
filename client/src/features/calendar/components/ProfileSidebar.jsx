@@ -107,7 +107,7 @@ export default function ProfileSidebar({
               <p>
                 {t(
                   notifications.native
-                    ? "Allow Daymark notifications in your device settings, then reopen the app."
+                    ? "Allow Jotstride notifications in your device settings, then reopen the app."
                     : "Blocked by your browser. You can allow notifications in this site's browser settings.",
                 )}
               </p>
@@ -174,7 +174,7 @@ export default function ProfileSidebar({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {t("Download Daymark")}
+                  {t("Download Jotstride")}
                 </a>
               </p>
             )}
@@ -293,7 +293,7 @@ export default function ProfileSidebar({
                   <p>
                     {t(
                       notifications.native
-                        ? "Allow Daymark notifications in your device settings, then reopen the app."
+                        ? "Allow Jotstride notifications in your device settings, then reopen the app."
                         : "Allow notifications for this site in your browser settings to receive reminders.",
                     )}
                   </p>

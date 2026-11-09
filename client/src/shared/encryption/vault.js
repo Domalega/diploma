@@ -630,7 +630,7 @@ export function disableVault() {
       try {
         await offlineNative("unsealVault", { token: localStorage.getItem("token"), prepare: true });
       } catch {
-        throw new Error("Update the installed Daymark app before disabling encryption.");
+        throw new Error("Update the installed Jotstride app before disabling encryption.");
       }
     }
     await synchronize(s);

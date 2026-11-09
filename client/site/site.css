@@ -1,12 +1,18 @@
 :root {
   color-scheme: light;
-  --page: #fcfcf9;
-  --surface: #eef1e8;
-  --ink: #1c332c;
-  --muted: #5d6d64;
-  --green: #356a52;
-  --line: #dce1d8;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --page: #f6f8eb;
+  --panel: #ffffff;
+  --surface: #e9f0cf;
+  --outside: #eef1df;
+  --ink: #283413;
+  --muted: #526044;
+  --green: #4b6418;
+  --primary: #425b12;
+  --line: #dae2c2;
+  --outline: #798753;
+  --radius-panel: 14px;
+  --radius-pill: 999px;
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
   background: var(--page);
   color: var(--ink);
   line-height: 1.6;
@@ -41,8 +47,7 @@ p {
 }
 h1,
 h2 {
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 400;
+  font-weight: 650;
 }
 h1 {
   font-size: clamp(2.6rem, 4.7vw, 4.4rem);
@@ -72,7 +77,7 @@ main,
   justify-content: space-between;
   align-items: center;
   gap: 28px;
-  min-height: 112px;
+  min-height: 84px;
   border-bottom: 1px solid var(--line);
 }
 .brand {
@@ -98,8 +103,8 @@ nav a[aria-current="page"] {
   text-decoration: underline;
 }
 .nav-open {
-  border: 1px solid var(--line);
-  border-radius: 100px;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-pill);
   padding: 9px 20px;
 }
 .skip-link {
@@ -108,7 +113,7 @@ nav a[aria-current="page"] {
   left: 8px;
   transform: translateY(-160%);
   padding: 12px 18px;
-  background: white;
+  background: var(--panel);
   z-index: 2;
 }
 .skip-link:focus {
@@ -119,7 +124,7 @@ nav a[aria-current="page"] {
   grid-template-columns: 1.1fr 1fr;
   align-items: center;
   gap: 7%;
-  padding-block: 92px 100px;
+  padding-block: 74px 80px;
 }
 .eyebrow {
   color: var(--green);
@@ -148,9 +153,9 @@ nav a[aria-current="page"] {
   gap: 15px;
   min-height: 49px;
   padding: 12px 23px;
-  border: 1px solid var(--ink);
-  border-radius: 100px;
-  background: var(--ink);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-pill);
+  background: var(--primary);
   color: white;
   font-size: 0.9rem;
   font-weight: 500;
@@ -164,10 +169,10 @@ nav a[aria-current="page"] {
 .button.secondary {
   color: var(--ink);
   background: transparent;
-  border-color: var(--line);
+  border-color: var(--outline);
 }
 .button.secondary:hover {
-  background: #e6eddf;
+  background: var(--surface);
   border-color: var(--green);
 }
 .quiet {
@@ -176,12 +181,10 @@ nav a[aria-current="page"] {
   font-size: 0.8rem;
 }
 .preview {
-  border: 1px solid #d7dfd0;
-  border-radius: 24px;
-  background: var(--surface);
-  padding: 27px;
-  box-shadow: 0 24px 60px #1c332c0a;
-  transform: rotate(2deg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--panel);
+  padding: 22px;
 }
 .preview-header {
   display: flex;
@@ -189,25 +192,24 @@ nav a[aria-current="page"] {
   align-items: center;
   font-size: 0.85rem;
   font-weight: 600;
-  border-bottom: 1px solid #d4ddcc;
-  padding-bottom: 19px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 13px;
 }
 .preview-dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #77995d;
+  background: var(--green);
 }
 .preview-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-block: 23px;
+  padding-block: 15px;
 }
 .preview-heading strong {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.6rem;
-  font-weight: 400;
+  font-size: 1.35rem;
+  font-weight: 650;
 }
 .week,
 .dates {
@@ -216,23 +218,39 @@ nav a[aria-current="page"] {
   text-align: center;
 }
 .week {
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   color: var(--muted);
   letter-spacing: 0.09em;
-  padding-bottom: 12px;
+  padding-bottom: 8px;
 }
 .dates {
-  row-gap: 3px;
+  row-gap: 5px;
 }
 .dates > span {
-  aspect-ratio: 1;
+  min-height: 43px;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
   position: relative;
   font-size: 0.85rem;
-  border-radius: 12px;
+  border: 1px solid var(--line);
+  border-left: 0;
+  font-variant-numeric: tabular-nums;
+}
+.dates > span:nth-child(7n + 1) {
+  border-left: 1px solid var(--line);
+  border-radius: 9px 0 0 9px;
+}
+.dates > span:nth-child(7n) {
+  border-radius: 0 9px 9px 0;
+}
+.dates b {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  font-weight: 550;
 }
 .dates i {
   position: absolute;
@@ -240,26 +258,25 @@ nav a[aria-current="page"] {
   height: 4px;
   border-radius: 50%;
   background: var(--green);
-  bottom: 5px;
+  bottom: 3px;
 }
 .dates .today {
-  background: var(--ink);
-  color: white;
+  background: var(--surface);
 }
-.dates .today i {
-  background: #d8bc78;
+.dates .today b {
+  background: var(--primary);
+  color: var(--panel);
 }
 .dates .outside {
-  color: #74806c;
+  background: var(--outside);
+  color: var(--muted);
 }
 .preview-note {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fcfcf9;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  padding: 15px 12px;
+  border-top: 1px solid var(--line);
+  padding: 13px 0 0;
   margin-top: 16px;
 }
 .note-check {
@@ -267,7 +284,7 @@ nav a[aria-current="page"] {
   place-items: center;
   flex: 0 0 26px;
   height: 26px;
-  background: #e4edda;
+  background: var(--surface);
   border-radius: 50%;
   color: var(--green);
 }
@@ -287,6 +304,8 @@ nav a[aria-current="page"] {
 .note-time {
   font-size: 0.7rem;
   margin-left: auto;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
 }
 .preview-caption {
   font-size: 0.65rem;
@@ -324,11 +343,20 @@ nav a[aria-current="page"] {
   gap: 42px 40px;
 }
 .feature-number {
-  display: block;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
   color: var(--green);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 23px;
+  margin-bottom: 14px;
+}
+.feature {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
 }
 .feature p {
   color: var(--muted);
@@ -343,7 +371,7 @@ nav a[aria-current="page"] {
   gap: 36px;
   padding: 45px 48px;
   background: var(--surface);
-  border-radius: 20px;
+  border-radius: var(--radius-panel);
   margin-bottom: 70px;
 }
 .bottom-panel .eyebrow {
@@ -390,7 +418,8 @@ nav a[aria-current="page"] {
   flex-direction: column;
   padding: 28px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--radius-panel);
+  background: var(--panel);
 }
 .download-card:first-child {
   background: var(--surface);
@@ -513,10 +542,9 @@ nav a[aria-current="page"] {
     font-size: 0.63rem;
   }
   .preview {
-    width: min(420px, calc(100% - 12px));
+    width: min(420px, 100%);
     justify-self: center;
-    transform: rotate(1deg);
-    padding: 23px;
+    padding: 16px;
   }
   .section {
     padding-block: 40px 45px;

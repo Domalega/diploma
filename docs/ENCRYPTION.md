@@ -14,7 +14,7 @@ The wrapped content key is retained locally for offline access. Signing out drop
 
 ## Connect another device
 
-1. Update Daymark on both devices and sign in to the same account.
+1. Update Jotstride on both devices and sign in to the same account.
 2. The new device creates its own key pair and displays **Copy connection link**. Copy or share that link to an already connected device.
 3. Open the link on the connected device. Confirm that it came from your own new device and press **Approve device**.
 4. The new device receives its wrapped key and opens the calendar automatically. **Retry** checks immediately; otherwise the open page checks periodically.

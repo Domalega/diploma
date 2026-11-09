@@ -5,7 +5,7 @@ public class ReminderReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
         try {
             if (ReminderService.TEST.equals(intent.getAction())) {
-                ReminderService.show(context, "test", "Daymark", "Local reminders work without an open browser or server.");
+                ReminderService.show(context, "test", context.getString(R.string.app_name), "Local reminders work without an open browser or server.");
                 return;
             }
             if (ReminderService.ALARM.equals(intent.getAction())) ReminderService.deliver(context, intent.getLongExtra("at", 0));

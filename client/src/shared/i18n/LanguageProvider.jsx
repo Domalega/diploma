@@ -49,7 +49,7 @@ export function LanguageProvider({ children }) {
   );
   useLayoutEffect(() => {
     document.documentElement.lang = locale;
-    document.title = translate("Daymark — Personal calendar", locale);
+    document.title = translate("Jotstride — Personal calendar", locale);
   }, [locale]);
   useEffect(() => {
     const refresh = () => setSystem(systemLanguage());

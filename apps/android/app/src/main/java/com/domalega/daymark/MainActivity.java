@@ -93,7 +93,7 @@ public class MainActivity extends Activity {
                 return true;
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                if (request.isForMainFrame()) new AlertDialog.Builder(MainActivity.this).setTitle("Daymark")
+                if (request.isForMainFrame()) new AlertDialog.Builder(MainActivity.this).setTitle(R.string.app_name)
                     .setMessage("Could not open the bundled calendar. Reopen the app or install the latest APK. Saved device data is retained.")
                     .setPositiveButton("Retry", (dialog, which) -> web.loadUrl(HOME + "#/calendar")).setNegativeButton("Close", null).show();
             }
@@ -208,7 +208,7 @@ public class MainActivity extends Activity {
     }
     private void applySystemTheme(String theme) {
         boolean dark = "dark".equals(theme);
-        int background = Color.parseColor(dark ? "#101a17" : "#fcfcf9");
+        int background = Color.parseColor(dark ? "#181d10" : "#f6f8eb");
         content.setBackgroundColor(background);
         web.setBackgroundColor(background);
         getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(background));
@@ -223,7 +223,7 @@ public class MainActivity extends Activity {
             if (update == null || updateDialogVisible) return;
             boolean ru = "ru".equals(getResources().getConfiguration().getLocales().get(0).getLanguage());
             updateDialogVisible = true;
-            new AlertDialog.Builder(this).setTitle("Daymark " + update.version)
+            new AlertDialog.Builder(this).setTitle(getString(R.string.app_name) + " " + update.version)
                 .setMessage((ru ? "Обновите приложение. Локальные данные сохранятся. Android попросит подтвердить установку." : "Update the app. Your saved data is retained. Android will ask you to confirm installation.") + "\n\n" + update.notes)
                 .setPositiveButton(ru ? "Обновить" : "Update", (dialog, which) -> { try { UpdateManager.download(this); } catch (Exception ignored) { } })
                 .setNegativeButton(ru ? "Позже" : "Later", null).setOnDismissListener(dialog -> updateDialogVisible = false).show();

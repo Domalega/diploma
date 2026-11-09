@@ -2,7 +2,7 @@
   min-height: 100svh;
   color: var(--text);
   background: var(--page);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
   font-size: 15px;
 }
 .planner button,
@@ -31,12 +31,12 @@
 }
 .planner-header {
   border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--page);
 }
 .planner-header-inner {
   width: 100%;
   margin: auto;
-  padding: 22px 44px;
+  padding: 14px 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -58,9 +58,8 @@
 .planner-brand-icon {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
 }
 .planner-brand small {
   display: block;
@@ -86,11 +85,11 @@
   width: 100%;
   min-width: 0;
   min-height: 44px;
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border-strong);
   padding: 10px 44px 10px 40px;
   color: var(--text);
-  background: var(--page);
+  background: var(--surface);
 }
 .planner-search input::-webkit-search-cancel-button {
   display: none;
@@ -110,7 +109,7 @@
 .planner .btn,
 .planner-drawer .btn,
 .planner-modal .btn {
-  border-radius: 9px;
+  border-radius: var(--radius-pill);
   min-height: 44px;
   padding: 10px 16px;
   display: inline-flex;
@@ -122,7 +121,7 @@
 }
 .planner-main {
   width: 100%;
-  padding: 28px 32px 20px;
+  padding: 25px 40px 20px;
   margin: auto;
   outline: none;
 }
@@ -146,7 +145,7 @@
   min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-panel);
   overflow: hidden;
 }
 .calendar-toolbar {
@@ -178,7 +177,7 @@
   color: var(--text);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-pill);
   width: 44px;
   height: 44px;
   padding: 0;
@@ -193,7 +192,7 @@
 .view-switch {
   padding: 3px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   display: flex;
   background: var(--surface-subtle);
 }
@@ -206,7 +205,7 @@
   gap: 7px;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
   color: var(--muted);
 }
@@ -217,44 +216,49 @@
   font-weight: 600;
 }
 .month-grid {
+  --calendar-week-gap: 7px;
+  --calendar-day-min: 82px;
+  --calendar-weekday-height: 34px;
   width: 100%;
   table-layout: fixed;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 var(--calendar-week-gap);
 }
 .month-grid th {
-  padding: 14px 8px;
+  padding: 8px 4px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-align: center;
-  border-top: 1px solid var(--border);
-  background: var(--preview);
 }
 .month-grid td {
   padding: 0;
-  border-top: 1px solid var(--border);
-  border-right: 1px solid var(--border);
   vertical-align: top;
-}
-.month-grid td:last-child {
-  border-right: 0;
 }
 .planner .day-cell {
   position: relative;
   width: 100%;
-  height: clamp(126px, calc((100svh - 350px) / 6), 156px);
-  border: 2px solid transparent;
-  padding: 12px 9px;
+  height: var(--calendar-day-min);
+  border: 1px solid var(--border);
+  border-left-width: 0;
+  padding: 7px 8px;
   display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 8px 5px;
+  gap: 3px 4px;
   color: var(--text);
   background: var(--surface);
   text-align: left;
   min-width: 0;
   border-radius: 0;
+}
+.month-grid td:first-child .day-cell {
+  border-left-width: 1px;
+  border-radius: var(--radius-panel) 0 0 var(--radius-panel);
+}
+.month-grid td:last-child .day-cell {
+  border-radius: 0 var(--radius-panel) var(--radius-panel) 0;
 }
 .planner .day-cell:hover {
   background: var(--surface-subtle);
@@ -264,8 +268,8 @@
   color: var(--muted);
 }
 .planner .day-cell.is-selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  background: var(--today-bg);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 .planner .day-cell:focus-visible {
   outline-offset: -4px;
@@ -275,9 +279,11 @@
 .day-number {
   display: inline-grid;
   place-items: center;
-  font-size: 12px;
-  width: 26px;
-  height: 26px;
+  font-size: 14px;
+  font-weight: 550;
+  font-variant-numeric: tabular-nums;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -298,11 +304,9 @@
   min-width: 0;
   width: 100%;
   font-size: 11px;
-  line-height: 1.5;
+  line-height: 1.35;
   color: var(--text);
-  background: var(--surface-subtle);
-  padding: 4px 6px;
-  border-radius: 5px;
+  padding: 0 2px;
 }
 .day-note > span:last-child {
   overflow: hidden;
@@ -310,8 +314,8 @@
   white-space: nowrap;
 }
 .note-dot {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: var(--accent);
   flex-shrink: 0;
@@ -334,7 +338,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin: 20px 0;
+  margin: 0 0 12px;
 }
 .day-notes-heading h3 {
   font-size: 13px;
@@ -346,12 +350,54 @@
   padding: 0;
   margin: 0;
 }
-.day-notes .note-paper {
-  margin: 0 0 14px;
-  padding: 16px;
+.day-notes > li {
+  position: relative;
+  padding-left: 20px;
 }
-.note-paper.is-highlighted {
-  border-color: var(--accent);
+.day-notes > li:not(:only-child)::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 1px;
+  background: var(--border-strong);
+  content: "";
+}
+.day-notes > li:first-child::before {
+  top: 17px;
+}
+.day-notes > li:last-child::before {
+  bottom: auto;
+  height: 17px;
+}
+.day-notes > li::after {
+  position: absolute;
+  top: 13px;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--surface);
+  content: "";
+}
+.note-paper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  margin: 0;
+  padding: 10px 0 12px;
+  border-bottom: 1px solid var(--border);
+}
+.day-notes > li:last-child .note-paper {
+  border-bottom-color: transparent;
+}
+.day-notes .note-paper.is-highlighted {
+  padding-inline: 8px;
+  background: var(--accent-soft);
+  border-radius: var(--radius-control);
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
 }
 .note-paper-time {
   display: flex;
@@ -360,13 +406,8 @@
   color: var(--accent);
   font-size: 12px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   font-variant-numeric: tabular-nums;
-}
-.note-paper {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 12px;
 }
 .note-paper-time,
 .note-paper p {
@@ -376,7 +417,7 @@
 .note-paper .detail-actions {
   grid-column: 2;
   grid-row: 1 / span 2;
-  align-self: start;
+  align-self: center;
   flex-wrap: nowrap;
   gap: 0;
   margin: 0;
@@ -395,7 +436,7 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   padding: 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--surface-subtle);
 }
 .agenda-time {
@@ -405,37 +446,15 @@
   font-variant-numeric: tabular-nums;
 }
 .calendar-empty-hint {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   padding: 16px 24px;
   margin: 0;
   border-top: 1px solid var(--border);
   line-height: 1.6;
 }
-.calendar-empty-hint {
-  font-size: 12px;
-}
 .day-details {
   padding: 24px;
-}
-.note-paper {
-  background: var(--preview);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
-  margin: 24px 0 16px;
-}
-.note-paper > svg {
-  color: var(--accent);
-  font-size: 18px;
-  margin-bottom: 16px;
-}
-.note-paper h3 {
-  font-size: 11px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
 }
 .note-paper p {
   font-size: 14px;
@@ -470,9 +489,8 @@
   margin-bottom: 18px;
 }
 .empty-day h3 {
-  font-family: Georgia, serif;
   font-size: 24px;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.3;
   margin: 0 0 12px;
 }
@@ -549,7 +567,7 @@
   color: var(--text);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--radius-panel);
   text-align: left;
 }
 .agenda-note::before {
@@ -679,9 +697,8 @@
   margin-bottom: 20px;
 }
 .list-empty h3 {
-  font-family: Georgia, serif;
   font-size: 27px;
-  font-weight: 400;
+  font-weight: 600;
 }
 .list-empty p {
   font-size: 12px;
@@ -706,11 +723,9 @@
 }
 .planner-drawer .offcanvas-title,
 .planner-modal .modal-title {
-  font-size: 20px;
-  font-weight: 550;
-}
-.planner-modal .modal-content {
-  border-radius: 16px;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.45px;
 }
 .planner-modal .modal-body {
   padding: 24px;
@@ -722,7 +737,7 @@
 .planner-modal .form-control {
   font-size: 14px;
   padding: 12px;
-  border-radius: 9px;
+  border-radius: var(--radius-control);
   border-color: var(--border-strong);
 }
 .planner-modal textarea {
@@ -737,16 +752,20 @@
   margin: 10px 0 0;
 }
 .account-section {
-  padding-bottom: 28px;
-  margin-bottom: 28px;
+  padding-bottom: 22px;
+  margin-bottom: 22px;
   border-bottom: 1px solid var(--border);
 }
 .account-section h2 {
   font-size: 15px;
+  font-weight: 650;
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
+}
+.account-section h2 > svg {
+  color: var(--accent);
 }
 .settings-appearance .theme-switcher {
   width: 100%;
@@ -815,9 +834,6 @@
   .planner-main {
     padding: 32px 28px 16px;
   }
-  .day-cell {
-    min-height: 94px;
-  }
 }
 @media (max-width: 600px) {
   .planner-header-inner {
@@ -852,7 +868,6 @@
   }
   .planner .new-note-button {
     align-self: flex-end;
-    margin-top: -4px;
   }
   .planner-feedback {
     min-height: 28px;
@@ -876,13 +891,16 @@
     justify-content: space-between;
   }
   .planner .day-cell {
-    height: 82px;
-    min-height: 0;
     padding: 6px 3px;
-    gap: 6px 2px;
+    gap: 4px 2px;
+  }
+  .month-grid {
+    --calendar-week-gap: 5px;
+    --calendar-day-min: 56px;
+    --calendar-weekday-height: 30px;
   }
   .month-grid th {
-    padding: 12px 3px;
+    padding: 7px 2px;
     font-size: 10px;
   }
   .day-number {
@@ -909,7 +927,7 @@
     display: block;
     width: 100%;
     color: var(--accent);
-    font-size: 9px;
+    font-size: 10px;
     line-height: 1.4;
   }
   .note-dot {
@@ -943,7 +961,9 @@
     outline: 2px solid Highlight;
     outline-offset: -3px;
   }
-  .note-dot {
+  .note-dot,
+  .day-notes > li::after,
+  .day-notes > li::before {
     background: CanvasText;
   }
   .is-today .day-number {

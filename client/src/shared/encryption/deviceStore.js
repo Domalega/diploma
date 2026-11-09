@@ -7,7 +7,7 @@ async function database() {
     request.onupgradeneeded = () => request.result.createObjectStore("devices");
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(new Error("Device key storage is unavailable."));
-    request.onblocked = () => reject(new Error("Close other Daymark tabs and try again."));
+    request.onblocked = () => reject(new Error("Close other Jotstride tabs and try again."));
   });
 }
 export async function readDevice(scope) {
@@ -42,7 +42,7 @@ async function protection(action, data) {
       ? await offlineNative(action, { data, token: localStorage.getItem("token") })
       : await nativeRequest(action, { data });
   } catch {
-    throw new Error("Update the installed Daymark app to protect this device key.");
+    throw new Error("Update the installed Jotstride app to protect this device key.");
   }
 }
 export async function privateDeviceKey(device) {

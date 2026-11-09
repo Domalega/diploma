@@ -10,6 +10,7 @@ namespace Daymark;
 
 public sealed class App : Application
 {
+    internal const string DisplayName = "Jotstride";
     const string Home = "https://domalega.github.io/diploma/";
     static readonly Mutex DeviceLock = new(false, "Local\\Domalega.Daymark.Reminders");
     WebView2? web;
@@ -47,7 +48,7 @@ public sealed class App : Application
         {
             if (e.Args.Length == 2 && e.Args[0].StartsWith("--self-test-", StringComparison.Ordinal)) { File.WriteAllText(e.Args[1], JsonSerializer.Serialize(new { error = ex.ToString() })); Shutdown(1); return; }
             if (e.Args.Contains("--refresh")) { Shutdown(1); return; }
-            MessageBox.Show("Daymark could not start. Install or update Microsoft Edge WebView2 Runtime.\n\n" + ex.Message, "Daymark");
+            MessageBox.Show($"{DisplayName} could not start. Install or update Microsoft Edge WebView2 Runtime.\n\n" + ex.Message, DisplayName);
             Shutdown(1);
         }
     }
@@ -55,7 +56,7 @@ public sealed class App : Application
     {
         if (MainWindow != null) { MainWindow.Show(); MainWindow.Activate(); return; }
         web = new WebView2();
-        MainWindow = new Window { Title = "Daymark", Width = 1280, Height = 850, MinWidth = 360, MinHeight = 560, Content = web };
+        MainWindow = new Window { Title = DisplayName, Width = 1280, Height = 850, MinWidth = 360, MinHeight = 560, Content = web };
         MainWindow.Closed += (_, _) => Shutdown();
         MainWindow.Show();
         Directory.CreateDirectory(DeviceReminders.DataDirectory);

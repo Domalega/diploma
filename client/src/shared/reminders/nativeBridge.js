@@ -7,7 +7,7 @@ export const nativeRequest = createNativeRequest(
   () => (isNativeApp() ? window.DaymarkNative || window.chrome.webview : null),
   {
     timeout: 30000,
-    unavailable: "Open the installed Daymark app.",
+    unavailable: "Open the installed Jotstride app.",
     timeoutMessage: "The device reminder service did not respond.",
   },
 );

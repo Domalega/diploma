@@ -7,7 +7,7 @@
   gap: 36px;
   padding: 48px 24px;
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
   text-align: center;
 }
 .calendar-loading-page {
@@ -40,7 +40,7 @@
   position: relative;
   width: 116px;
   border: 1px solid var(--border-strong);
-  border-radius: 18px;
+  border-radius: var(--radius-panel);
   padding: 18px 13px 15px;
   background: var(--surface);
   box-shadow: 0 14px 36px var(--shadow);

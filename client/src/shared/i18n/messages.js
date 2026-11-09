@@ -1,11 +1,16 @@
 export const en = {
+  // Older device clients and the API still send these error messages.
+  "Unlock your encrypted data in an updated Daymark client.":
+    "Unlock your encrypted data in an updated Jotstride client.",
+  "Allow Daymark to install updates in Android settings, then try again.":
+    "Allow Jotstride to install updates in Android settings, then try again.",
   "notes.count": { one: "{count} note", other: "{count} notes" },
   "notes.found": { one: "{count} note found", other: "{count} notes found" },
   "notes.month": { one: "{count} note this month", other: "{count} notes this month" },
   "notes.more": "+{count} more",
   "reminders.remaining": {
-    one: "{count} scheduled item is still unchecked. Open Daymark to review.",
-    other: "{count} scheduled items are still unchecked. Open Daymark to review.",
+    one: "{count} scheduled item is still unchecked. Open Jotstride to review.",
+    other: "{count} scheduled items are still unchecked. Open Jotstride to review.",
   },
 };
 export const ru = {
@@ -13,8 +18,8 @@ export const ru = {
   "Disable encryption?": "Выключить шифрование?",
   "Your current data will be stored without end-to-end encryption. An encrypted backup will be kept.":
     "Текущие данные будут храниться без сквозного шифрования. Зашифрованная резервная копия сохранится.",
-  "Update the installed Daymark app before disabling encryption.":
-    "Обновите приложение Daymark перед выключением шифрования.",
+  "Update the installed Jotstride app before disabling encryption.":
+    "Обновите приложение Jotstride перед выключением шифрования.",
   "Encryption was enabled again. Reload this device.":
     "Шифрование включено заново. Перезагрузите приложение на этом устройстве.",
   "Unsynced changes from an earlier encryption period are retained on this device.":
@@ -60,10 +65,10 @@ export const ru = {
   "Invalid device connection": "Некорректный запрос подключения",
   "Device key storage is unavailable.": "Хранилище ключей устройства недоступно.",
   "The device key could not be saved.": "Не удалось сохранить ключ устройства.",
-  "Close other Daymark tabs and try again.":
-    "Закройте остальные вкладки Daymark и повторите действие.",
-  "Update the installed Daymark app to protect this device key.":
-    "Обновите установленное приложение Daymark для защиты ключа устройства.",
+  "Close other Jotstride tabs and try again.":
+    "Закройте остальные вкладки Jotstride и повторите действие.",
+  "Update the installed Jotstride app to protect this device key.":
+    "Обновите установленное приложение Jotstride для защиты ключа устройства.",
   "The connection link could not be copied.": "Не удалось скопировать ссылку подключения.",
   "Connect to finish enabling encryption.":
     "Подключитесь к интернету, чтобы завершить включение шифрования.",
@@ -112,7 +117,7 @@ export const ru = {
   "Keep local versions": "Оставить локальные версии",
   "Unlock your encrypted data first.": "Сначала разблокируйте зашифрованные данные.",
   "Unlock your encrypted data in an updated Daymark client.":
-    "Разблокируйте зашифрованные данные в обновлённом приложении Daymark.",
+    "Разблокируйте зашифрованные данные в обновлённом приложении Jotstride.",
   "Invalid encrypted document": "Некорректный зашифрованный документ",
   "Connect once to download your encrypted data.":
     "Подключитесь к интернету, чтобы загрузить зашифрованные данные.",
@@ -156,9 +161,9 @@ export const ru = {
   "Could not restore the backup. Use the Daymark 0.2 export and restore before signing in.":
     "Не удалось восстановить копию. Выберите выгрузку Daymark 0.2. Восстановление доступно до первого входа в аккаунт.",
   "App updates": "Обновления приложения",
-  "Daymark {version} is available": "Доступен Daymark {version}",
+  "Jotstride {version} is available": "Доступен Jotstride {version}",
   "Your saved data stays on this phone. Android will ask you to confirm installation.":
-    "Данные на телефоне сохранятся. Android попросит подтвердить установку. При первом обновлении разрешите Daymark установку приложений.",
+    "Данные на телефоне сохранятся. Android попросит подтвердить установку. При первом обновлении разрешите Jotstride установку приложений.",
   "Downloading update… {progress}%": "Скачиваем обновление… {progress}%",
   "Update download": "Загрузка обновления",
   "Install update": "Установить обновление",
@@ -182,7 +187,7 @@ export const ru = {
   "Could not download or verify the update. Try again.":
     "Не удалось скачать или проверить обновление. Попробуйте ещё раз.",
   "Allow Daymark to install updates in Android settings, then try again.":
-    "Разрешите Daymark установку обновлений в настройках Android и повторите попытку.",
+    "Разрешите Jotstride установку обновлений в настройках Android и повторите попытку.",
   "Could not open the installer. Try again.": "Не удалось открыть установщик. Попробуйте ещё раз.",
   "Hide tile headings": "Скрыть заголовки плиток",
   "Task date (today if empty)": "Дата (по умолчанию сегодня)",
@@ -326,8 +331,8 @@ export const ru = {
   "Choose a valid column position": "Выберите корректное место для столбца",
   "Unknown board update": "Неизвестное изменение доски",
   "Reload the board before making another change": "Обновите доску перед новым изменением",
-  "Allow Daymark notifications in your device settings, then reopen the app.":
-    "Разрешите уведомления Daymark в настройках устройства, затем снова откройте приложение.",
+  "Allow Jotstride notifications in your device settings, then reopen the app.":
+    "Разрешите уведомления Jotstride в настройках устройства, затем снова откройте приложение.",
   "Test notification scheduled in five seconds. You can close the app.":
     "Тестовое уведомление запланировано через пять секунд. Можно закрыть приложение.",
   "Timed reminders are saved on this device and work with the app closed. All-day notes remind you when you open the calendar. Open the app online to receive changes from other devices.":
@@ -342,7 +347,7 @@ export const ru = {
   "Disable device reminders": "Отключить напоминания на устройстве",
   "To receive reminders with the browser closed, use the Android or Windows app.":
     "Для напоминаний при закрытом браузере используйте приложение Android или Windows.",
-  "Download Daymark": "Скачать Daymark",
+  "Download Jotstride": "Скачать Jotstride",
   "Reminds you about unchecked items using the schedule saved on this device.":
     "Напоминает о неотмеченных приёмах по расписанию, сохранённому на этом устройстве.",
   Close: "Закрыть",
@@ -358,7 +363,7 @@ export const ru = {
     "Выберите существующее время приёма для каждого препарата",
   "Enter valid course dates": "Проверьте даты курса",
   "Choose at least one day of the week": "Выберите хотя бы один день недели",
-  "Daymark — Personal calendar": "Daymark — Личный календарь",
+  "Jotstride — Personal calendar": "Jotstride — Личный календарь",
   Language: "Язык",
   "System language": "Системный",
   System: "Системная",
@@ -688,10 +693,10 @@ export const ru = {
   "Medication update": "Отметка приёма препаратов",
   "Medication reminder": "Напоминание о приёме",
   "reminders.remaining": {
-    one: "Не отмечен {count} запланированный приём. Откройте Daymark для проверки.",
-    few: "Не отмечены {count} запланированных приёма. Откройте Daymark для проверки.",
-    many: "Не отмечено {count} запланированных приёмов. Откройте Daymark для проверки.",
-    other: "Не отмечено {count} запланированных приёма. Откройте Daymark для проверки.",
+    one: "Не отмечен {count} запланированный приём. Откройте Jotstride для проверки.",
+    few: "Не отмечены {count} запланированных приёма. Откройте Jotstride для проверки.",
+    many: "Не отмечено {count} запланированных приёмов. Откройте Jotstride для проверки.",
+    other: "Не отмечено {count} запланированных приёма. Откройте Jotstride для проверки.",
   },
   "Wait for the current medication update to finish.": "Дождитесь завершения текущего изменения.",
   "Opening your calendar…": "Открываем календарь…",

@@ -1,9 +1,9 @@
 import { isNativeApp, nativeRequest } from "./nativeBridge";
-test("ordinary WebView hosts are not mistaken for the Daymark Windows client", async () => {
+test("ordinary WebView hosts are not mistaken for the Jotstride Windows client", async () => {
   const original = window.chrome;
   window.chrome = { webview: { postMessage: jest.fn() } };
   expect(isNativeApp()).toBe(false);
-  await expect(nativeRequest("status")).rejects.toThrow("installed Daymark");
+  await expect(nativeRequest("status")).rejects.toThrow("installed Jotstride");
   expect(window.chrome.webview.postMessage).not.toHaveBeenCalled();
   window.chrome = original;
 });

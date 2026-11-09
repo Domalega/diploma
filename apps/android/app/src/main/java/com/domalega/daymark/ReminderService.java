@@ -32,7 +32,7 @@ public final class ReminderService {
     }
     static boolean exact(Context c) { return Build.VERSION.SDK_INT < 31 || c.getSystemService(AlarmManager.class).canScheduleExactAlarms(); }
     static void channel(Context c) {
-        c.getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel(CHANNEL, "Daymark reminders", NotificationManager.IMPORTANCE_HIGH));
+        c.getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel(CHANNEL, c.getString(R.string.app_name) + " reminders", NotificationManager.IMPORTANCE_HIGH));
     }
     static PendingIntent intent(Context c, String action, long at) {
         return PendingIntent.getBroadcast(c, action.equals(TEST) ? 2 : 1,

@@ -3,7 +3,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
   min-height: 44px;
 }
 .dashboard-layout-controls {
@@ -17,14 +17,12 @@
 }
 .dashboard-layout-heading h1 {
   font-size: clamp(30px, 3vw, 42px);
-  font-weight: 550;
+  font-weight: 640;
   letter-spacing: -1.4px;
   margin: 0;
 }
 .dashboard-layout-heading h1 em {
-  font-family: Georgia, serif;
-  color: var(--accent-em);
-  font-weight: 400;
+  font-style: normal;
 }
 .dashboard-layout-heading p {
   margin-top: 10px;
@@ -46,7 +44,7 @@
   padding: 8px 12px;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-pill);
   font-size: 12px !important;
   color: var(--muted);
 }
@@ -63,7 +61,7 @@
   container-type: inline-size;
   min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-panel);
   background: var(--surface);
   position: absolute;
   display: flex;
@@ -72,7 +70,7 @@
 }
 .dashboard-tile-header {
   flex-shrink: 0;
-  min-height: 64px;
+  min-height: 50px;
   padding: 12px 18px;
   display: flex;
   align-items: center;
@@ -107,20 +105,6 @@
     text-overflow: ellipsis;
   }
 }
-@container (max-width: 260px) {
-  .planner .has-custom-height.tile-today .current-date-tile {
-    padding: 12px;
-  }
-  .current-date-tile time {
-    column-gap: 10px;
-  }
-  .current-date-tile .current-date-weekday {
-    font-size: 12px;
-  }
-  .current-date-tile .current-date-month {
-    font-size: 10px;
-  }
-}
 .dashboard-tile-icon {
   color: var(--accent);
   display: inline-grid;
@@ -137,7 +121,7 @@
 }
 .dashboard-tile-label p {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   margin: 5px 0 0;
   line-height: 1.5;
 }
@@ -177,9 +161,6 @@
   min-height: 0;
   padding: 16px 20px;
 }
-.has-custom-height .current-date-number {
-  font-size: clamp(48px, calc((var(--panel-height) - 90px) * 0.7), 72px);
-}
 .planner .has-custom-height.tile-notes .day-details,
 .has-custom-height .medication-table-scroll {
   max-height: none;
@@ -197,7 +178,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 428px;
+  min-height: calc(
+    6 * var(--calendar-day-min) + 5 * var(--calendar-week-gap) + var(--calendar-weekday-height)
+  );
 }
 .has-custom-height.tile-calendar .month-grid thead {
   flex-shrink: 0;
@@ -206,7 +189,8 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-rows: repeat(6, minmax(64px, 1fr));
+  grid-template-rows: repeat(6, minmax(var(--calendar-day-min), 1fr));
+  row-gap: var(--calendar-week-gap);
 }
 .has-custom-height.tile-calendar .month-grid tr {
   display: grid;
@@ -300,10 +284,17 @@
 .planner .dashboard-tile .calendar-card {
   background: transparent;
   border: 0;
-  border-radius: 0 0 8px 8px;
+  border-radius: 0;
+}
+.tile-calendar {
+  background: transparent;
+  border: 0;
+}
+.tile-calendar > .dashboard-tile-header {
+  padding-inline: 2px;
 }
 .planner .tile-calendar .calendar-toolbar {
-  padding: 16px;
+  padding: 12px 2px;
   gap: 12px;
   flex-wrap: wrap;
 }
@@ -311,20 +302,11 @@
   gap: 10px;
 }
 .planner .tile-calendar .month-navigation h2 {
-  font-size: 18px;
-  width: 185px;
-  flex-shrink: 0;
+  font-size: clamp(18px, 2vw, 26px);
+  letter-spacing: -0.7px;
 }
 .planner .tile-calendar .day-cell {
-  height: clamp(112px, calc((100svh - 320px) / 6), 128px);
-  padding: 8px 6px;
-  gap: 4px;
   overflow: hidden;
-}
-.tile-calendar .day-note {
-  font-size: 10px;
-  line-height: 1.4;
-  padding: 2px 4px;
 }
 .tile-calendar .today-label {
   display: none;
@@ -332,6 +314,9 @@
 .tile-today {
   background: var(--accent-soft);
   align-self: start;
+}
+.tile-today > .dashboard-tile-header {
+  border-bottom: 0;
 }
 .current-date-tile {
   padding: 20px 24px;
@@ -345,14 +330,22 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: 18px;
-  align-items: end;
+  align-items: center;
 }
 .current-date-number {
+  --date-size: clamp(46px, calc(var(--panel-height, 164px) - 86px), 74px);
   grid-row: span 2;
-  font-size: clamp(76px, 7vw, 100px);
-  line-height: 0.95;
-  font-weight: 300;
-  letter-spacing: -5px;
+  display: grid;
+  place-items: center;
+  width: var(--date-size);
+  height: var(--date-size);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: calc(var(--date-size) * 0.6);
+  line-height: 1;
+  font-weight: 650;
+  letter-spacing: -0.05em;
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
@@ -363,9 +356,40 @@
 }
 .current-date-month {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   padding-top: 6px;
   align-self: start;
+}
+@container (max-width: 260px) {
+  .planner .has-custom-height.tile-today .current-date-tile {
+    padding: 10px 12px;
+  }
+  .current-date-tile time {
+    width: 100%;
+    column-gap: 10px;
+  }
+  .current-date-number {
+    --date-size: clamp(40px, calc(var(--panel-height, 164px) - 86px), 56px);
+  }
+  .current-date-weekday {
+    font-size: 12px;
+  }
+  .current-date-month {
+    font-size: 10px;
+  }
+}
+@container (max-width: 165px) {
+  .current-date-tile time {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2px;
+  }
+  .current-date-number {
+    --date-size: 34px;
+    grid-row: auto;
+  }
+  .current-date-month {
+    padding-top: 0;
+  }
 }
 .notes-panel-content {
   outline: 0;
@@ -391,10 +415,6 @@
 }
 .planner .tile-notes .empty-day-icon {
   display: none;
-}
-.planner .tile-notes .note-paper {
-  border-radius: 6px;
-  padding: 16px;
 }
 .planner .tile-medications .dashboard-tile-body {
   padding: 20px;
@@ -473,17 +493,10 @@
   .dashboard-layout-heading h1 {
     font-size: 30px;
   }
-  .dashboard-layout-toolbar .new-note-button {
-    margin: 0;
-  }
   .planner .tile-medications .dashboard-tile-body {
     padding: 12px;
   }
 
-  .planner .tile-calendar .day-cell {
-    height: 78px;
-    min-height: 0;
-  }
   .planner .tile-calendar .month-navigation h2 {
     width: auto;
     flex-shrink: 1;

@@ -1,4 +1,5 @@
 import { createContext, useContext, useLayoutEffect, useEffect, useMemo, useState } from "react";
+import brand from "../brand";
 import { COLOR_STORAGE_KEY, readColor, validColor } from "./palettes";
 
 export const THEME_STORAGE_KEY = "calendar.theme";
@@ -32,8 +33,8 @@ export function ThemeProvider({ children }) {
     const brandBackground = styles.getPropertyValue("--brand-bg").trim();
     if (color !== "green" && brandBackground) {
       const outline = styles.getPropertyValue("--brand-outline").trim();
-      const check = styles.getPropertyValue("--brand-check").trim();
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="14" fill="${brandBackground}"/><g fill="none" stroke="${outline}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14h10c8 0 12 4 12 11s-4 11-12 11H14Z"/><path d="M14 22h21M20 11v6M29 11v6"/></g><path d="m20 29 4 4 7-8" fill="none" stroke="${check}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      const jot = styles.getPropertyValue("--brand-check").trim();
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="14" fill="${brandBackground}"/><g fill="none" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="${brand.stridePath}" stroke="${outline}"/><path d="${brand.jotPath}" stroke="${jot}"/></g></svg>`;
       icon = "data:image/svg+xml," + encodeURIComponent(svg);
     }
     document.querySelector("#daymark-icon")?.setAttribute("href", icon);
@@ -42,7 +43,7 @@ export function ThemeProvider({ children }) {
       ?.setAttribute(
         "content",
         getComputedStyle(document.body).backgroundColor ||
-          (resolvedTheme === "dark" ? "#101a17" : "#fcfcf9"),
+          (resolvedTheme === "dark" ? "#181d10" : "#f6f8eb"),
       );
     window.DaymarkAppearance?.postMessage(JSON.stringify({ theme: resolvedTheme }));
   }, [preference, resolvedTheme, color]);

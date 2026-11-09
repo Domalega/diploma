@@ -7,6 +7,7 @@ import LanguageSwitcher from "../../../shared/i18n/LanguageSwitcher";
 import { weekdayLabel } from "../../../shared/i18n/formatters";
 import InteractivePhrase from "../../../shared/components/InteractivePhrase";
 import BrandMark from "../../../shared/components/BrandMark";
+import brand from "../../../shared/brand";
 import { AppUpdateSettings } from "../../../shared/updates/AppUpdates";
 import "../styles/Auth.css";
 
@@ -15,13 +16,14 @@ export default function AuthLayout({ children }) {
 
   return (
     <main className="auth-shell">
-      <section className="auth-story" aria-label="Daymark">
+      <section className="auth-story" aria-label={brand.name}>
         <Link className="auth-brand" to={LOGIN_ROUTE}>
           <span className="auth-brand-icon">
             <BrandMark />
           </span>
           <span>
-            Daymark<span className="auth-brand-caption">{t("Your personal calendar")}</span>
+            {brand.name}
+            <span className="auth-brand-caption">{t("Your personal calendar")}</span>
           </span>
         </Link>
         <div className="auth-story-content">

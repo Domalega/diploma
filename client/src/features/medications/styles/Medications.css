@@ -31,7 +31,7 @@
   gap: 3px;
   padding: 3px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   background: var(--surface-subtle);
 }
 .medication-view-control > button {
@@ -43,7 +43,7 @@
   min-height: 40px;
   padding: 6px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--radius-pill);
   color: var(--muted);
   background: transparent;
   font-size: 11px;
@@ -73,7 +73,7 @@
   overflow: auto;
   max-height: 440px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-panel);
   background: var(--surface);
   scrollbar-color: var(--border-strong) var(--surface);
 }
@@ -416,7 +416,7 @@
 .medication-tracker .theme-button-outline {
   min-height: 44px;
   border: 1px solid var(--border-strong);
-  border-radius: 9px;
+  border-radius: var(--radius-pill);
   padding: 8px 12px;
   background: transparent;
   color: var(--text);
@@ -445,7 +445,6 @@
 }
 .is-standalone .medication-table-scroll {
   max-height: 520px;
-  border-radius: 6px;
 }
 .is-standalone .medication-table .medication-name-column {
   min-width: 120px;
@@ -460,12 +459,12 @@
 .is-standalone .medication-dose {
   width: 48px;
   height: 48px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
 }
 
 .is-standalone .medication-column-button {
   min-width: 86px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
 }
 .is-expanded .medication-table-scroll {
   max-height: 68svh;
@@ -492,14 +491,15 @@
   gap: 4px;
   padding: 4px;
   background: var(--surface-subtle);
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
   margin-bottom: 18px;
 }
 .medication-manager-tabs button {
   flex: 1;
   min-height: 44px;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: var(--radius-control);
   color: var(--muted);
   background: transparent;
 }
@@ -558,7 +558,7 @@
   margin-top: 20px;
   padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-panel);
   background: var(--preview);
 }
 .medication-edit-form h3 {

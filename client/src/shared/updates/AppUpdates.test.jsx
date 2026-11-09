@@ -31,7 +31,7 @@ test("checking a version never starts a download until the user asks", async () 
   render(<AppUpdateSettings />);
   expect(await screen.findByText("Installed version: 0.3.0")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Check for updates" }));
-  expect(await screen.findByText("Daymark 0.3.1 is available")).toBeInTheDocument();
+  expect(await screen.findByText("Jotstride 0.3.1 is available")).toBeInTheDocument();
   expect(updateNative).not.toHaveBeenCalledWith("install");
   fireEvent.click(screen.getByRole("button", { name: "Download and update" }));
   await waitFor(() => expect(updateNative).toHaveBeenCalledWith("install"));
@@ -110,9 +110,9 @@ test("a stale automatic status cannot overwrite the result of a manual check", a
     .mockResolvedValue({ ...installed, candidate: { versionCode: 4, versionName: "0.3.1" } });
   render(<AppUpdateSettings />);
   fireEvent.click(screen.getByRole("button", { name: "Check for updates" }));
-  expect(await screen.findByText("Daymark 0.3.1 is available")).toBeInTheDocument();
+  expect(await screen.findByText("Jotstride 0.3.1 is available")).toBeInTheDocument();
   await act(async () => finish(installed));
-  expect(screen.getByText("Daymark 0.3.1 is available")).toBeInTheDocument();
+  expect(screen.getByText("Jotstride 0.3.1 is available")).toBeInTheDocument();
 });
 
 test("hidden pages and pending polls do not issue repeated status calls", async () => {

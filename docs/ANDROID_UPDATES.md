@@ -1,10 +1,10 @@
 # Android updates
 
-Daymark checks for new versions on launch (at most once every six hours) and approximately daily in the background. You can also check manually in **Settings → App updates**. A notification and an in-app banner offer the update. Downloads start only after you press the button; WorkManager retries an interrupted download up to three times. Android may postpone background work to save battery.
+Jotstride checks for new versions on launch (at most once every six hours) and approximately daily in the background. You can also check manually in **Settings → App updates**. A notification and an in-app banner offer the update. Downloads start only after you press the button; WorkManager retries an interrupted download up to three times. Android may postpone background work to save battery.
 
-After downloading, the app verifies the APK's size, SHA-256 checksum, package name, version, and signing certificate against the installed app. The first time you install an update through Daymark, allow it to install APKs in Android settings. Android then asks you to confirm installation. Canceling keeps the existing version and data. Updates from 0.3.0 onward preserve the local database, pending changes and settings.
+After downloading, the app verifies the APK's size, SHA-256 checksum, package name, version, and signing certificate against the installed app. The first time you install an update through Jotstride, allow it to install APKs in Android settings. Android then asks you to confirm installation. Canceling keeps the existing version and data. Updates from 0.3.0 onward preserve the local database, pending changes and settings.
 
-Update notifications require notification permission. Without it, available updates still appear inside the app. Each new version is announced once; a downloaded update has a separate ready-to-install notification. Reopen Daymark after force-stopping it to resume background checks.
+Update notifications require notification permission. Without it, available updates still appear inside the app. Each new version is announced once; a downloaded update has a separate ready-to-install notification. Reopen Jotstride after force-stopping it to resume background checks.
 
 ## First upgrade from 0.2.0
 

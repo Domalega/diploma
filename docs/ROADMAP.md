@@ -1,4 +1,4 @@
-# Daymark roadmap
+# Jotstride roadmap
 
 - Evaluate Kanban on narrow screens, with hidden columns, concurrent sessions and long histories.
 - Design a shared note/task model and a versioned migration that preserves existing IDs, ownership, dates, times and reminders. Kanban tasks and calendar notes are currently separate.

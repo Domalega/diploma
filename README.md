@@ -1,10 +1,20 @@
-# Daymark
+# Jotstride
 
 A personal calendar for notes, tasks and reminders. Includes user accounts, search, a month view and a notes list. Optional panels add a to-do list, Kanban board and medication tracker.
 
 End-to-end encryption is an optional setting. Device keys are created automatically; new devices connect after approval from an existing device. Encrypted changes sync while the interface is open. Existing unencrypted server records are retained. See [encryption and device access](docs/ENCRYPTION.md).
 
 [Live demo](https://domalega.github.io/diploma/) · [Android and Windows clients](apps/README.md)
+
+## Screenshots
+
+### Light theme
+
+![Jotstride in the light theme with a month calendar and notes for the selected day](docs/screenshots/calendar-light.png)
+
+### Dark theme
+
+![Jotstride in the dark theme with a month calendar and notes for the selected day](docs/screenshots/calendar-dark.png)
 
 ## Tech stack
 

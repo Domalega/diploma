@@ -13,42 +13,42 @@ const content = {
     startHeading: "Освободите место для важного.",
     startText: "Создайте аккаунт и сохраните первую заметку в своём календаре.",
     previewAlt:
-      "Пример календаря Daymark: дни месяца с отметками и заметка «Время для себя» на 18:30.",
+      "Пример календаря Jotstride: дни месяца с отметками и заметка «Время для себя» на 18:30.",
     previewLabel: "Пример планов в календаре",
     month: "Июнь, 2026",
     days: ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"],
     sampleTitle: "Время для себя",
     sampleText: "Немного прогуляться после работы",
     skip: "Перейти к содержимому",
-    homeLabel: "Daymark — на главную",
+    homeLabel: "Jotstride — на главную",
     navigation: "Основная навигация",
     footerNavigation: "Ссылки в подвале",
     footer: "Личный календарь, заметки и задачи.",
     nav: { features: "Возможности", download: "Скачать" },
     pages: {
       home: {
-        title: "Daymark — личный онлайн-календарь, заметки и задачи",
+        title: "Jotstride — личный онлайн-календарь, заметки и задачи",
         heading: "Личный календарь для ваших планов.",
         intro:
-          "Сохраняйте заметки по датам, собирайте задачи и планируйте день в одном месте. Daymark работает в браузере, на Android и Windows.",
+          "Сохраняйте заметки по датам, собирайте задачи и планируйте день в одном месте. Jotstride работает в браузере, на Android и Windows.",
         description:
-          "Daymark — онлайн-календарь с заметками, задачами и канбан-доской. Планируйте день в браузере или установите приложение для Android и Windows.",
+          "Jotstride — онлайн-календарь с заметками, задачами и канбан-доской. Планируйте день в браузере или установите приложение для Android и Windows.",
       },
       features: {
-        title: "Возможности Daymark — календарь, задачи и канбан-доска",
+        title: "Возможности Jotstride — календарь, задачи и канбан-доска",
         heading: "Ваш день, в удобном вам порядке.",
         intro:
-          "Календарь для дат и заметок, список для небольших дел, канбан-доска для задач по этапам. Включайте дополнительные панели в настройках Daymark.",
+          "Календарь для дат и заметок, список для небольших дел, канбан-доска для задач по этапам. Включайте дополнительные панели в настройках Jotstride.",
         description:
-          "Узнайте о возможностях Daymark: заметки в календаре, поиск, список дел, канбан-доска, трекер приёма лекарств и необязательное сквозное шифрование.",
+          "Узнайте о возможностях Jotstride: заметки в календаре, поиск, список дел, канбан-доска, трекер приёма лекарств и необязательное сквозное шифрование.",
       },
       download: {
-        title: "Скачать Daymark для Android и Windows — онлайн-календарь",
+        title: "Скачать Jotstride для Android и Windows — онлайн-календарь",
         heading: "Ваши планы — рядом с вами.",
         intro:
-          "Откройте Daymark в браузере или установите предварительную версию приложения. Для начала работы нужен аккаунт и подключение к интернету.",
+          "Откройте Jotstride в браузере или установите предварительную версию приложения. Для начала работы нужен аккаунт и подключение к интернету.",
         description:
-          "Откройте календарь Daymark в браузере или скачайте предварительные версии для Android 8+ и Windows 10/11. Требования и инструкции по установке.",
+          "Откройте календарь Jotstride в браузере или скачайте предварительные версии для Android 8+ и Windows 10/11. Требования и инструкции по установке.",
       },
     },
     summary: [
@@ -100,7 +100,7 @@ const content = {
         title: "В браузере",
         platform: "Без установки",
         text: "Войдите в аккаунт, чтобы открыть календарь, заметки и задачи. Для работы веб-версии нужен JavaScript.",
-        button: "Открыть Daymark",
+        button: "Открыть Jotstride",
       },
       {
         title: "Android",
@@ -117,7 +117,7 @@ const content = {
     ],
     installTitle: "Как начать",
     installSteps: [
-      "Для веб-версии нажмите «Открыть Daymark» и создайте аккаунт или войдите в существующий.",
+      "Для веб-версии нажмите «Открыть Jotstride» и создайте аккаунт или войдите в существующий.",
       "На Android скачайте APK из раздела Releases на GitHub, установите его и войдите в аккаунт.",
       "На Windows скачайте ZIP из Releases, распакуйте в постоянную папку и запустите Daymark.exe.",
       "Для напоминаний включите уведомления в настройках приложения. На Android разрешите точные будильники, если требуется напоминание в заданное время.",
@@ -140,42 +140,42 @@ const content = {
     startHeading: "Make room for what matters.",
     startText: "Create an account and add your first calendar note.",
     previewAlt:
-      "Example Daymark calendar: a month with marked dates and a note, Time for yourself, at 18:30.",
+      "Example Jotstride calendar: a month with marked dates and a note, Time for yourself, at 18:30.",
     previewLabel: "Example calendar plans",
     month: "June, 2026",
     days: ["MO", "TU", "WE", "TH", "FR", "SA", "SU"],
     sampleTitle: "Time for yourself",
     sampleText: "Take a little walk after work",
     skip: "Skip to content",
-    homeLabel: "Daymark — home",
+    homeLabel: "Jotstride — home",
     navigation: "Main navigation",
     footerNavigation: "Footer links",
     footer: "A personal calendar for notes and tasks.",
     nav: { features: "Features", download: "Download" },
     pages: {
       home: {
-        title: "Daymark — Personal Online Calendar, Notes and Tasks",
+        title: "Jotstride — Personal Online Calendar, Notes and Tasks",
         heading: "A personal calendar for your plans.",
         intro:
-          "Keep notes by date, collect tasks and plan your day in one place. Use Daymark in your browser, on Android or on Windows.",
+          "Keep notes by date, collect tasks and plan your day in one place. Use Jotstride in your browser, on Android or on Windows.",
         description:
-          "Daymark is an online calendar with notes, tasks and a Kanban board. Plan your day in your browser or get the Android and Windows apps.",
+          "Jotstride is an online calendar with notes, tasks and a Kanban board. Plan your day in your browser or get the Android and Windows apps.",
       },
       features: {
-        title: "Daymark Features — Calendar, Tasks and Kanban Board",
+        title: "Jotstride Features — Calendar, Tasks and Kanban Board",
         heading: "Your day, in your own order.",
         intro:
-          "A calendar for dates and notes, a list for small tasks and a Kanban board for work in progress. Enable additional panels in Daymark settings.",
+          "A calendar for dates and notes, a list for small tasks and a Kanban board for work in progress. Enable additional panels in Jotstride settings.",
         description:
-          "Explore Daymark: calendar notes, search, a to-do list, Kanban board, medication tracker and optional end-to-end encryption.",
+          "Explore Jotstride: calendar notes, search, a to-do list, Kanban board, medication tracker and optional end-to-end encryption.",
       },
       download: {
-        title: "Download Daymark for Android and Windows — Online Calendar",
+        title: "Download Jotstride for Android and Windows — Online Calendar",
         heading: "Keep your plans within reach.",
         intro:
-          "Open Daymark in your browser or install a preview app. You need an account and an internet connection to get started.",
+          "Open Jotstride in your browser or install a preview app. You need an account and an internet connection to get started.",
         description:
-          "Use Daymark in your browser or download preview apps for Android 8+ and Windows 10/11. Read the requirements and installation instructions.",
+          "Use Jotstride in your browser or download preview apps for Android 8+ and Windows 10/11. Read the requirements and installation instructions.",
       },
     },
     summary: [
@@ -227,7 +227,7 @@ const content = {
         title: "Browser",
         platform: "No installation",
         text: "Sign in to open your calendar, notes and tasks. The web app needs JavaScript.",
-        button: "Open Daymark",
+        button: "Open Jotstride",
       },
       {
         title: "Android",
@@ -244,7 +244,7 @@ const content = {
     ],
     installTitle: "Getting started",
     installSteps: [
-      "For the web app, choose Open Daymark and create an account or sign in.",
+      "For the web app, choose Open Jotstride and create an account or sign in.",
       "On Android, get the APK from GitHub Releases, install it and sign in.",
       "On Windows, get the ZIP from Releases, extract it into a permanent folder and run Daymark.exe.",
       "For reminders, enable notifications in app settings. On Android, allow exact alarms if you need alerts at a precise time.",

@@ -1,4 +1,4 @@
-# Daymark device clients
+# Jotstride device clients
 
 Android 0.4.1 and the updated Windows package support [optional end-to-end encryption](../docs/ENCRYPTION.md) with automatic device keys. New devices require approval from a connected device. Old server records are retained. Encrypted accounts synchronize while the interface is open.
 
@@ -23,7 +23,7 @@ Android restores alarms after reboot, app update and clock changes. Force-stop, 
 
 Windows schedules eight days ahead. A local task refills the schedule hourly and at sign-in while the user is signed in. Clock changes apply on the next refill or app activation. Neither platform can deliver while powered off; Windows may drop alerts during long sleep periods. Focus/Do Not Disturb settings still apply.
 
-Android uses private storage with backup disabled and Keystore encryption for account documents, reminder plans and sync credentials. Windows encrypts reminder snapshots with the user's DPAPI key. Reminder snapshots contain no account tokens. Native messaging is restricted to the Android bundled interface or the Windows Daymark page.
+Android uses private storage with backup disabled and Keystore encryption for account documents, reminder plans and sync credentials. Windows encrypts reminder snapshots with the user's DPAPI key. Reminder snapshots contain no account tokens. Native messaging is restricted to the Android bundled interface or the Windows Jotstride page.
 
 ## Build
 

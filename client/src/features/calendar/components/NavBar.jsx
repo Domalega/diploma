@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiSearch, FiX } from "react-icons/fi";
 import ProfileSidebar from "./ProfileSidebar";
 import BrandMark from "../../../shared/components/BrandMark";
+import brand from "../../../shared/brand";
 import { CALENDAR_ROUTE } from "../../../shared/config/routes";
 export default function NavBar({
   query = "",
@@ -26,7 +27,7 @@ export default function NavBar({
           <span className="planner-brand-icon">
             <BrandMark />
           </span>
-          <span>Daymark</span>
+          <span>{brand.name}</span>
         </Link>
         <div className="planner-search" role="search">
           <FiSearch aria-hidden="true" />

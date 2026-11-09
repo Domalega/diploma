@@ -5,7 +5,7 @@ export const GRID_COLUMNS = 24;
 export const GRID_GAP = 16;
 export const GRID_ROW_HEIGHT = 4;
 export const DEFAULT_HEIGHT = {
-  calendar: 884,
+  calendar: 744,
   today: 164,
   notes: 424,
   medications: 524,

@@ -1,6 +1,6 @@
 export const COLOR_STORAGE_KEY = "calendar.color";
 export const COLOR_PALETTES = [
-  { value: "green", label: "Green", swatch: "#356a52" },
+  { value: "green", label: "Green", swatch: "#4b6418" },
   { value: "blue", label: "Blue", swatch: "#426bb0" },
   { value: "purple", label: "Purple", swatch: "#8854ad" },
   { value: "rose", label: "Pink", swatch: "#b54f7c" },

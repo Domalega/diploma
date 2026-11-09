@@ -11,7 +11,7 @@ function UpdateAction({ updates }) {
     <>
       {status.candidate && (
         <>
-          <p>{t("Daymark {version} is available", { version: status.candidate.versionName })}</p>
+          <p>{t("Jotstride {version} is available", { version: status.candidate.versionName })}</p>
           {status.candidate.notes && (
             <p style={{ whiteSpace: "pre-line" }}>{status.candidate.notes}</p>
           )}

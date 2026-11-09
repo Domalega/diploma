@@ -72,7 +72,7 @@ public static class DeviceReminders
     }
     public static void Test()
     {
-        var content = new ToastContentBuilder().AddText("Daymark").AddText("Local reminders work without an open browser or server.").GetToastContent();
+        var content = new ToastContentBuilder().AddText(App.DisplayName).AddText("Local reminders work without an open browser or server.").GetToastContent();
         Notifier.AddToSchedule(new ScheduledToastNotification(content.GetXml(), DateTimeOffset.Now.AddSeconds(5)) { Tag = "test", Group = "Daymark" });
     }
     public static object ArmSmokeTest()
