@@ -141,12 +141,15 @@ const newDevice = () => {
   global.localStorage = storage();
   lockEncryption();
 };
-const note = () =>
-  encryptedRequest("/userDate/create", {
+const note = async () => {
+  const result = await encryptedRequest("/userDate/create", {
     method: "POST",
     token,
     body: { date: "2026-10-25", comment: "Private automatic-key note" },
   });
+  if (online) await syncVault();
+  return result;
+};
 test("encryption is off by default and creates no key or device request until explicitly enabled", async () => {
   expect((await initializeDeviceAccess()).mode).toBe("plain");
   expect(await readDevice(deviceScope())).toBeNull();

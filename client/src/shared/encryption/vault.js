@@ -31,12 +31,18 @@ const storageKey = (id) => `daymark.encrypted.v1:${SOURCE}:${id}`;
 export const isCurrentVaultKey = (key) => key === storageKey(owner());
 const context = (id, purpose) => `daymark:v1:${SOURCE}:${id}:${purpose}`;
 const notify = () => window.dispatchEvent(new Event("daymark:vault"));
-let tail = Promise.resolve();
-function serial(action) {
-  const result = tail.then(action);
-  tail = result.catch(() => {});
-  return result;
+function createQueue() {
+  let tail = Promise.resolve();
+  return (action) => {
+    const result = tail.then(action);
+    tail = result.catch(() => {});
+    return result;
+  };
 }
+const serial = createQueue();
+const serialSync = createQueue();
+const serialTransition = (action) => serialSync(() => serial(action));
+let queuedSync = null;
 function guard(s) {
   if (!s || s !== encryptionSession() || s.owner !== owner())
     throw new Error("Unlock your encrypted data first.");
@@ -44,21 +50,31 @@ function guard(s) {
 export async function vaultNetwork(method = "GET", body, path = "/vault") {
   const token = localStorage.getItem("token");
   if (isOfflineApp()) return offlineNative("request", { path, method, body, token });
-  const response = await fetch(SOURCE + path, {
-    method,
-    cache: "no-store",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(body ? { "Content-Type": "application/json" } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const data = await response.json();
-  if (!response.ok)
-    throw Object.assign(new Error(data.message || "Synchronization failed. Try again."), {
-      status: response.status,
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch(SOURCE + path, {
+      method,
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
     });
-  return data;
+    const data = await response.json();
+    if (!response.ok)
+      throw Object.assign(new Error(data.message || "Synchronization failed. Try again."), {
+        status: response.status,
+      });
+    return data;
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error("Synchronization failed. Try again.");
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 const network = vaultNetwork;
 export const deviceScope = () => `${SOURCE}:${owner()}`;
@@ -189,12 +205,32 @@ function combine(base, local, remote) {
   const history = historyFor(state, remote, local);
   return { current: { state, history }, conflicts };
 }
-async function synchronize(s) {
-  return withFreshLocal(s, () => synchronizeCurrent(s));
-}
-async function synchronizeCurrent(s) {
+async function synchronize(s, { exclusive = false } = {}) {
+  const local = (action) => {
+    const run = () => withFreshLocal(s, action);
+    return exclusive ? run() : serial(run);
+  };
   guard(s);
   const remote = await network();
+  const upload = await local(() => prepareUpload(s, remote));
+  if (upload) {
+    guard(s);
+    const reply = await network("PUT", { revision: upload.revision, envelope: upload.envelope });
+    await local(async () => {
+      if (s.doc.revision >= reply.revision) return;
+      // A newer local edit must remain pending after the uploaded snapshot is acknowledged.
+      await persist(s, {
+        ...s.doc,
+        revision: reply.revision,
+        base: upload.current,
+        lastSync: new Date().toISOString(),
+      });
+    });
+  }
+  s.error = "";
+  notify();
+}
+async function prepareUpload(s, remote) {
   guard(s);
   if (!remote.encrypted && remote.disabled) return synchronizePlain(s, remote);
   if (remote.encrypted && remote.envelope.salt !== s.salt) {
@@ -246,27 +282,11 @@ async function synchronizeCurrent(s) {
     window.dispatchEvent(new Event("daymark:sync"));
   }
   if (s.doc.conflicts?.length) throw new Error("These items changed on both devices");
-  if (dirty(s)) {
-    validateDocument(s.doc.current);
-    const envelope = await seal(
-      s.key,
-      s.salt,
-      s.doc.current,
-      context(s.owner, "remote"),
-      s.version || 1,
-    );
-    guard(s);
-    const reply = await network("PUT", { revision: s.doc.revision, envelope });
-    guard(s);
-    await persist(s, {
-      ...s.doc,
-      revision: reply.revision,
-      base: clone(s.doc.current),
-      lastSync: new Date().toISOString(),
-    });
-  }
-  s.error = "";
-  notify();
+  if (!dirty(s)) return;
+  const { revision, current } = s.doc;
+  validateDocument(current);
+  const envelope = await seal(s.key, s.salt, current, context(s.owner, "remote"), s.version || 1);
+  return { revision, current, envelope };
 }
 export async function unlockVault(passphrase, status) {
   const epoch = encryptionEpoch();
@@ -361,7 +381,7 @@ async function activate(s, status) {
     await persist(s, s.doc);
     if (!status.offline) {
       try {
-        await synchronize(s);
+        await serialSync(() => synchronize(s));
       } catch (error) {
         if (!s.doc.conflicts?.length) throw error;
         s.error = error.message;
@@ -493,18 +513,28 @@ export const vaultStatus = () => {
     : null;
 };
 export function syncVault() {
-  const scheduled = encryptionSession();
-  return serial(async () => {
-    const s = scheduled;
-    if (!s) return;
-    try {
-      await synchronize(s);
-    } catch (error) {
-      s.error = error.message;
-      notify();
-      throw error;
-    }
-  });
+  return scheduleSync(encryptionSession());
+}
+function scheduleSync(s) {
+  if (!s) return Promise.resolve();
+  if (queuedSync?.session === s) return queuedSync.promise;
+  const request = {
+    session: s,
+    promise: serialSync(async () => {
+      if (queuedSync === request) queuedSync = null;
+      try {
+        await synchronize(s);
+      } catch (error) {
+        if (s === encryptionSession()) {
+          s.error = error.message;
+          notify();
+        }
+        throw error;
+      }
+    }),
+  };
+  queuedSync = request;
+  return request.promise;
 }
 async function synchronizePlain(s, remote) {
   const clear = { state: remote.legacy.state, history: remote.legacy.history || {} };
@@ -596,7 +626,7 @@ export async function resumePlainVault(raw, status) {
   };
   setEncryptionSession(s);
   try {
-    await synchronizePlain(s, status);
+    await serialTransition(() => synchronizePlain(s, status));
   } catch (error) {
     s.error = error.message;
     notify();
@@ -622,9 +652,8 @@ export async function archivePreviousVault(raw) {
   });
 }
 export function disableVault() {
-  const scheduled = encryptionSession();
-  return serial(async () => {
-    const s = scheduled;
+  const s = encryptionSession();
+  return serialTransition(async () => {
     guard(s);
     if (isOfflineApp()) {
       try {
@@ -633,7 +662,7 @@ export function disableVault() {
         throw new Error("Update the installed Jotstride app before disabling encryption.");
       }
     }
-    await synchronize(s);
+    await synchronize(s, { exclusive: true });
     if (!encryptionSession()) return;
     guard(s);
     const command = {
@@ -649,13 +678,12 @@ export function disableVault() {
       if (status?.encrypted !== false || status.disabled?.salt !== s.salt) throw error;
     }
     guard(s);
-    await synchronize(s);
+    await synchronize(s, { exclusive: true });
   });
 }
-export function resolveVault(choice) {
-  const scheduled = encryptionSession();
-  return serial(async () => {
-    const s = scheduled;
+export async function resolveVault(choice) {
+  const s = encryptionSession();
+  await serial(async () => {
     guard(s);
     const doc = clone(s.doc);
     for (const k of doc.conflicts || []) {
@@ -671,8 +699,8 @@ export function resolveVault(choice) {
     doc.generation++;
     await persist(s, doc);
     window.dispatchEvent(new Event("daymark:sync"));
-    await synchronize(s);
   });
+  await scheduleSync(s);
 }
 export async function encryptedRequest(path, { method = "GET", body, signal, token } = {}) {
   const scheduled = encryptionSession();
@@ -708,13 +736,8 @@ export async function encryptedRequest(path, { method = "GET", body, signal, tok
     const result = await withFreshLocal(s, () =>
       changeLocal(s, path, method, body, signal, expected),
     );
-    // Local durability precedes the network. Failures retain pending ciphertext for retry.
-    try {
-      await synchronize(s);
-    } catch (error) {
-      s.error = error.message;
-      notify();
-    }
+    // Return after the encrypted write commits on this device.
+    scheduleSync(s).catch(() => {});
     return result;
   });
 }

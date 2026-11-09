@@ -82,7 +82,13 @@ afterEach(() => {
   delete global.fetch;
 });
 const unlock = async () => unlockVault(phrase, await inspectVault());
-const write = (path, body, method = "POST") => encryptedRequest(path, { token, method, body });
+const saveLocally = (path, body, method = "POST") =>
+  encryptedRequest(path, { token, method, body });
+const write = async (...args) => {
+  const result = await saveLocally(...args);
+  if (online) await syncVault().catch(() => {});
+  return result;
+};
 const read = (path) => encryptedRequest(path, { token });
 function switchDevice(s) {
   localStorage.setItem(storageKey, s.stored);
@@ -124,6 +130,72 @@ test("offline edits survive lock, page reload and logout as ciphertext and later
   expect((await read("/userDate/get"))[0].comment).toBe("Pending offline note");
   online = true;
   await syncVault();
+  expect(vaultStatus().pending).toBe(false);
+});
+test("two notes can be saved while a background vault download is stalled", async () => {
+  const s = await unlock();
+  const fetchVault = global.fetch.getMockImplementation();
+  let release, start;
+  const started = new Promise((resolve) => (start = resolve));
+  const stalled = new Promise((resolve) => (release = resolve));
+  global.fetch.mockImplementationOnce(async (...args) => {
+    start();
+    await stalled;
+    return fetchVault(...args);
+  });
+  const syncing = syncVault();
+  await started;
+  try {
+    await saveLocally("/userDate/create", { date: "2026-11-09", comment: "First local note" });
+    await saveLocally("/userDate/create", { date: "2026-11-09", comment: "Second local note" });
+    const stored = localStorage.getItem(storageKey);
+    expect(stored).not.toContain("local note");
+    const { current } = await open(s.key, JSON.parse(stored), localContext);
+    const notes = Object.entries(current.state)
+      .filter(([key]) => key.startsWith("note/"))
+      .map(([, note]) => note.comment);
+    expect(notes.sort()).toEqual(["First local note", "Second local note"]);
+    expect(await read("/userDate/get")).toHaveLength(2);
+    expect(vaultStatus().pending).toBe(true);
+  } finally {
+    release();
+    await syncing;
+    await syncVault();
+  }
+  expect(vaultStatus().pending).toBe(false);
+});
+test("an upload acknowledgement keeps a newer local edit pending for the next upload", async () => {
+  const s = await unlock();
+  const fetchVault = global.fetch.getMockImplementation();
+  let release, start;
+  const started = new Promise((resolve) => (start = resolve));
+  const stalled = new Promise((resolve) => (release = resolve));
+  let firstUpload = true;
+  global.fetch.mockImplementation(async (url, options) => {
+    const response = await fetchVault(url, options);
+    if (firstUpload && options.method === "PUT") {
+      firstUpload = false;
+      start();
+      await stalled;
+    }
+    return response;
+  });
+  const { note } = await saveLocally("/userDate/create", {
+    date: "2026-11-09",
+    comment: "First version",
+  });
+  await started;
+  try {
+    await saveLocally("/userDate/update", { id: note.id, comment: "Newer edit" }, "PATCH");
+    expect((await read("/userDate/get"))[0].comment).toBe("Newer edit");
+    expect(vaultStatus().pending).toBe(true);
+  } finally {
+    release();
+    await syncVault();
+  }
+  expect((await open(s.key, server.envelope, remoteContext)).state[`note/${note.id}`].comment).toBe(
+    "Newer edit",
+  );
   expect(vaultStatus().pending).toBe(false);
 });
 test("same-item conflicts retain both versions and explicitly resolve to the local version", async () => {
