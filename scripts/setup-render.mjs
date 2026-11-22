@@ -30,6 +30,7 @@ async function request(path, body, method = body ? "POST" : "GET") {
 
 const owners = await request("/owners?limit=100");
 const services = await request("/services?limit=100");
+const branch = "main";
 let service = services.find(
   ({ service: item }) =>
     item.name === "diploma-api" && item.repo === "https://github.com/Domalega/diploma",
@@ -52,7 +53,7 @@ if (!service) {
     name: "diploma-api",
     ownerId: owners[0].owner.id,
     repo: "https://github.com/Domalega/diploma",
-    branch: "redesign",
+    branch,
     rootDir: "server",
     autoDeployTrigger: "checksPass",
     envVars: Object.entries(env).map(([key, value]) => ({ key, value })),
@@ -69,18 +70,9 @@ if (!service) {
 }
 if (!service?.id) throw new Error("Render returned no service ID");
 service = await request(`/services/${service.id}`);
-if (service.branch !== "redesign" || service.serviceDetails.plan !== "free") {
-  throw new Error("Expected the redesign branch and free plan");
+if (service.serviceDetails.plan !== "free") {
+  throw new Error("Expected the free plan");
 }
-const deployment = {
-  id: service.id,
-  url: service.serviceDetails.url,
-  branch: service.branch,
-  plan: service.serviceDetails.plan,
-  commit: GITHUB_SHA,
-};
-await writeFile("render-deployment.json", JSON.stringify(deployment, null, 2));
-console.log(JSON.stringify(deployment));
 
 if (GOOGLE_MAIL_URL || GOOGLE_MAIL_SECRET) {
   if (
@@ -117,6 +109,20 @@ for (let attempt = 0; attempt < 120; attempt++) {
   await new Promise((resolve) => setTimeout(resolve, 5000));
 }
 if (!verified) throw new Error("Project verification timed out");
+if (service.branch !== branch) {
+  service = await request(`/services/${service.id}`, { branch }, "PATCH");
+  if (service.branch !== branch) throw new Error(`Render did not switch to ${branch}`);
+}
+const deployment = {
+  id: service.id,
+  url: service.serviceDetails.url,
+  branch: service.branch,
+  plan: service.serviceDetails.plan,
+  commit: GITHUB_SHA,
+};
+await writeFile("render-deployment.json", JSON.stringify(deployment, null, 2));
+console.log(JSON.stringify(deployment));
+
 if (GOOGLE_MAIL_URL || GOOGLE_MAIL_SECRET) {
   for (const [key, value] of Object.entries({
     GOOGLE_MAIL_URL,

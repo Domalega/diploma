@@ -2,7 +2,7 @@ name: Native apps
 
 on:
   push:
-    branches: [redesign]
+    branches: [main]
     paths:
       [
         "apps/**",

@@ -10,7 +10,7 @@ Jotstride uses GitHub Pages for the website, Render for the API and PostgreSQL f
 2. If the hosted site needs password recovery, set up [Google Apps Script mail](../integrations/google-mail/README.md).
 3. In the GitHub repository, open **Settings → Pages**. Under **Build and deployment**, set **Source** to **GitHub Actions**.
 4. In **Settings → Secrets and variables → Actions**, open the **Variables** tab and select **New repository variable**. Create `REACT_APP_API_URL` with the API's HTTPS address ending in `/api`.
-5. Push to `redesign`. In the **Actions** tab, wait for **Checks** to build and publish the site.
+5. Push to `main`. In the **Actions** tab, wait for **Checks** to build and publish the site.
 6. Confirm the API's `/api/health` returns `{"status":"ok"}`. Open the published site and check that the app can reach the API.
 
 ## Build and preview the website
@@ -60,4 +60,4 @@ Once verified, submit the full sitemap URL and request a recrawl of the public p
 
 If Render uses a public repository URL for the service, deploy the verified commit manually or use the [**Render setup** workflow](../.github/workflows/render-setup.yml). Enable the workflow with the `RENDER_SETUP_ENABLED=true` repository variable and the `RENDER_API_KEY` secret. Add the `DATABASE_URL` secret if the workflow needs to create the service. To configure mail through the workflow, supply both `GOOGLE_MAIL_URL` and `GOOGLE_MAIL_SECRET`.
 
-On API changes pushed to `redesign`, the workflow waits for the GitHub verification job to pass and then requests a Render deployment for that commit. After deployment, check `/api/health` for `{"status":"ok"}`. [Render deployment modes](https://render.com/docs/deploys)
+On API changes pushed to `main`, the workflow waits for the GitHub verification job to pass and then requests a Render deployment for that commit. After deployment, check `/api/health` for `{"status":"ok"}`. [Render deployment modes](https://render.com/docs/deploys)

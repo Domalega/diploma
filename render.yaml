@@ -5,7 +5,7 @@ services:
     plan: free
     region: frankfurt
     repo: https://github.com/Domalega/diploma
-    branch: redesign
+    branch: main
     rootDir: server
     buildCommand: npm ci --omit=dev
     startCommand: npm start

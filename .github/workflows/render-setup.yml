@@ -2,7 +2,7 @@ name: Render setup
 
 on:
   push:
-    branches: [redesign]
+    branches: [main]
     paths:
       - server/**
       - .github/workflows/render-setup.yml

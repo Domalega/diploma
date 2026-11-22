@@ -2,7 +2,7 @@ name: Checks
 
 on:
   push:
-    branches: [redesign]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -48,12 +48,12 @@ jobs:
           DAYMARK_SITE_URL: https://domalega.github.io/diploma/
           REACT_APP_API_URL: ${{ vars.REACT_APP_API_URL || 'http://localhost:5000/api' }}
       - uses: actions/upload-pages-artifact@v4
-        if: github.ref == 'refs/heads/redesign' && github.event_name != 'pull_request' && vars.REACT_APP_API_URL != ''
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.REACT_APP_API_URL != ''
         with:
           path: client/build
 
   deploy-pages:
-    if: github.ref == 'refs/heads/redesign' && github.event_name != 'pull_request' && vars.REACT_APP_API_URL != ''
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.REACT_APP_API_URL != ''
     needs: verify
     runs-on: ubuntu-latest
     permissions:
