@@ -1,1 +1,1 @@
-Add the option to disable end-to-end encryption in Settings. Synchronize the latest data before returning to ordinary storage, retain encrypted backups and restore native offline synchronization. Resolve conflicting edits before switching modes.
+Show the Jotstride icon on the Android home screen and in the app list.

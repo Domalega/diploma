@@ -11,6 +11,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Resource Include="Jotstride.ico" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
     <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />

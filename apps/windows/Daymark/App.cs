@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
@@ -56,7 +57,16 @@ public sealed class App : Application
     {
         if (MainWindow != null) { MainWindow.Show(); MainWindow.Activate(); return; }
         web = new WebView2();
-        MainWindow = new Window { Title = DisplayName, Width = 1280, Height = 850, MinWidth = 360, MinHeight = 560, Content = web };
+        MainWindow = new Window
+        {
+            Title = DisplayName,
+            Icon = BitmapFrame.Create(new Uri("pack://application:,,,/Jotstride.ico")),
+            Width = 1280,
+            Height = 850,
+            MinWidth = 360,
+            MinHeight = 560,
+            Content = web
+        };
         MainWindow.Closed += (_, _) => Shutdown();
         MainWindow.Show();
         Directory.CreateDirectory(DeviceReminders.DataDirectory);
