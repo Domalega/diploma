@@ -1,44 +1,34 @@
 # Jotstride
 
-A personal calendar for notes, tasks and reminders. Includes user accounts, search, a month view and a notes list. Optional panels add a to-do list, Kanban board and medication tracker.
+English · [Русский](README.ru.md)
 
-End-to-end encryption is an optional setting. Device keys are created automatically; new devices connect after approval from an existing device. Encrypted changes sync while the interface is open. Existing unencrypted server records are retained. See [encryption and device access](docs/ENCRYPTION.md).
+Jotstride is a personal calendar for notes, tasks and reminders. Browse the month, see the notes for a day, or search across your notes. You can also turn on a to-do list, a Kanban board and a medication tracker.
 
-[Live demo](https://domalega.github.io/diploma/) · [Android and Windows clients](apps/README.md)
+[Open Jotstride](https://domalega.github.io/diploma/) · [Install for Android or Windows](apps/README.md) · [Run locally](#run-locally) · [Documentation](#documentation)
 
-## Screenshots
-
-### Light theme
-
-![Jotstride in the light theme with a month calendar and notes for the selected day](docs/screenshots/calendar-light.png)
-
-### Dark theme
-
-![Jotstride in the dark theme with a month calendar and notes for the selected day](docs/screenshots/calendar-dark.png)
+You can enable end-to-end encryption in Settings. Jotstride creates the keys and asks you to approve each new device from one you've already connected. If you already have an account, read [what encryption protects](docs/ENCRYPTION.md) before turning it on.
 
 ## Tech stack
 
-React 18, Express, Sequelize. SQLite for local use; PostgreSQL for hosting.
+Jotstride uses React 18, Express and Sequelize. The local setup below uses SQLite, and the hosted setup uses PostgreSQL.
 
 ## Run locally
 
-Requires **Node.js 22+** and npm. Run commands from the project root.
+You'll need Node.js 22 or newer and npm.
 
-1. Install dependencies:
+1. From the repository root, install the dependencies.
 
    ```sh
    npm run setup
    ```
 
-2. Copy `server/.env.example` to `server/.env` and set `SECRET_KEY` to a random secret:
+2. Copy [`server/.env.example`](server/.env.example) to `server/.env`. Run the command below and paste the generated value into `SECRET_KEY` in `server/.env`.
 
    ```sh
    node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
    ```
 
-   The SQLite database is created automatically at `server/data/calendar.sqlite`.
-
-3. Start the API and frontend in separate terminals:
+3. From the repository root, start the API and frontend in separate terminals.
 
    ```sh
    npm run dev:server
@@ -48,21 +38,38 @@ Requires **Node.js 22+** and npm. Run commands from the project root.
    npm run dev:client
    ```
 
-4. Open [localhost:3000](http://localhost:3000). The API runs on port `5000`.
+4. Open [localhost:3000](http://localhost:3000). The API listens on port `5000` and creates the SQLite database at `server/data/calendar.sqlite`.
 
-For another API address, set `REACT_APP_API_URL` in `client/.env` using `client/.env.example`. PostgreSQL settings are listed in `server/.env.example`.
+If the API runs at a different address, copy [`client/.env.example`](client/.env.example) to `client/.env` and set `REACT_APP_API_URL`. The server example lists the PostgreSQL settings.
 
-Local password recovery messages are saved in `server/data/mail/`. Hosted recovery requires the [Google mail setup](integrations/google-mail/README.md).
+To test password recovery locally, look for the generated emails in `server/data/mail/`. For hosted email delivery, follow the [Google Apps Script setup](integrations/google-mail/README.md).
 
 ## Checks
 
-Run `npm test`, `npm run lint` and `npm run build` from the project root. Native client checks are listed in [Device clients](apps/README.md#build).
+Run these commands from the repository root. See [Build the device clients](apps/README.md#build) for Android and Windows checks.
+
+```sh
+npm test
+npm run lint
+npm run build
+```
 
 ## Documentation
 
-- [Encrypted storage preparation](docs/ENCRYPTION.md)
-- [Device clients and builds](apps/README.md)
-- [Android offline storage and sync](docs/OFFLINE_SYNC.md)
-- [Android updates and migration](docs/ANDROID_UPDATES.md)
-- [Deployment](docs/DEPLOYMENT.md)
-- [Roadmap](docs/ROADMAP.md)
+- [Install, configure and build the Android and Windows apps](apps/README.md)
+- [Set up encryption or connect a device](docs/ENCRYPTION.md)
+- [Use Android offline and resolve sync conflicts](docs/OFFLINE_SYNC.md)
+- [Update Android or move data from version 0.2.0](docs/ANDROID_UPDATES.md)
+- [Deploy the website and API](docs/DEPLOYMENT.md)
+- [Set up password recovery emails](integrations/google-mail/README.md)
+- [See what's planned](docs/ROADMAP.md)
+
+## Screenshots
+
+### Light theme
+
+![Month calendar and notes for the selected day in the light theme](docs/screenshots/calendar-light.png)
+
+### Dark theme
+
+![Month calendar and notes for the selected day in the dark theme](docs/screenshots/calendar-dark.png)

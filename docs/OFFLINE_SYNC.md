@@ -1,34 +1,33 @@
 # Android offline storage and sync
 
-For accounts using the encrypted document, [encrypted storage](ENCRYPTION.md) replaces the legacy exchange described below. Synchronization requires the interface to be open and unlocked; pending ciphertext remains available after closing it. Existing server records are preserved. Native account documents and reminder plans use Android Keystore encryption.
+English · [Русский](ru/OFFLINE_SYNC.md)
 
-Android bundles the interface and keeps each account's notes, tasks, board and medication data in app-private SQLite storage. The first sign-in requires an internet connection. Later edits work offline and sync when connected, when the app opens, manually through Settings, and approximately hourly in the background. Android may delay background work.
+You'll need an internet connection the first time you sign in on Android. After that, you can edit notes, tasks, Kanban cards and medication records offline. Jotstride saves each account's changes in the app's private SQLite database.
 
-Independent edits merge automatically. Concurrent changes to the same item, including deletion versus editing, require an explicit phone/server choice. Local changes remain available until the conflict is resolved. Signing out stops the account's background work and removes its credentials; its pending data is retained for the next sign-in to the same account. Uninstalling or clearing app storage removes that data.
+The steps below describe sync with end-to-end encryption turned off. With [encryption enabled](ENCRYPTION.md#storage-and-synchronization), Jotstride syncs while the calendar is open and can retry saved encrypted changes after you reopen it. Existing server records are preserved. For both account types, Android Keystore protects native account documents and reminder plans.
+
+## Sync your changes
+
+Open Jotstride with a connection or select **Sync now** in **Settings**. Android also schedules a background sync about once an hour when connected. The operating system can delay background work.
+
+If you change different items on two devices, Jotstride merges the changes. If you edit the same item on both devices, or edit it on one and delete it on the other, choose whether to keep the phone or server version. Your local change stays available until you resolve the conflict.
+
+Signing out stops background sync and removes the account's saved credentials. Pending changes remain on the phone for the next sign-in to the same account. Uninstalling the app or clearing its storage removes those local changes.
 
 ## Sync contract
 
-Each note, task or intake is a merge unit; board and medication settings are separate units. The local document retains the server baseline, current state, generation and in-flight upload. Edits made during an upload are rebased over its reply. Generation checks reject obsolete local writes; uncertain network outcomes retry the same operation ID.
+- **Merge units.** Each note, task and medication intake can merge independently. Board settings and medication settings are separate units.
+- **Local writes.** The app keeps the last server state, the current local state, a generation number and any upload in progress. An edit made during an upload is applied on top of the response. The generation check rejects stale local writes. When a network request has an uncertain outcome, the client retries with the same operation ID.
+- **Server writes.** The API serializes writes for each account and saves each operation receipt with its data. Repeating a completed upload with the same ID and payload is safe. The API rejects a different payload with the same ID. A UUID mapping preserves existing numeric note IDs.
+- **Kanban history.** The API records the changes for each task after sync. The Android bridge reads only the requested section. It loads history in pages when you open it and caches those pages for offline viewing. Background sync skips history, while older clients can still request the full history in a sync response. Deleting a task removes its activity.
+- **Reminders and credentials.** Background sync refreshes reminders from the complete local snapshot. A scheduling failure leaves saved calendar data intact. Android Keystore protects the background credentials, which the bridge keeps private. If the session expires or is revoked, sign in again to resume network sync.
 
-The API serializes writes per account. Receipts commit with data, making identical upload retries idempotent; reusing an operation ID with another payload is rejected. Existing numeric note IDs are preserved through a separate UUID mapping. Kanban history records each task's resulting change after an exchange.
+<a name="build-and-verify"></a>
 
-Android reads send only the requested section across the native bridge. Activity history loads in pages when opened and is cached for offline viewing; background sync omits it. Earlier clients retain the full-history sync response. Deleting a Kanban task removes its activity; deletion versus concurrent editing requires an explicit conflict choice.
+## Verify offline sync
 
-Background sync refreshes device reminders from the complete local snapshot. Alarm failures do not undo saved calendar data. Background credentials are encrypted with Android Keystore and excluded from bridge responses. Expired or revoked sessions require sign-in before network sync can resume.
+Install a [preview APK](../apps/README.md#install-and-enable) or [build the Android app](../apps/README.md#android). Use a test account with end-to-end encryption turned off.
 
-## Build and verify
-
-Build the interface before Gradle:
-
-```powershell
-$env:PUBLIC_URL = '.'
-$env:REACT_APP_ROUTER = 'hash'
-$env:REACT_APP_API_URL = 'https://diploma-api-zozr.onrender.com/api'
-npm ci --prefix client
-npm run build --prefix client
-gradle -p apps/android testDebugUnitTest assembleDebug
-```
-
-The API must support `/api/sync`. Native build requirements are listed in [Device clients](../apps/README.md#build).
-
-For acceptance testing, sign in online, disconnect, edit and complete items, close and reopen the app, then reconnect and compare with the website. Edit the same item on both devices and resolve the conflict. Repeat with medication marks and check that deleted or taken items no longer trigger reminders. Background delivery also needs validation on a real phone.
+1. Sign in online. Disconnect, edit and complete items, then close and reopen the app. Confirm your changes are still there.
+2. Reconnect, sync, and compare the records with the website. Then edit the same item on two devices and confirm you can resolve the conflict.
+3. Repeat with medication intake marks. Check that deleted items and medications already marked as taken stop generating reminders. Verify background delivery on a physical phone.

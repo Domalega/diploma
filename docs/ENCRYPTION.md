@@ -1,54 +1,56 @@
 # Optional end-to-end encryption
 
-The calendar opens normally with encryption off. Enable **Settings → End-to-end encryption → Enable encryption** to protect the account. The application creates the key automatically; no new phrase or password is required. Encryption buttons use the shared Bootstrap button components and application styles.
+English · [Русский](ru/ENCRYPTION.md)
 
-Enabling is account-wide. Existing unencrypted server records are retained as requested, so historical copies are not protected by the new encryption. No cleanup or deletion migration is included.
+End-to-end encryption is off by default. It protects your current calendar data, including notes, dates, times, to-dos, Kanban columns, tasks and activity, medication schedules and intake history. Jotstride retains existing unencrypted server records, so historical copies stay outside this protection and may be out of date.
 
-## Automatic device keys
+**Keep at least one connected device after enabling encryption.** If you lose all the device keys Jotstride created for your account, resetting your password won't recover encrypted data. This version has no device-key recovery, revocation or rotation.
 
-The first device creates a random 256-bit content key and an ECDH P-256 device key pair. The content key is wrapped for that device with an ephemeral ECDH key, HKDF-SHA-256 and AES-256-GCM. The server receives public keys and wrapped content keys; it never receives the device private key or unwrapped content key. Data envelopes use AES-GCM with fresh 12-byte nonces and 128-bit authentication tags. Authenticated context binds data to the API address, account and local/remote purpose; key-transfer context additionally binds the recipient device and public key. Algorithms use the standard [Web Crypto API](https://www.w3.org/TR/webcrypto-1/).
-
-The browser stores a non-extractable device private key in IndexedDB. It is not stored as plaintext JSON or sent to the API. This does not guarantee hardware-backed or disk-encrypted browser key storage: protection of the whole browser profile depends on the browser and operating system. Android protects the device private key through Android Keystore; the updated Windows app uses user-scoped DPAPI with separate purpose entropy. Both native clients store only the protected private-key representation in IndexedDB and import the opened key as non-extractable during use.
-
-The wrapped content key is retained locally for offline access. Signing out drops the current in-memory content key and cancels reminders but keeps this device's access for the next sign-in. A connected device opens its encrypted data automatically; a separate phrase-based lock is not shown. JavaScript memory cannot be guaranteed to be zeroized, although temporary raw content-key buffers are cleared after use.
+To enable encryption, connect to the internet and open **Settings → End-to-end encryption → Enable encryption**. Jotstride creates the keys automatically. You can keep using your existing account password.
 
 ## Connect another device
 
-1. Update Jotstride on both devices and sign in to the same account.
-2. The new device creates its own key pair and displays **Copy connection link**. Copy or share that link to an already connected device.
-3. Open the link on the connected device. Confirm that it came from your own new device and press **Approve device**.
-4. The new device receives its wrapped key and opens the calendar automatically. **Retry** checks immediately; otherwise the open page checks periodically.
+1. Connect both devices to the internet. Update Jotstride on both devices and sign in to the same account.
+2. On the new device, select **Copy connection link** and send the link to a device that already has access.
+3. Open the link on the connected device. Check that it came from your new device, then select **Approve device**.
+4. Leave the calendar open on the new device. It checks for approval periodically and opens automatically once it has the wrapped key. Select **Retry** to check immediately.
 
-If a link opens in a different browser instead of the already connected native app, use **Settings → End-to-end encryption → Connect another device** in that app and paste the generated connection link. This transfers public connection information, not an encryption phrase. The next screen still requires explicit approval before any key is shared.
+If the link opens in a different browser, switch to the already connected app. Open **Settings → End-to-end encryption → Connect another device**, paste the link and select **Review connection**. Check that the request came from your new device, then select **Approve device**.
 
-The connection link contains only public connection information, not a content key, password or account token. Its full public key is pinned and compared with the server request before approval, preventing the server from silently substituting another recipient key. Approval is never automatic. Pending requests expire after 30 minutes without renewal. Wrapped keys cannot be replaced through the approval endpoint after approval.
+### Access from the previous version
 
-Keep at least one connected device. If every device key is lost through device loss, uninstall or cleared browser storage, the server cannot restore encrypted content merely by resetting the account password. Historical plaintext server records remain separate and may be outdated. This version does not provide key recovery or revocation/rotation for a lost device.
-
-Accounts that enabled the earlier phrase-based format retain their existing data. A connected device can authorize another device using the same flow. If no device has remembered the key yet, **Access from the previous version** accepts the old phrase once, verifies it and saves device access. This compatibility path does not ask for a new phrase or rewrite the encrypted document.
+If you used the earlier phrase-based encryption, a device with saved access can approve a new one through the same steps. If no device has remembered the key, open **Access from the previous version** on the new device and enter the old phrase once. Jotstride verifies it and saves access for that device. The encrypted document stays in its existing format.
 
 ## Disable encryption
 
-On a connected device, choose **Settings → End-to-end encryption → Disable encryption** and confirm. An internet connection is required. The client synchronizes and resolves conflicts before submitting the current decrypted document. The server checks the encrypted revision and restores ordinary records in one transaction. Failed validation or a stale revision leaves encryption enabled.
+On a connected device with internet access, open **Settings → End-to-end encryption → Disable encryption** and confirm. Jotstride syncs first and asks you to resolve any conflicts. The server checks the encrypted revision and restores ordinary account records in one transaction. If the revision is stale or validation fails, encryption stays on.
 
-The last encrypted document and the previous ordinary snapshot remain in an account-scoped deactivation archive. Local ciphertext and the corresponding device keys are retained as backups; existing activity is preserved and missing events are added without replacing the history. Other connected clients merge pending changes into the ordinary snapshot or ask to resolve conflicts. Enabling again creates a fresh content key and device registration. Unsynchronized changes from an earlier encryption period are retained and reported instead of silently discarded.
+The server keeps the last encrypted document and the previous ordinary snapshot in an account-scoped archive. The device retains its encrypted copy and its keys. Jotstride preserves existing activity and adds missing entries. Other connected devices merge pending changes into ordinary storage or ask you to resolve conflicts. If you enable encryption again, Jotstride creates a fresh content key and device registration. It keeps and reports any unsynced changes from an earlier encryption period.
 
-Android 0.4.2 or newer restores its native ordinary snapshot and background synchronization after disabling. Older Android apps must be updated first. Native disk storage still uses operating-system protection; disabling concerns end-to-end encryption and ordinary server storage.
+On Android, update to version 0.4.2 or newer before disabling encryption. These versions can restore the native snapshot and resume ordinary background sync. Android Keystore and Windows DPAPI still protect their respective native data after you disable end-to-end encryption.
+
+## Automatic device keys
+
+- **Key creation.** The first device generates a random 256-bit content key and an ECDH P-256 device key pair. Each recipient gets its own wrapped copy of the content key. Wrapping uses ephemeral ECDH, HKDF-SHA-256 and AES-256-GCM. The server receives public keys and wrapped keys. Device private keys and the unwrapped content key stay on the clients.
+- **Data protection.** Jotstride uses AES-GCM with a fresh 12-byte nonce and a 128-bit authentication tag for each data envelope. Authenticated context binds it to the API address, account and local or remote purpose. The key-transfer context also binds the recipient device and public key. [Web Crypto API specification](https://www.w3.org/TR/webcrypto-1/)
+- **Device approval.** The connection link carries only public connection details. Before wrapping the key, the approving device compares the full public key from the link with the server's pending request. This check rejects recipient-key substitution through the server. Approval requires user confirmation. Pending requests expire after 30 minutes without renewal. The approval endpoint rejects attempts to replace an approved wrapped key.
+- **Key storage.** The browser keeps the device private key in IndexedDB as a non-extractable Web Crypto key. The browser and operating system determine how well the profile is protected at rest. Android protects native keys with Keystore and Windows uses user-scoped DPAPI with separate purpose entropy. Native clients store the protected representation in IndexedDB and import the opened key as non-extractable for use.
+- **Signing out.** The wrapped content key stays on the device for future access, including offline use. Signing out clears the active content key from application state and cancels reminders. A connected device opens the data automatically on the next sign-in. Jotstride clears temporary raw key buffers after use, while JavaScript does not guarantee complete memory zeroization.
 
 ## Storage and synchronization
 
-Notes, dates, times, to-dos, Kanban columns/tasks/activity, medication schedules and intake history are inside the encrypted document. Email, authentication/reset state, public device keys, device type, record sizes and request timing remain visible to the server. Account tokens and appearance preferences are outside content encryption.
+The server can still see email, authentication and password-reset state, public device keys, device type, record sizes and request timing. Account tokens and appearance preferences are outside the encrypted document.
 
-Current data and the last server baseline are stored as account/API-scoped ciphertext in local storage. The device key is saved durably before the initial encrypted upload. Existing plaintext server records remain intact throughout bootstrap. The old browser response cache is cleared only after encrypted local storage succeeds. Storage failures reject edits; network failures retain locally saved encrypted changes for retry. Web Locks serialize local writes across tabs.
+Jotstride stores the current document and last server baseline as ciphertext scoped to the account and API. It saves the device key before the first encrypted upload and clears the old browser response cache only after the encrypted local write succeeds. Web Locks serialize writes from multiple tabs. If local storage fails, the edit is rejected. If the network fails after the edit is saved locally, Jotstride can retry it later.
 
-The `/api/vault` API and legacy calendar writes share an account lock. Revision checks reject stale uploads. Clients merge independent edits after decryption and require a local/server choice for conflicts, including incompatible schedule or WIP changes. Old calendar endpoints reject accounts using an encrypted vault; ordinary accounts continue to use those endpoints normally.
+Writes to `/api/vault` and ordinary calendar writes share the account lock. Revision checks reject stale uploads. Clients decrypt documents locally, merge independent changes and ask you to choose a version when records conflict, including incompatible schedule or Kanban work-in-progress limit changes. An active vault blocks access to ordinary calendar endpoints for that account. Accounts with encryption off continue to use ordinary sync.
 
-Encrypted synchronization runs while the interface is open, on edits, focus, reconnection, periodically and through **Sync now** in Settings. Android's earlier plaintext background exchange remains disabled for encrypted accounts. Native reminder snapshots are protected by Keystore/DPAPI and can run after the interface closes, but remote changes refresh reminders only after the next open exchange. Notification text can be visible in operating-system notification surfaces.
+Sync runs while the interface is open, including on edits, focus, reconnection, periodic checks and **Sync now** in Settings. Android's ordinary background exchange is disabled for encrypted accounts. Native reminders can still fire after the app closes. Changes from other devices update those reminders at the next open sync. The operating system may show reminder text in notifications.
 
 ## Deployment and verification
 
-Deploy the additive `vaultDevices` table and device endpoints before the new clients. Android 0.4.1 and the updated Windows package add native private-key protection; update older native clients before enabling the option. HTTPS, Web Crypto, IndexedDB and Web Locks are required. Keep the configured API address stable because it is part of the encryption context.
+Deploy the server with the additive `vaultDevices` table and device endpoints before updating clients. Android 0.4.1 and the updated Windows package add native protection for device private keys. Update older native clients before enabling encryption. Use HTTPS and clients with Web Crypto, IndexedDB and Web Locks. Keep the API address stable because it is part of the encryption context.
 
-The cleartext document limit remains 1.8 million JavaScript characters, including activity; browser storage has its own quota. No truncation or silent eviction is performed. Old SQLite pages, exported files and historical backups are not securely erased by this change. A compromised client, XSS, malicious frontend update or an attacker controlling an unlocked browser profile can access device keys and plaintext. A newly connected device cannot independently detect a malicious rollback of its first downloaded document.
+The cleartext document, including activity, can contain up to 1.8 million JavaScript string units when serialized. Browser storage has its own quota. The app rejects oversized documents without truncating them or evicting records. Old SQLite pages, exports and historical backups fall outside this feature's protection. A compromised device, malicious frontend update, cross-site scripting or control of an unlocked profile can expose keys and plaintext. A newly connected device cannot independently detect a rollback of the first document it downloads.
 
-Tests cover optional access, automatic keys surviving reload/sign-out, offline access, explicit device approval, recipient-key substitution, pending/expired requests, immutable wrapped keys, lost upload replies, legacy access, conflict handling and account isolation. Native tests cover Keystore/DPAPI protection and retained storage. Verify browser pairing with separate profiles/devices and test native installation updates before release.
+The test suite covers device approval, recipient-key checks, expired requests, immutable wrapped keys, offline access, retained access after reload and sign-out, lost upload responses, legacy-format access, conflicts and account isolation. Native tests cover Keystore and DPAPI protection and retained storage. Before release, pair two browser profiles or devices and test upgrading existing native installations.

@@ -1,9 +1,11 @@
 # Jotstride roadmap
 
-- Evaluate Kanban on narrow screens, with hidden columns, concurrent sessions and long histories.
-- Design a shared note/task model and a versioned migration that preserves existing IDs, ownership, dates, times and reminders. Kanban tasks and calendar notes are currently separate.
-- Share editing across Month, List and Board once completion and reminder behavior are defined.
-- Add history filters and workflow metrics as account data grows.
-- Consider account-synced workspace layouts separately from task data.
+English · [Русский](ru/ROADMAP.md)
 
-These are development directions, without scheduled release dates. Experimental features remain opt-in in Settings.
+These are areas the project is exploring. Experimental features are opt-in in Settings.
+
+- **Kanban.** Test the board on narrow screens, with hidden columns, multiple active sessions and long activity histories.
+- **Notes and tasks.** Calendar notes and Kanban tasks are separate today. Design a shared model and a versioned migration that preserves IDs, ownership, dates, times and reminders.
+- **Editing across views.** Define how completion and reminders work, then let people edit the same items in Month, List and Board.
+- **Activity history.** Add filters and workflow metrics as accounts accumulate more activity.
+- **Workspace layouts.** Explore syncing layouts across devices separately from task data.
