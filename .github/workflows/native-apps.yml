@@ -93,6 +93,20 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci --prefix client
+      - name: Build bundled Windows interface
+        run: npm run build --prefix client
+        env:
+          CI: "true"
+          BUILD_PATH: ../dist/windows-web
+          PUBLIC_URL: .
+          REACT_APP_ROUTER: hash
+          REACT_APP_API_URL: https://diploma-api-zozr.onrender.com/api
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"

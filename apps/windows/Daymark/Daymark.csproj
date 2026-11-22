@@ -9,10 +9,21 @@
     <Product>Jotstride</Product>
     <ApplicationIcon>Jotstride.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <WindowsWebAssets Condition="'$(WindowsWebAssets)' == ''">$(MSBuildThisFileDirectory)..\..\..\dist\windows-web</WindowsWebAssets>
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Jotstride.ico" />
+    <Content Include="$(WindowsWebAssets)\index.html;$(WindowsWebAssets)\*.svg"
+             Condition="Exists('$(WindowsWebAssets)\index.html')"
+             Link="web\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="$(WindowsWebAssets)\static\**\*"
+             Exclude="$(WindowsWebAssets)\static\**\*.map"
+             Condition="Exists('$(WindowsWebAssets)\index.html')"
+             Link="web\static\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+  <Target Name="RequireWindowsWebAssets" BeforeTargets="PrepareForPublish">
+    <Error Condition="!Exists('$(WindowsWebAssets)\index.html')" Text="Build the bundled interface before publishing Jotstride for Windows." />
+  </Target>
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
     <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" />

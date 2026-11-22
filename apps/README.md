@@ -2,7 +2,7 @@
 
 English · [Русский](../docs/ru/APPS.md)
 
-The Android app can work offline after you sign in online once. The Windows app opens the hosted site and needs an internet connection for editing. Both apps save timed reminders on the device so they can alert you with the app closed.
+The Android app can work offline after you sign in online once. The Windows app bundles the calendar interface. On Windows, you can view previously saved calendar data and edit an unlocked, locally saved encrypted calendar offline. Signing in and synchronizing changes require a connection to the API. Both apps save timed reminders on the device so they can alert you with the app closed.
 
 ## Install and enable
 
@@ -53,9 +53,15 @@ gradle -p apps/android testDebugUnitTest assembleDebug
 
 ### Windows
 
-Install the .NET 8 SDK on Windows. From the repository root, run the scheduler tests and publish the x64 build.
+Install Node.js 22 or newer and the .NET 8 SDK on Windows. From the repository root, build the bundled interface, run the scheduler tests and publish the x64 build.
 
 ```powershell
+$env:BUILD_PATH = '../dist/windows-web'
+$env:PUBLIC_URL = '.'
+$env:REACT_APP_ROUTER = 'hash'
+$env:REACT_APP_API_URL = 'https://diploma-api-zozr.onrender.com/api'
+npm ci --prefix client
+npm run build --prefix client
 dotnet run --project apps/windows/ScheduleTests
 dotnet publish apps/windows/Daymark -c Release -r win-x64 --self-contained true -o dist/windows
 ```

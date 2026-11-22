@@ -2,7 +2,7 @@
 
 [English](../../apps/README.md) · Русский
 
-Приложение для Android работает без интернета после первого входа в аккаунт. Приложение для Windows открывает веб-версию, поэтому для редактирования нужен интернет. Оба приложения сохраняют напоминания с указанным временем на устройстве и могут показывать их, даже когда закрыты.
+Приложение для Android работает без интернета после первого входа в аккаунт. В Windows интерфейс календаря входит в сборку. Без интернета можно просматривать ранее сохранённые данные и редактировать разблокированный зашифрованный календарь, если его копия есть на устройстве. Для входа и синхронизации нужен доступ к API. Оба приложения сохраняют напоминания с указанным временем на устройстве и могут показывать их, даже когда закрыты.
 
 ## Установка и настройка
 
@@ -53,9 +53,15 @@ gradle -p apps/android testDebugUnitTest assembleDebug
 
 ### Windows
 
-Установите .NET 8 SDK на Windows. Из корня репозитория запустите тесты планировщика и соберите приложение для x64.
+Установите Node.js 22 или новее и .NET 8 SDK на Windows. Из корня репозитория соберите интерфейс, запустите тесты планировщика и соберите приложение для x64.
 
 ```powershell
+$env:BUILD_PATH = '../dist/windows-web'
+$env:PUBLIC_URL = '.'
+$env:REACT_APP_ROUTER = 'hash'
+$env:REACT_APP_API_URL = 'https://diploma-api-zozr.onrender.com/api'
+npm ci --prefix client
+npm run build --prefix client
 dotnet run --project apps/windows/ScheduleTests
 dotnet publish apps/windows/Daymark -c Release -r win-x64 --self-contained true -o dist/windows
 ```

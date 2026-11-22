@@ -12,11 +12,9 @@ namespace Daymark;
 public sealed class App : Application
 {
     internal const string DisplayName = "Jotstride";
-    const string Home = "https://domalega.github.io/diploma/";
     static readonly Mutex DeviceLock = new(false, "Local\\Domalega.Daymark.Reminders");
     WebView2? web;
     [STAThread] public static void Main() => new App().Run();
-    static bool Trusted(string? value) => Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == "https" && uri.Host == "domalega.github.io" && uri.IsDefaultPort && string.IsNullOrEmpty(uri.UserInfo) && uri.AbsolutePath.StartsWith("/diploma/", StringComparison.Ordinal);
     static void Locked(Action action)
     {
         var acquired = false;
@@ -73,13 +71,14 @@ public sealed class App : Application
         var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: Path.Combine(DeviceReminders.DataDirectory, "WebView"));
         await web.EnsureCoreWebView2Async(environment);
         var core = web.CoreWebView2;
+        BundledInterface.Attach(core, environment);
         core.Settings.AreHostObjectsAllowed = false;
         await core.AddScriptToExecuteOnDocumentCreatedAsync("window.__DAYMARK_NATIVE__ = true;");
         core.PermissionRequested += (_, args) => args.State = CoreWebView2PermissionState.Deny;
-        core.NavigationStarting += (_, args) => { if (!Trusted(args.Uri)) { args.Cancel = true; External(args.Uri); } };
-        core.NewWindowRequested += (_, args) => { args.Handled = true; if (Trusted(args.Uri)) core.Navigate(args.Uri); else External(args.Uri); };
+        core.NavigationStarting += (_, args) => { if (!BundledInterface.IsAppPage(args.Uri)) { args.Cancel = true; External(args.Uri); } };
+        core.NewWindowRequested += (_, args) => { args.Handled = true; if (BundledInterface.IsAppPage(args.Uri)) core.Navigate(args.Uri); else External(args.Uri); };
         core.WebMessageReceived += (_, args) => {
-            if (!Trusted(args.Source)) return;
+            if (!BundledInterface.IsAppPage(args.Source)) return;
             string id = "";
             try
             {
@@ -105,7 +104,7 @@ public sealed class App : Application
             catch { core.PostWebMessageAsJson(JsonSerializer.Serialize(new { id, error = "Could not update device reminders." })); }
         };
         MainWindow.Activated += (_, _) => { try { Locked(() => DeviceReminders.Refresh()); } catch { /* Retain the previous schedule on a temporary error. */ } };
-        core.Navigate(Home + "#/calendar");
+        core.Navigate(BundledInterface.Page + "#/calendar");
     }
     static object Clear() { DeviceReminders.Clear(); return new { permission = "default", exact = true }; }
     static object Test() { DeviceReminders.Test(); return new { permission = "granted" }; }
